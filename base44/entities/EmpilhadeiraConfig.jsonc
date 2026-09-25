@@ -1,0 +1,54 @@
+{
+  "name": "EmpilhadeiraConfig",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome da empilhadeira, ex: Empilhadeira 01"
+    },
+    "marca": {
+      "type": "string",
+      "description": "Marca da empilhadeira"
+    },
+    "modelo": {
+      "type": "string",
+      "description": "Modelo da empilhadeira"
+    },
+    "numero_serie": {
+      "type": "string",
+      "description": "N\u00famero de s\u00e9rie"
+    },
+    "ativa": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a empilhadeira est\u00e1 ativa"
+    },
+    "intervalo_manutencao_dias": {
+      "type": "number",
+      "description": "Intervalo em dias entre manuten\u00e7\u00f5es, ex: 90"
+    },
+    "data_ultima_manutencao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da \u00faltima manuten\u00e7\u00e3o realizada"
+    },
+    "data_proxima_manutencao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data prevista para a pr\u00f3xima manuten\u00e7\u00e3o (calculada automaticamente)"
+    },
+    "duracao_turno_horas": {
+      "type": "number",
+      "default": 8,
+      "description": "Dura\u00e7\u00e3o padr\u00e3o do turno em horas (usado para c\u00e1lculo de OEE e % parado)"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais sobre a empilhadeira"
+    }
+  },
+  "required": [
+    "nome",
+    "intervalo_manutencao_dias"
+  ]
+}

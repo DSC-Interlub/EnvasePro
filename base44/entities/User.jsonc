@@ -1,0 +1,16 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "operator"
+      ],
+      "default": "operator",
+      "description": "Papel do usu\u00e1rio: admin (l\u00edderes/supervisores) ou operator (conta compartilhada de operadores)"
+    }
+  },
+  "required": []
+}

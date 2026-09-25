@@ -1,0 +1,46 @@
+{
+  "name": "EmpilhaProgramacao",
+  "type": "object",
+  "properties": {
+    "data_programada": {
+      "type": "string",
+      "format": "date",
+      "description": "Data para qual a programa\u00e7\u00e3o foi criada"
+    },
+    "empilhadeira_id": {
+      "type": "string",
+      "description": "FK \u2192 EmpilhadeiraConfig.id (obrigat\u00f3rio)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Em Andamento",
+        "Conclu\u00eddo"
+      ],
+      "default": "Pendente",
+      "description": "Status geral da programa\u00e7\u00e3o"
+    },
+    "total_linhas": {
+      "type": "number",
+      "description": "Total de linhas nesta programa\u00e7\u00e3o"
+    },
+    "linhas_concluidas": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantidade de linhas j\u00e1 conclu\u00eddas"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais sobre a programa\u00e7\u00e3o"
+    },
+    "criado_por": {
+      "type": "string",
+      "description": "Nome do l\u00edder/supervisor que criou a programa\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "data_programada",
+    "empilhadeira_id"
+  ]
+}

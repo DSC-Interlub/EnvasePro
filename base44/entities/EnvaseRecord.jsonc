@@ -1,0 +1,121 @@
+{
+  "name": "EnvaseRecord",
+  "type": "object",
+  "properties": {
+    "sala": {
+      "type": "string",
+      "enum": [
+        "Bio",
+        "Industrial"
+      ],
+      "description": "Sala onde foi realizado o envase"
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do envase"
+    },
+    "mes": {
+      "type": "number",
+      "description": "M\u00eas extra\u00eddo da data"
+    },
+    "ano": {
+      "type": "number",
+      "description": "Ano extra\u00eddo da data"
+    },
+    "op": {
+      "type": "string",
+      "description": "Ordem de Produ\u00e7\u00e3o"
+    },
+    "operador": {
+      "type": "string",
+      "description": "Nome do operador"
+    },
+    "codigo_produto": {
+      "type": "string",
+      "description": "C\u00f3digo do produto"
+    },
+    "descricao_produto": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do produto"
+    },
+    "consistencia": {
+      "type": "string",
+      "description": "Consist\u00eancia do produto"
+    },
+    "codigo_embalagem": {
+      "type": "string",
+      "description": "C\u00f3digo da embalagem"
+    },
+    "descricao_embalagem": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da embalagem"
+    },
+    "multiplo": {
+      "type": "number",
+      "description": "Conte\u00fado da embalagem"
+    },
+    "quantidade_produzida": {
+      "type": "number",
+      "description": "Quantidade produzida"
+    },
+    "inicio": {
+      "type": "string",
+      "description": "Hor\u00e1rio de in\u00edcio"
+    },
+    "termino": {
+      "type": "string",
+      "description": "Hor\u00e1rio de t\u00e9rmino"
+    },
+    "tempo_produtivo": {
+      "type": "string",
+      "description": "Tempo total produtivo calculado"
+    },
+    "quantidade_embalagens": {
+      "type": "number",
+      "description": "Quantidade de embalagens calculada"
+    },
+    "tempo_por_embalagem": {
+      "type": "string",
+      "description": "Tempo por embalagem calculado"
+    },
+    "dificuldade_codigo": {
+      "type": "number",
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "description": "0=Normal, 1=Rotulagem, 2=Final Tambor, 3=Mescla"
+    },
+    "dificuldade_tipo": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da dificuldade"
+    },
+    "lote_embalagem": {
+      "type": "string",
+      "description": "Lote da embalagem"
+    },
+    "lotes_tampa": {
+      "type": "string",
+      "description": "Lotes das tampas"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es adicionais"
+    },
+    "material_retirado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o material foi retirado da sala (apenas para sala Bio)"
+    }
+  },
+  "required": [
+    "sala",
+    "data",
+    "operador",
+    "codigo_produto",
+    "quantidade_produzida"
+  ]
+}

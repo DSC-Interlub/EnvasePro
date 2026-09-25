@@ -1,0 +1,39 @@
+{
+  "name": "RecebimentoParticipante",
+  "type": "object",
+  "properties": {
+    "recebimento_id": {
+      "type": "string",
+      "description": "FK \u2192 Recebimento.id"
+    },
+    "operator_id": {
+      "type": "string",
+      "description": "FK \u2192 Operator.id"
+    },
+    "operator_nome": {
+      "type": "string",
+      "description": "Nome do operador (desnormalizado)"
+    },
+    "funcao": {
+      "type": "string",
+      "enum": [
+        "Coordenador",
+        "Conferente",
+        "Auxiliar"
+      ],
+      "description": "Fun\u00e7\u00e3o no recebimento"
+    },
+    "assinou": {
+      "type": "boolean",
+      "default": false
+    },
+    "assinatura_datetime": {
+      "type": "string",
+      "description": "ISO 8601 \u2014 quando assinou"
+    }
+  },
+  "required": [
+    "recebimento_id",
+    "operator_id"
+  ]
+}

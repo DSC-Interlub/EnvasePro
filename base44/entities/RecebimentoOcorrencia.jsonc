@@ -1,0 +1,52 @@
+{
+  "name": "RecebimentoOcorrencia",
+  "type": "object",
+  "properties": {
+    "recebimento_id": {
+      "type": "string",
+      "description": "FK \u2192 Recebimento.id"
+    },
+    "item_id": {
+      "type": "string",
+      "description": "FK \u2192 RecebimentoItem.id (opcional)"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Avaria",
+        "Diverg\u00eancia de quantidade",
+        "Produto errado",
+        "Atraso",
+        "Problema de documento",
+        "Problema de acesso",
+        "Outro"
+      ]
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada da ocorr\u00eancia"
+    },
+    "registrado_por": {
+      "type": "string",
+      "description": "Nome de quem registrou"
+    },
+    "datetime_registro": {
+      "type": "string",
+      "description": "ISO 8601"
+    },
+    "resolvido": {
+      "type": "boolean",
+      "default": false
+    },
+    "resolucao": {
+      "type": "string",
+      "description": "Como foi resolvida"
+    }
+  },
+  "required": [
+    "recebimento_id",
+    "descricao",
+    "registrado_por",
+    "datetime_registro"
+  ]
+}

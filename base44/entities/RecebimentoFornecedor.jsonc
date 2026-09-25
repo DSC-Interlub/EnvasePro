@@ -1,0 +1,35 @@
+{
+  "name": "RecebimentoFornecedor",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do fornecedor"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Nacional",
+        "Internacional",
+        "Ambos"
+      ],
+      "description": "Tipo do fornecedor"
+    },
+    "pais_origem": {
+      "type": "string",
+      "description": "Pa\u00eds de origem (relevante para importa\u00e7\u00f5es)"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o fornecedor est\u00e1 ativo"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

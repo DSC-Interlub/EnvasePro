@@ -1,0 +1,29 @@
+{
+  "name": "NotaFiscalArquivo",
+  "type": "object",
+  "properties": {
+    "numero_nf": {
+      "type": "string",
+      "description": "N\u00famero da nota fiscal"
+    },
+    "arquivo_url": {
+      "type": "string",
+      "description": "URL do arquivo/foto da NF"
+    },
+    "arquivo_nome": {
+      "type": "string",
+      "description": "Nome original do arquivo"
+    },
+    "arquivado_por_nome": {
+      "type": "string",
+      "description": "Nome de quem arquivou"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    }
+  },
+  "required": [
+    "numero_nf"
+  ]
+}

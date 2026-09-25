@@ -1,0 +1,36 @@
+{
+  "name": "Operator",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome completo do operador"
+    },
+    "matricula": {
+      "type": "string",
+      "description": "Matr\u00edcula do operador"
+    },
+    "sala": {
+      "type": "string",
+      "enum": [
+        "Bio",
+        "Industrial",
+        "Ambas"
+      ],
+      "description": "Sala(s) onde o operador trabalha"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o operador est\u00e1 ativo"
+    },
+    "foto_url": {
+      "type": "string",
+      "description": "URL da foto do operador"
+    }
+  },
+  "required": [
+    "nome",
+    "sala"
+  ]
+}

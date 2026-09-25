@@ -1,0 +1,42 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo do produto"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome/Descri\u00e7\u00e3o do produto"
+    },
+    "unidade_medida": {
+      "type": "string",
+      "description": "Unidade de medida (L, KG, etc)"
+    },
+    "consistencia": {
+      "type": "string",
+      "description": "Consist\u00eancia do produto (ex: 2, x, 0-00, 100-320)"
+    },
+    "nsf_3h": {
+      "type": "boolean",
+      "default": false,
+      "description": "Produto possui certifica\u00e7\u00e3o NSF 3H"
+    },
+    "nsf_h1": {
+      "type": "boolean",
+      "default": false,
+      "description": "Produto possui certifica\u00e7\u00e3o NSF H1"
+    },
+    "halal": {
+      "type": "boolean",
+      "default": false,
+      "description": "Produto possui certifica\u00e7\u00e3o HALAL"
+    }
+  },
+  "required": [
+    "codigo",
+    "nome",
+    "consistencia"
+  ]
+}

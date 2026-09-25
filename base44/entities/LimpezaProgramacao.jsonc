@@ -1,0 +1,140 @@
+{
+  "name": "LimpezaProgramacao",
+  "type": "object",
+  "properties": {
+    "local_id": {
+      "type": "string",
+      "description": "FK \u2192 LimpezaLocal.id"
+    },
+    "local_nome": {
+      "type": "string",
+      "description": "Nome do local (desnormalizado)"
+    },
+    "responsavel_id": {
+      "type": "string",
+      "description": "FK \u2192 Operator.id (principal, compatibilidade)"
+    },
+    "responsavel_nome": {
+      "type": "string",
+      "description": "Nomes dos respons\u00e1veis separados por v\u00edrgula (desnormalizado)"
+    },
+    "responsaveis": {
+      "type": "array",
+      "description": "Lista de respons\u00e1veis [{id, nome}]",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "assinaturas_responsaveis": {
+      "type": "array",
+      "description": "Assinaturas individuais de cada respons\u00e1vel [{id, nome, hora, assinado}]",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "assinado": {
+            "type": "boolean"
+          },
+          "hora": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "data_prevista": {
+      "type": "string",
+      "format": "date",
+      "description": "Data prevista para realiza\u00e7\u00e3o"
+    },
+    "hora_prevista": {
+      "type": "string",
+      "description": "Hora prevista HH:MM (opcional)"
+    },
+    "tipo_limpeza": {
+      "type": "string",
+      "enum": [
+        "Varri\u00e7\u00e3o",
+        "Lavagem",
+        "Desinfec\u00e7\u00e3o",
+        "Limpeza geral",
+        "Outro"
+      ],
+      "description": "Tipo de limpeza"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Instru\u00e7\u00f5es espec\u00edficas"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Em Andamento",
+        "Conclu\u00eddo",
+        "Atrasado"
+      ],
+      "default": "Pendente"
+    },
+    "data_realizada": {
+      "type": "string",
+      "format": "date"
+    },
+    "hora_inicio": {
+      "type": "string"
+    },
+    "hora_fim": {
+      "type": "string"
+    },
+    "assinatura_responsavel": {
+      "type": "boolean",
+      "default": false,
+      "description": "true quando TODOS os respons\u00e1veis assinaram"
+    },
+    "assinatura_responsavel_nome": {
+      "type": "string"
+    },
+    "assinatura_responsavel_hora": {
+      "type": "string"
+    },
+    "assinatura_lider": {
+      "type": "boolean",
+      "default": false
+    },
+    "assinatura_lider_nome": {
+      "type": "string"
+    },
+    "assinatura_lider_hora": {
+      "type": "string"
+    },
+    "status_assinatura": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Parcial",
+        "Completo"
+      ],
+      "default": "Pendente",
+      "description": "Pendente=nenhuma, Parcial=algum respons\u00e1vel assinou ou todos assinaram mas l\u00edder n\u00e3o, Completo=todos assinaram incluindo l\u00edder"
+    },
+    "criado_por": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "local_id",
+    "data_prevista"
+  ]
+}

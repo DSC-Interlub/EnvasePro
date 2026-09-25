@@ -1,0 +1,136 @@
+{
+  "name": "Recebimento",
+  "type": "object",
+  "properties": {
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Importa\u00e7\u00e3o",
+        "Nacional",
+        "Devolu\u00e7\u00e3o",
+        "Material auxiliar",
+        "Outro"
+      ],
+      "description": "Tipo do recebimento"
+    },
+    "numero_documento": {
+      "type": "string",
+      "description": "N\u00famero da NF, DI, AWB, BL ou identificador interno"
+    },
+    "numero_nf": {
+      "type": "string",
+      "description": "Nota fiscal vinculada (para importa\u00e7\u00f5es)"
+    },
+    "fornecedor_id": {
+      "type": "string",
+      "description": "FK \u2192 RecebimentoFornecedor.id"
+    },
+    "fornecedor_nome": {
+      "type": "string",
+      "description": "Nome do fornecedor (desnormalizado ou fornecedor espor\u00e1dico)"
+    },
+    "data_prevista": {
+      "type": "string",
+      "format": "date",
+      "description": "Previs\u00e3o de chegada"
+    },
+    "data_chegada": {
+      "type": "string",
+      "format": "date",
+      "description": "Data real de chegada"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Breve descri\u00e7\u00e3o do que est\u00e1 sendo recebido"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Agendado",
+        "Em andamento",
+        "Pausado",
+        "Conclu\u00eddo",
+        "Cancelado"
+      ],
+      "default": "Agendado"
+    },
+    "prioridade": {
+      "type": "string",
+      "enum": [
+        "Normal",
+        "Alta",
+        "Urgente"
+      ],
+      "default": "Normal"
+    },
+    "coordenador_id": {
+      "type": "string",
+      "description": "FK \u2192 Operator.id"
+    },
+    "coordenador_nome": {
+      "type": "string",
+      "description": "Nome do coordenador (desnormalizado)"
+    },
+    "datetime_inicio": {
+      "type": "string",
+      "description": "ISO 8601 \u2014 in\u00edcio do recebimento"
+    },
+    "datetime_pausa": {
+      "type": "string",
+      "description": "ISO 8601 \u2014 \u00faltima pausa"
+    },
+    "datetime_retomada": {
+      "type": "string",
+      "description": "ISO 8601 \u2014 \u00faltima retomada ap\u00f3s pausa"
+    },
+    "datetime_fim": {
+      "type": "string",
+      "description": "ISO 8601 \u2014 fim do recebimento"
+    },
+    "tempo_produtivo_minutos": {
+      "type": "number",
+      "description": "Tempo produtivo calculado descontando pausas"
+    },
+    "tempo_pausado_minutos": {
+      "type": "number",
+      "description": "Tempo total em pausa"
+    },
+    "observacoes_finais": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es ao finalizar"
+    },
+    "assinatura_coordenador": {
+      "type": "boolean",
+      "default": false
+    },
+    "assinatura_coordenador_nome": {
+      "type": "string"
+    },
+    "assinatura_coordenador_datetime": {
+      "type": "string"
+    },
+    "assinatura_lider": {
+      "type": "boolean",
+      "default": false
+    },
+    "assinatura_lider_nome": {
+      "type": "string"
+    },
+    "assinatura_lider_datetime": {
+      "type": "string"
+    },
+    "status_assinatura": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Parcial",
+        "Completo"
+      ],
+      "default": "Pendente"
+    }
+  },
+  "required": [
+    "tipo",
+    "numero_documento"
+  ]
+}

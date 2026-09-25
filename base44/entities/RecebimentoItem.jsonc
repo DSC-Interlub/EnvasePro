@@ -1,0 +1,53 @@
+{
+  "name": "RecebimentoItem",
+  "type": "object",
+  "properties": {
+    "recebimento_id": {
+      "type": "string",
+      "description": "FK \u2192 Recebimento.id"
+    },
+    "produto_codigo": {
+      "type": "string",
+      "description": "C\u00f3digo do produto (refer\u00eancia ao Product)"
+    },
+    "produto_descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do produto"
+    },
+    "lote": {
+      "type": "string",
+      "description": "Lote do produto"
+    },
+    "quantidade_prevista": {
+      "type": "number",
+      "description": "Quantidade esperada conforme documento"
+    },
+    "quantidade_recebida": {
+      "type": "number",
+      "description": "Quantidade efetivamente conferida"
+    },
+    "unidade": {
+      "type": "string",
+      "description": "Unidade de medida: KG, UN, CX, L..."
+    },
+    "status_item": {
+      "type": "string",
+      "enum": [
+        "Pendente confer\u00eancia",
+        "OK",
+        "Diverg\u00eancia de quantidade",
+        "Avaria",
+        "Recusado"
+      ],
+      "default": "Pendente confer\u00eancia"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre o item"
+    }
+  },
+  "required": [
+    "recebimento_id",
+    "produto_descricao"
+  ]
+}

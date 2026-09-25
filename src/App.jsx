@@ -1,0 +1,141 @@
+import React from 'react';
+import { Toaster } from "@/components/ui/toaster"
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClientInstance } from '@/lib/query-client'
+import { pagesConfig } from './pages.config'
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import PageNotFound from './lib/PageNotFound';
+import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import LoginModal from '@/components/auth/LoginModal';
+import SelecionarOperadorModal from '@/components/auth/SelecionarOperadorModal';
+import ImportarCategorias from '@/pages/ImportarCategorias';
+import Empilhadeira from '@/pages/Empilhadeira';
+import NovaEmpilhaProgramacao from '@/pages/NovaEmpilhaProgramacao';
+import ExecutarEmpilha from '@/pages/ExecutarEmpilha';
+import EmpilhadeiraConfigPage from '@/pages/EmpilhadeiraConfig';
+import IndicadoresEmpilha from '@/pages/IndicadoresEmpilha';
+import RotaProtegidaAdmin from '@/components/empilhadeira/RotaProtegidaAdmin';
+import GerenciarUsuarios from '@/pages/GerenciarUsuarios';
+import Recebimento from '@/pages/Recebimento';
+import ExecutarRecebimento from '@/pages/ExecutarRecebimento';
+import IndicadoresRecebimento from '@/pages/IndicadoresRecebimento';
+import ChecklistRecebimentoPage from '@/pages/ChecklistRecebimento';
+import NovoChecklist from '@/pages/NovoChecklist';
+import ChecklistDetalhe from '@/pages/ChecklistDetalhe';
+import Painel from '@/pages/Painel';
+import NotasFiscais from '@/pages/NotasFiscais';
+import NovaNotaFiscal from '@/pages/NovaNotaFiscal';
+import NotaFiscalDetalhe from '@/pages/NotaFiscalDetalhe';
+
+const { Pages, Layout, mainPage } = pagesConfig;
+const mainPageKey = mainPage ?? Object.keys(Pages)[0];
+const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
+
+const LayoutWrapper = ({ children, currentPageName }) => Layout ?
+  <Layout currentPageName={currentPageName}>{children}</Layout>
+  : <>{children}</>;
+
+// Lista de rotas públicas de TV que funcionam sem login (Ajuste 4)
+function ehRotaTv(pathname) {
+  if (!pathname) return false;
+  const p = pathname.toLowerCase();
+  return p.includes('televisao') || p === '/painel';
+}
+
+const AuthenticatedApp = () => {
+  const { isLoadingAuth, isAuthenticated, setLoginModalAberto } = useAuth();
+  const location = useLocation();
+  const isPublicTv = ehRotaTv(location.pathname);
+
+  // Spinner enquanto carrega sessão (exceto para TV pública)
+  if (isLoadingAuth && !isPublicTv) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
+        <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Se não estiver autenticado e não for tela de TV, exibe tela para login
+  if (!isAuthenticated && !isPublicTv) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex items-center justify-center p-4">
+        <LoginModal />
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="w-16 h-16 bg-blue-600 text-white rounded-2xl mx-auto flex items-center justify-center shadow-lg font-bold text-2xl">
+            EP
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800">EnvasePro Interlub</h1>
+          <p className="text-sm text-slate-600">
+            Sistema de Controle de Produção, Empilhadeira e Recebimento.
+          </p>
+          <button
+            onClick={() => setLoginModalAberto(true)}
+            className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition"
+          >
+            Fazer Login no Sistema
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={
+          <LayoutWrapper currentPageName={mainPageKey}>
+            <MainPage />
+          </LayoutWrapper>
+        } />
+        {Object.entries(Pages).map(([path, Page]) => (
+          <Route
+            key={path}
+            path={`/${path}`}
+            element={
+              <LayoutWrapper currentPageName={path}>
+                <Page />
+              </LayoutWrapper>
+            }
+          />
+        ))}
+        <Route path="/ImportarCategorias" element={<LayoutWrapper currentPageName="ImportarCategorias"><ImportarCategorias /></LayoutWrapper>} />
+        <Route path="/Empilhadeira" element={<LayoutWrapper currentPageName="Empilhadeira"><Empilhadeira /></LayoutWrapper>} />
+        <Route path="/NovaEmpilhaProgramacao" element={<LayoutWrapper currentPageName="NovaEmpilhaProgramacao"><RotaProtegidaAdmin><NovaEmpilhaProgramacao /></RotaProtegidaAdmin></LayoutWrapper>} />
+        <Route path="/ExecutarEmpilha" element={<LayoutWrapper currentPageName="ExecutarEmpilha"><ExecutarEmpilha /></LayoutWrapper>} />
+        <Route path="/EmpilhadeiraConfig" element={<LayoutWrapper currentPageName="EmpilhadeiraConfig"><RotaProtegidaAdmin><EmpilhadeiraConfigPage /></RotaProtegidaAdmin></LayoutWrapper>} />
+        <Route path="/IndicadoresEmpilha" element={<LayoutWrapper currentPageName="IndicadoresEmpilha"><RotaProtegidaAdmin><IndicadoresEmpilha /></RotaProtegidaAdmin></LayoutWrapper>} />
+        <Route path="/GerenciarUsuarios" element={<LayoutWrapper currentPageName="GerenciarUsuarios"><RotaProtegidaAdmin><GerenciarUsuarios /></RotaProtegidaAdmin></LayoutWrapper>} />
+        <Route path="/Recebimento" element={<LayoutWrapper currentPageName="Recebimento"><Recebimento /></LayoutWrapper>} />
+        <Route path="/ExecutarRecebimento" element={<LayoutWrapper currentPageName="ExecutarRecebimento"><ExecutarRecebimento /></LayoutWrapper>} />
+        <Route path="/IndicadoresRecebimento" element={<LayoutWrapper currentPageName="IndicadoresRecebimento"><RotaProtegidaAdmin><IndicadoresRecebimento /></RotaProtegidaAdmin></LayoutWrapper>} />
+        <Route path="/ChecklistRecebimento" element={<LayoutWrapper currentPageName="ChecklistRecebimento"><ChecklistRecebimentoPage /></LayoutWrapper>} />
+        <Route path="/NovoChecklist" element={<LayoutWrapper currentPageName="NovoChecklist"><NovoChecklist /></LayoutWrapper>} />
+        <Route path="/ChecklistDetalhe" element={<LayoutWrapper currentPageName="ChecklistDetalhe"><ChecklistDetalhe /></LayoutWrapper>} />
+        <Route path="/Painel" element={<LayoutWrapper currentPageName="Painel"><Painel /></LayoutWrapper>} />
+        <Route path="/NotasFiscais" element={<LayoutWrapper currentPageName="NotasFiscais"><NotasFiscais /></LayoutWrapper>} />
+        <Route path="/NovaNotaFiscal" element={<LayoutWrapper currentPageName="NovaNotaFiscal"><NovaNotaFiscal /></LayoutWrapper>} />
+        <Route path="/NotaFiscalDetalhe" element={<LayoutWrapper currentPageName="NotaFiscalDetalhe"><NotaFiscalDetalhe /></LayoutWrapper>} />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+
+      <LoginModal />
+      <SelecionarOperadorModal />
+    </>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={queryClientInstance}>
+        <Router>
+          <AuthenticatedApp />
+        </Router>
+        <Toaster />
+      </QueryClientProvider>
+    </AuthProvider>
+  );
+}
+
+export default App;

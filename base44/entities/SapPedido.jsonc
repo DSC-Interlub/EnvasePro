@@ -1,0 +1,95 @@
+{
+  "name": "SapPedido",
+  "type": "object",
+  "properties": {
+    "serie_documento": {
+      "type": "string",
+      "description": "S\u00e9ries de documento, ex: Prim\u00e1rio"
+    },
+    "numero_documento": {
+      "type": "string",
+      "description": "N\u00ba doc. SAP \u2014 chave de busca"
+    },
+    "codigo_fornecedor": {
+      "type": "string",
+      "description": "C\u00f3d. fornecedor, ex: FOR000545"
+    },
+    "nome_fornecedor": {
+      "type": "string",
+      "description": "Nome do fornecedor"
+    },
+    "numero_referencia_fornecedor": {
+      "type": "string",
+      "description": "N\u00ba ref.fornec."
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de chegada (mantido para compatibilidade do checklist)"
+    },
+    "data_chegada": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de chegada da importa\u00e7\u00e3o"
+    },
+    "codigo_item": {
+      "type": "string",
+      "description": "C\u00f3digo do item (apenas para FOR000002)"
+    },
+    "produto": {
+      "type": "string",
+      "description": "Nome do produto (apenas para FOR000002)"
+    },
+    "quantidade": {
+      "type": "number",
+      "description": "Quantidade do item"
+    },
+    "item_para_recebimento": {
+      "type": "string",
+      "description": "String completa do item para recebimento"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor"
+    },
+    "valor_liquido": {
+      "type": "number",
+      "description": "Valor l\u00edquido"
+    },
+    "valor_imposto": {
+      "type": "number",
+      "description": "Valor do imposto"
+    },
+    "valor_original": {
+      "type": "number",
+      "description": "Valor original"
+    },
+    "data_lancamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de lan\u00e7amento"
+    },
+    "data_documento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do documento"
+    },
+    "tipo_documento": {
+      "type": "string",
+      "description": "Tipo de documento, ex: Pedidos de compra"
+    },
+    "nome_filial": {
+      "type": "string",
+      "description": "Nome da filial"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o registro est\u00e1 ativo"
+    }
+  },
+  "required": [
+    "numero_documento",
+    "nome_fornecedor"
+  ]
+}

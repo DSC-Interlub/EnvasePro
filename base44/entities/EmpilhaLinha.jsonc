@@ -1,0 +1,147 @@
+{
+  "name": "EmpilhaLinha",
+  "type": "object",
+  "properties": {
+    "programacao_id": {
+      "type": "string",
+      "description": "FK \u2192 EmpilhaProgramacao.id"
+    },
+    "tipo_linha": {
+      "type": "string",
+      "enum": [
+        "Normal",
+        "Cr\u00edtico",
+        "Avulso"
+      ],
+      "default": "Normal",
+      "description": "Tipo da linha"
+    },
+    "numero_item": {
+      "type": "string",
+      "description": "N\u00famero do item, ex: IVP072696220"
+    },
+    "codigo_produto": {
+      "type": "string",
+      "description": "Refer\u00eancia ao Product.codigo"
+    },
+    "descricao_produto": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do produto"
+    },
+    "lote": {
+      "type": "string",
+      "description": "Lote do produto"
+    },
+    "deposito": {
+      "type": "string",
+      "description": "Dep\u00f3sito, ex: ERM, EPB, EPI"
+    },
+    "rua_torre": {
+      "type": "string",
+      "description": "Localiza\u00e7\u00e3o, ex: R02-T01"
+    },
+    "quantidade": {
+      "type": "number",
+      "description": "Quantidade a movimentar"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Em Andamento",
+        "Pausado",
+        "Conclu\u00eddo"
+      ],
+      "default": "Pendente",
+      "description": "Status atual da linha"
+    },
+    "operador_empilhadeira": {
+      "type": "string",
+      "description": "Nome do operador na empilhadeira"
+    },
+    "operador_ajudante": {
+      "type": "string",
+      "description": "Nome do operador ajudante"
+    },
+    "hora_inicio": {
+      "type": "string",
+      "description": "Hor\u00e1rio de in\u00edcio HH:MM"
+    },
+    "hora_pausa": {
+      "type": "string",
+      "description": "Hor\u00e1rio da \u00faltima pausa HH:MM"
+    },
+    "hora_retomada": {
+      "type": "string",
+      "description": "Hor\u00e1rio da \u00faltima retomada ap\u00f3s pausa HH:MM"
+    },
+    "hora_termino": {
+      "type": "string",
+      "description": "Hor\u00e1rio de t\u00e9rmino HH:MM"
+    },
+    "tempo_total": {
+      "type": "string",
+      "description": "Tempo total calculado descontando pausas"
+    },
+    "tempo_pausado": {
+      "type": "string",
+      "description": "Tempo total em pausa"
+    },
+    "assinatura_operador": {
+      "type": "boolean",
+      "default": false,
+      "description": "Operador confirmou que realizou a linha"
+    },
+    "assinatura_operador_nome": {
+      "type": "string",
+      "description": "Nome do operador que assinou"
+    },
+    "assinatura_operador_hora": {
+      "type": "string",
+      "description": "Hora da assinatura do operador"
+    },
+    "assinatura_ajudante": {
+      "type": "boolean",
+      "default": false,
+      "description": "Ajudante confirmou que participou da linha"
+    },
+    "assinatura_ajudante_nome": {
+      "type": "string",
+      "description": "Nome do ajudante que assinou"
+    },
+    "assinatura_ajudante_hora": {
+      "type": "string",
+      "description": "Hora da assinatura do ajudante"
+    },
+    "assinatura_lider": {
+      "type": "boolean",
+      "default": false,
+      "description": "L\u00edder confirmou a linha"
+    },
+    "assinatura_lider_nome": {
+      "type": "string",
+      "description": "Nome do l\u00edder que assinou"
+    },
+    "assinatura_lider_hora": {
+      "type": "string",
+      "description": "Hora da assinatura do l\u00edder"
+    },
+    "status_assinatura": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Parcial",
+        "Completo"
+      ],
+      "default": "Pendente",
+      "description": "Pendente=nenhuma, Parcial=operador assinou/l\u00edder n\u00e3o, Completo=todos assinaram"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es adicionais"
+    }
+  },
+  "required": [
+    "programacao_id"
+  ]
+}

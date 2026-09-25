@@ -1,0 +1,56 @@
+{
+  "name": "EmpilhadeiraParada",
+  "type": "object",
+  "properties": {
+    "empilhadeira_id": {
+      "type": "string",
+      "description": "FK \u2192 EmpilhadeiraConfig.id"
+    },
+    "programacao_id": {
+      "type": "string",
+      "description": "FK \u2192 EmpilhaProgramacao.id (opcional \u2014 se aconteceu durante uma programa\u00e7\u00e3o)"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Quebra",
+        "Manuten\u00e7\u00e3o",
+        "Aguardando operador",
+        "Falta de material",
+        "Outro"
+      ],
+      "description": "Tipo da parada"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada da parada"
+    },
+    "registrado_por": {
+      "type": "string",
+      "description": "Nome de quem registrou a parada"
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da parada"
+    },
+    "hora_inicio": {
+      "type": "string",
+      "description": "Hor\u00e1rio de in\u00edcio da parada HH:MM"
+    },
+    "hora_fim": {
+      "type": "string",
+      "description": "Hor\u00e1rio de fim da parada HH:MM"
+    },
+    "tempo_total": {
+      "type": "string",
+      "description": "Tempo total da parada calculado ao preencher hora_fim"
+    }
+  },
+  "required": [
+    "empilhadeira_id",
+    "registrado_por",
+    "data",
+    "hora_inicio"
+  ]
+}

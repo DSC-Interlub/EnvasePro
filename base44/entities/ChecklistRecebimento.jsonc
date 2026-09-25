@@ -1,0 +1,208 @@
+{
+  "name": "ChecklistRecebimento",
+  "type": "object",
+  "properties": {
+    "pedido_disponivel_etapa5": {
+      "type": "string",
+      "enum": [
+        "Sim",
+        "N\u00e3o"
+      ],
+      "description": "O Pedido de Compras Est\u00e1 Dispon\u00edvel na Etapa 5?"
+    },
+    "numero_pedido_compras": {
+      "type": "string",
+      "description": "N\u00famero do Pedido de Compras digitado pelo usu\u00e1rio"
+    },
+    "sap_pedido_id": {
+      "type": "string",
+      "description": "FK \u2192 SapPedido.id (v\u00ednculo autom\u00e1tico se encontrado)"
+    },
+    "nome_fornecedor": {
+      "type": "string",
+      "description": "Nome do fornecedor (auto via SAP ou manual)"
+    },
+    "codigo_fornecedor": {
+      "type": "string",
+      "description": "C\u00f3digo do fornecedor (auto via SAP ou manual)"
+    },
+    "descricao_material": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do material"
+    },
+    "data_prevista_material": {
+      "type": "string",
+      "format": "date",
+      "description": "Data prevista (auto via SAP data_vencimento ou manual)"
+    },
+    "data_entrega": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de entrega real"
+    },
+    "entrega_conforme_prevista": {
+      "type": "string",
+      "enum": [
+        "Sim",
+        "N\u00e3o"
+      ],
+      "description": "A entrega est\u00e1 conforme a data prevista?"
+    },
+    "inspecionado_por": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Nomes dos inspetores"
+    },
+    "numero_nota_fiscal": {
+      "type": "string",
+      "description": "N\u00famero da nota fiscal"
+    },
+    "material_recebimento": {
+      "type": "string",
+      "enum": [
+        "Spray",
+        "R\u00f3tulo",
+        "Embalagem",
+        "Produto Interlub",
+        "Mat\u00e9ria Prima (Terceiros)"
+      ],
+      "description": "Tipo de material recebido"
+    },
+    "quantidade_recebida": {
+      "type": "number",
+      "description": "Quantidade recebida"
+    },
+    "unidade_medida": {
+      "type": "string",
+      "enum": [
+        "KG",
+        "LT",
+        "PC",
+        "UN",
+        "MILHEIRO",
+        "M\u00b3"
+      ],
+      "description": "Unidade de medida"
+    },
+    "numero_lote": {
+      "type": "string",
+      "description": "N\u00famero do lote"
+    },
+    "quantidade_conforme_nf": {
+      "type": "string",
+      "enum": [
+        "Sim",
+        "N\u00e3o"
+      ],
+      "description": "Quantidade conforme com a NF?"
+    },
+    "amostragem_inspecionada": {
+      "type": "string",
+      "enum": [
+        "Sim",
+        "N\u00e3o",
+        "N/A"
+      ],
+      "description": "Amostragem inspecionada (10%)?"
+    },
+    "condicoes_gerais_conformes": {
+      "type": "string",
+      "enum": [
+        "Sim",
+        "N\u00e3o",
+        "N/A"
+      ],
+      "description": "Condi\u00e7\u00f5es gerais conforme padr\u00f5es Interlub?"
+    },
+    "spray_conforme_feps": {
+      "type": "string",
+      "enum": [
+        "Sim",
+        "N\u00e3o",
+        "N/A"
+      ],
+      "description": "Spray conforme FEPS atual?"
+    },
+    "acompanha_certificado_analise": {
+      "type": "string",
+      "enum": [
+        "Sim",
+        "N\u00e3o",
+        "N/A"
+      ],
+      "description": "Acompanha certificado de an\u00e1lise?"
+    },
+    "acompanha_ficha_emergencia": {
+      "type": "string",
+      "enum": [
+        "Sim",
+        "N\u00e3o",
+        "N/A"
+      ],
+      "description": "Acompanha ficha de emerg\u00eancia?"
+    },
+    "acompanha_fispq": {
+      "type": "string",
+      "enum": [
+        "Sim",
+        "N\u00e3o",
+        "N/A"
+      ],
+      "description": "Acompanha FISPQ?"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    },
+    "total_sim": {
+      "type": "number",
+      "description": "Contagem de respostas Sim nos campos de checklist"
+    },
+    "total_nao": {
+      "type": "number",
+      "description": "Contagem de respostas N\u00e3o nos campos de checklist"
+    },
+    "soma_sim": {
+      "type": "number",
+      "description": "total_sim \u00d7 10"
+    },
+    "soma_nao": {
+      "type": "number",
+      "description": "total_nao \u00d7 -10"
+    },
+    "nota_final": {
+      "type": "number",
+      "description": "soma_sim + soma_nao"
+    },
+    "recebimento_id": {
+      "type": "string",
+      "description": "FK \u2192 Recebimento.id (opcional)"
+    },
+    "criado_por_nome": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio que preencheu"
+    }
+  },
+  "required": [
+    "pedido_disponivel_etapa5",
+    "numero_pedido_compras",
+    "nome_fornecedor",
+    "descricao_material",
+    "data_entrega",
+    "entrega_conforme_prevista",
+    "numero_nota_fiscal",
+    "material_recebimento",
+    "quantidade_recebida",
+    "unidade_medida",
+    "numero_lote",
+    "quantidade_conforme_nf",
+    "amostragem_inspecionada",
+    "condicoes_gerais_conformes",
+    "spray_conforme_feps",
+    "acompanha_certificado_analise",
+    "acompanha_ficha_emergencia",
+    "acompanha_fispq"
+  ]
+}
