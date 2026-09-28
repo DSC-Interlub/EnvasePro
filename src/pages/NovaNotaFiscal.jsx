@@ -52,13 +52,13 @@ export default function NovaNotaFiscal() {
       try {
         let arquivo_url = "";
         let arquivo_nome = item.file.name;
-        // Upload do arquivo para bucket notas-fiscais (privado)
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: item.file, bucket: 'notas-fiscais' });
-        arquivo_url = file_url;
+        // Upload do arquivo para bucket notas-fiscais (privado) - guarda apenas o caminho no bucket
+        const { file_path } = await base44.integrations.Core.UploadFile({ file: item.file, bucket: 'notas-fiscais' });
+        arquivo_url = file_path;
 
         await base44.entities.NotaFiscalArquivo.create({
           numero_nf: item.numero_nf.trim(),
-          arquivo_url,
+          arquivo_url, // Caminho relativo no bucket (em conformidade com 5 anos de retenção legal)
           arquivo_nome,
           arquivado_por_nome: user?.full_name || "",
         });

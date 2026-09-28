@@ -25,7 +25,24 @@ export default function NotaFiscalDetalhe() {
 
   const { data: nf, isLoading } = useQuery({
     queryKey: ["nf-detalhe", id],
-    queryFn: () => base44.entities.NotaFiscalArquivo.get(id),
+    queryFn: async () => {
+      const data = await base44.entities.NotaFiscalArquivo.get(id);
+      if (data && data.arquivo_url) {
+        let path = data.arquivo_url;
+        if (path.includes('/notas-fiscais/')) {
+          path = path.split('/notas-fiscais/')[1]?.split('?')[0];
+        }
+        if (path && !path.startsWith('http')) {
+          try {
+            const signed = await base44.integrations.Core.createSignedUrl('notas-fiscais', path, 3600);
+            return { ...data, signed_url: signed, arquivo_path: path };
+          } catch (e) {
+            console.error('Erro ao gerar URL assinada da NF:', e);
+          }
+        }
+      }
+      return data;
+    },
     enabled: !!id,
   });
 
@@ -33,9 +50,9 @@ export default function NotaFiscalDetalhe() {
     if (!files || files.length === 0) return;
     setUploading(true);
     const file = files[0];
-    const { file_url } = await base44.integrations.Core.UploadFile({ file, bucket: 'notas-fiscais' });
+    const { file_path } = await base44.integrations.Core.UploadFile({ file, bucket: 'notas-fiscais' });
     await base44.entities.NotaFiscalArquivo.update(id, {
-      arquivo_url: file_url,
+      arquivo_url: file_path, // Salva APENAS o caminho no bucket (retenção 5 anos)
       arquivo_nome: file.name,
     });
     queryClient.invalidateQueries({ queryKey: ["nf-detalhe", id] });
@@ -102,11 +119,26 @@ export default function NotaFiscalDetalhe() {
       <Card>
         <CardContent className="p-5 space-y-3">
           <p className="text-sm font-medium text-slate-700">Arquivo / Foto</p>
-          {nf.arquivo_url ? (
+          {nf.signed_url || nf.arquivo_url ? (
             <div className="space-y-3">
-              <img src={nf.arquivo_url} alt="NF" className="w-full rounded-xl border object-contain max-h-80" />
+              {nf.arquivo_nome?.toLowerCase().endsWith('.pdf') ? (
+                <div className="p-6 bg-slate-50 border rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-8 h-8 text-blue-600" />
+                    <div>
+                      <p className="font-medium text-slate-800">{nf.arquivo_nome || "Documento PDF"}</p>
+                      <p className="text-xs text-slate-400">PDF Arquivado (retenção legal)</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => window.open(nf.signed_url || nf.arquivo_url, "_blank")}>
+                    <ExternalLink className="w-4 h-4 mr-1" /> Abrir PDF
+                  </Button>
+                </div>
+              ) : (
+                <img src={nf.signed_url || nf.arquivo_url} alt="NF" className="w-full rounded-xl border object-contain max-h-80" />
+              )}
               <div className="flex gap-2 flex-wrap">
-                <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(nf.arquivo_url, "_blank")}>
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(nf.signed_url || nf.arquivo_url, "_blank")}>
                   <ExternalLink className="w-3 h-3" /> Abrir original
                 </Button>
                 <Button variant="outline" size="sm" className="gap-1" onClick={() => inputRef.current?.click()} disabled={uploading}>

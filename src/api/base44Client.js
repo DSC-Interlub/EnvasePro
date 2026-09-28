@@ -490,19 +490,10 @@ const integrationsAdapter = {
         throw error;
       }
 
-      // Se for bucket privado (notas-fiscais), gera Signed URL válida por 1 ano (31.536.000 segundos)
+      // Se for bucket privado (notas-fiscais), retorna apenas o caminho do arquivo
       if (bucketName === 'notas-fiscais') {
-        const { data: signedData, error: signedError } = await supabase.storage
-          .from(bucketName)
-          .createSignedUrl(fileName, 31536000);
-
-        if (signedError) {
-          console.error('Erro ao gerar URL assinada para nota fiscal:', signedError);
-          throw signedError;
-        }
-
         return {
-          file_url: signedData.signedUrl,
+          file_url: fileName,
           file_path: fileName,
           bucket: bucketName
         };
@@ -522,8 +513,9 @@ const integrationsAdapter = {
 
     /**
      * Gera URL assinada sob demanda para arquivos em buckets privados (ex: notas-fiscais).
+     * Padrão: 3600 segundos (1 hora).
      */
-    async createSignedUrl(bucket, filePath, expiresIn = 3600 * 24) {
+    async createSignedUrl(bucket, filePath, expiresIn = 3600) {
       const { data, error } = await supabase.storage
         .from(bucket)
         .createSignedUrl(filePath, expiresIn);

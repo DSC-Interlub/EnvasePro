@@ -28,9 +28,9 @@ export default function LoginModal() {
     }
   };
 
-  const preencherCredenciais = (em, pass) => {
+  const preencherEmail = (em) => {
     setEmail(em);
-    setPassword(pass);
+    setPassword('');
     setErro(null);
   };
 
@@ -92,14 +92,14 @@ export default function LoginModal() {
             </Button>
 
             <div className="pt-3 border-t border-slate-100 space-y-2">
-              <p className="text-xs text-center text-slate-500 font-medium">Acesso Rápido de Turno:</p>
+              <p className="text-xs text-center text-slate-500 font-medium">Preenchimento Rápido de E-mail:</p>
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   className="text-xs flex items-center gap-1.5 border-blue-200 hover:bg-blue-50"
-                  onClick={() => preencherCredenciais('operacoes.equipe@interlub.com', 'Interlub@Operacoes2026')}
+                  onClick={() => preencherEmail('operacoes.equipe@interlub.com')}
                 >
                   <Factory className="w-3.5 h-3.5 text-blue-600" />
                   Operações (Fábrica)
@@ -109,7 +109,7 @@ export default function LoginModal() {
                   variant="outline"
                   size="sm"
                   className="text-xs flex items-center gap-1.5 border-slate-200 hover:bg-slate-50"
-                  onClick={() => preencherCredenciais('pcp-brasil@interlub.com', 'Interlub@Pcp2026!')}
+                  onClick={() => preencherEmail('pcp-brasil@interlub.com')}
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-slate-700" />
                   PCP (Admin)

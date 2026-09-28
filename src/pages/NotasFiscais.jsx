@@ -70,7 +70,9 @@ export default function NotasFiscais() {
             >
               <CardContent className="p-4 flex items-center gap-4">
                 {nf.arquivo_url ? (
-                  <img src={nf.arquivo_url} alt="" className="w-12 h-12 object-cover rounded-lg flex-shrink-0" />
+                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-6 h-6" />
+                  </div>
                 ) : (
                   <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Image className="w-5 h-5 text-slate-300" />
