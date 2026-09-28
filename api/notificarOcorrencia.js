@@ -86,34 +86,52 @@ ${linkSistema}`;
     console.log(`[notificarOcorrencia] Disparando notificação para ${admins.length} administradores:`, admins.map(a => a.email));
 
     // Se houver provedor configurado (ex: RESEND_API_KEY ou SENDGRID_API_KEY)
-    let notificados = 0;
+    // Validação estrita do provedor de e-mail (Resend)
     const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      console.error('[notificarOcorrencia] ERRO: RESEND_API_KEY não configurada no ambiente.');
+      return res.status(500).json({
+        error: 'Provedor de e-mail não configurado. Defina a variável de ambiente RESEND_API_KEY na Vercel.'
+      });
+    }
 
-    if (resendApiKey) {
-      for (const admin of admins) {
-        try {
-          await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${resendApiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              from: process.env.EMAIL_FROM || 'EnvasePro <notificacoes@interlub.com.br>',
-              to: [admin.email],
-              subject: assunto,
-              text: corpo
-            })
-          });
+    let notificados = 0;
+    const errosEnvio = [];
+
+    for (const admin of admins) {
+      try {
+        const emailRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: process.env.EMAIL_FROM || 'EnvasePro <onboarding@resend.dev>',
+            to: [admin.email],
+            subject: assunto,
+            text: corpo
+          })
+        });
+
+        const emailJson = await emailRes.json();
+        if (!emailRes.ok) {
+          console.error(`Erro ao enviar e-mail para ${admin.email}:`, emailJson);
+          errosEnvio.push({ email: admin.email, error: emailJson });
+        } else {
           notificados++;
-        } catch (e) {
-          console.error(`Erro ao enviar e-mail para ${admin.email}:`, e);
         }
+      } catch (e) {
+        console.error(`Erro ao enviar e-mail para ${admin.email}:`, e);
+        errosEnvio.push({ email: admin.email, error: e.message });
       }
-    } else {
-      // Simulação / Log em desenvolvimento/staging
-      notificados = admins.length;
-      console.log(`[notificarOcorrencia] Log de envio simulado (RESEND_API_KEY não configurada):\nAssunto: ${assunto}\nDestinatários: ${admins.map(a => a.email).join(', ')}`);
+    }
+
+    if (notificados === 0 && errosEnvio.length > 0) {
+      return res.status(502).json({
+        error: 'Falha no envio de e-mails pelo provedor.',
+        detalhes: errosEnvio
+      });
     }
 
     return res.status(200).json({

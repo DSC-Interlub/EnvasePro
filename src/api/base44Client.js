@@ -463,12 +463,20 @@ const functionsAdapter = {
  */
 const integrationsAdapter = {
   Core: {
-    async UploadFile({ file }) {
+    async UploadFile({ file, bucket }) {
       if (!file) throw new Error('Arquivo não fornecido para upload.');
 
       const fileExt = file.name.split('.').pop() || 'bin';
       const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
-      const bucketName = 'arquivos';
+
+      // Determina bucket correto baseado no DDL:
+      // fotos de operadores -> fotos-operadores (público)
+      // notas fiscais / documentos -> notas-fiscais (privado)
+      let bucketName = bucket;
+      if (!bucketName) {
+        const isDoc = fileExt.toLowerCase() === 'pdf' || (file.type && file.type.includes('pdf'));
+        bucketName = isDoc ? 'notas-fiscais' : 'fotos-operadores';
+      }
 
       const { data, error } = await supabase.storage
         .from(bucketName)
@@ -478,15 +486,49 @@ const integrationsAdapter = {
         });
 
       if (error) {
-        console.error('Erro no upload para o Supabase Storage:', error);
+        console.error(`Erro no upload para Supabase Storage [${bucketName}]:`, error);
         throw error;
       }
 
+      // Se for bucket privado (notas-fiscais), gera Signed URL válida por 1 ano (31.536.000 segundos)
+      if (bucketName === 'notas-fiscais') {
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(fileName, 31536000);
+
+        if (signedError) {
+          console.error('Erro ao gerar URL assinada para nota fiscal:', signedError);
+          throw signedError;
+        }
+
+        return {
+          file_url: signedData.signedUrl,
+          file_path: fileName,
+          bucket: bucketName
+        };
+      }
+
+      // Se for bucket público (fotos-operadores)
       const { data: { publicUrl } } = supabase.storage
         .from(bucketName)
         .getPublicUrl(fileName);
 
-      return { file_url: publicUrl };
+      return {
+        file_url: publicUrl,
+        file_path: fileName,
+        bucket: bucketName
+      };
+    },
+
+    /**
+     * Gera URL assinada sob demanda para arquivos em buckets privados (ex: notas-fiscais).
+     */
+    async createSignedUrl(bucket, filePath, expiresIn = 3600 * 24) {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(filePath, expiresIn);
+      if (error) throw error;
+      return data?.signedUrl;
     },
 
     async SendEmail({ to, subject, body }) {

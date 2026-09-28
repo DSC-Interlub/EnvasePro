@@ -39,7 +39,7 @@ export default function OperatorForm({ operator, onClose }) {
 
     setUploading(true);
     try {
-      const result = await base44.integrations.Core.UploadFile({ file });
+      const result = await base44.integrations.Core.UploadFile({ file, bucket: 'fotos-operadores' });
       setFormData(prev => ({ ...prev, foto_url: result.file_url }));
     } catch (error) {
       console.error('Erro ao fazer upload:', error);

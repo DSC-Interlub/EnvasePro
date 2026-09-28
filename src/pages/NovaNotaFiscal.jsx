@@ -52,8 +52,8 @@ export default function NovaNotaFiscal() {
       try {
         let arquivo_url = "";
         let arquivo_nome = item.file.name;
-        // Upload do arquivo
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: item.file });
+        // Upload do arquivo para bucket notas-fiscais (privado)
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: item.file, bucket: 'notas-fiscais' });
         arquivo_url = file_url;
 
         await base44.entities.NotaFiscalArquivo.create({

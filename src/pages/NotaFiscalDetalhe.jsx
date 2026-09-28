@@ -33,7 +33,7 @@ export default function NotaFiscalDetalhe() {
     if (!files || files.length === 0) return;
     setUploading(true);
     const file = files[0];
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const { file_url } = await base44.integrations.Core.UploadFile({ file, bucket: 'notas-fiscais' });
     await base44.entities.NotaFiscalArquivo.update(id, {
       arquivo_url: file_url,
       arquivo_nome: file.name,
