@@ -248,6 +248,7 @@ function parseBool(val, def = false) {
 }
 
 async function upsertBatch(table, items, conflictColumn, batchSize = 200) {
+  const start = Date.now();
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
     const { error } = await supabase
@@ -258,7 +259,9 @@ async function upsertBatch(table, items, conflictColumn, batchSize = 200) {
     }
     process.stdout.write(`   ↳ ${table}: ${Math.min(i + batchSize, items.length)}/${items.length} processados...\r`);
   }
-  console.log(`   ✅ ${table}: ${items.length} registros inseridos/atualizados com sucesso!      `);
+  const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+  const throughput = (items.length / (parseFloat(elapsed) || 0.01)).toFixed(0);
+  console.log(`   ✅ ${table.padEnd(24)}: ${items.length.toString().padStart(5)} registros em ${elapsed}s (${throughput} reg/s)      `);
 }
 
 export async function executarMigracao() {
@@ -385,6 +388,22 @@ export async function executarMigracao() {
       });
       orfaosCount++;
     }
+  });
+
+  // Adiciona produto para registros históricos sem código (2 registros de 2025 de rotulagem)
+  mapaProdutos.set('SEM_CODIGO', {
+    id: base44IdToUUID('legacy_prod_sem_codigo'),
+    codigo: 'SEM_CODIGO',
+    nome: 'Produto Não Especificado (Histórico)',
+    unidade_medida: 'UN',
+    categoria: null,
+    consistencia: 'N/A',
+    nsf_h1: false,
+    nsf_3h: false,
+    kosher: false,
+    halal: false,
+    created_at: '2025-12-01T00:00:00Z',
+    updated_at: '2025-12-31T23:59:59Z'
   });
 
   const produtosParaInserir = Array.from(mapaProdutos.values());
@@ -531,8 +550,8 @@ export async function executarMigracao() {
       op: env.op ? env.op.trim() : null,
       operador: nomeOp,
       operator_id: opUUID,
-      codigo_produto: String(env.codigo_produto || '').trim(),
-      descricao_produto: env.descricao_produto ? env.descricao_produto.trim() : null,
+      codigo_produto: String(env.codigo_produto || '').trim() || 'SEM_CODIGO',
+      descricao_produto: env.descricao_produto ? env.descricao_produto.trim() : (String(env.codigo_produto || '').trim() ? null : 'Produto Não Especificado (Histórico)'),
       consistencia: env.consistencia ? env.consistencia.trim() : null,
       codigo_embalagem: env.codigo_embalagem ? env.codigo_embalagem.trim() : null,
       descricao_embalagem: env.descricao_embalagem ? env.descricao_embalagem.trim() : null,
