@@ -198,3 +198,12 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export const useCurrentOperator = () => {
+  const context = useAuth();
+  return {
+    currentOperator: context.currentOperator,
+    selectOperator: context.selectOperator,
+    clearOperator: context.clearOperator
+  };
+};

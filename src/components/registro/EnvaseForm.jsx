@@ -9,6 +9,7 @@ import { Play, Square, Save } from "lucide-react";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCurrentOperator } from "@/lib/AuthContext";
 
 const DIFICULDADES = [
   { codigo: 0, descricao: "Normal" },
@@ -19,6 +20,7 @@ const DIFICULDADES = [
 
 export default function EnvaseForm({ products, embalagens, operators, onSubmit, isLoading, initialData }) {
   const queryClient = useQueryClient();
+  const { currentOperator } = useCurrentOperator ? useCurrentOperator() : { currentOperator: null };
   const formId = initialData?.id || `envase-${Date.now()}`;
   const storageKey = `envase-form-${formId}`;
   const [recordId, setRecordId] = useState(initialData?.id || null);
@@ -58,6 +60,12 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedEmbalagem, setSelectedEmbalagem] = useState(null);
   const [timing, setTiming] = useState(false);
+
+  useEffect(() => {
+    if (!formData.operador && currentOperator?.nome) {
+      setFormData(prev => ({ ...prev, operador: currentOperator.nome }));
+    }
+  }, [currentOperator, formData.operador]);
 
   // Mutation para criar/atualizar registro
   const autoSaveMutation = useMutation({
