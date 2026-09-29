@@ -8,6 +8,7 @@ import { Factory, Package, Clock, User, TrendingUp, CheckCircle, AlertCircle, Ch
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ImportacoesCard from "@/components/tv/ImportacoesCard";
+import { ensureTvSession } from "@/api/tvSessionClient";
 
 /* ===================== UTILITÁRIOS ===================== */
 function calcElapsed(startTime) {
@@ -355,9 +356,14 @@ export default function Televisao() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    ensureTvSession().then((res) => {
+      if (res?.authenticated) {
+        queryClient.invalidateQueries();
+      }
+    });
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [queryClient]);
 
   const NUM_SLIDES = 3;
 
