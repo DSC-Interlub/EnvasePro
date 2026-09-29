@@ -455,6 +455,24 @@ const functionsAdapter = {
       .single();
     if (error) throw error;
     return normalizarRetorno(data);
+  },
+
+  /**
+   * Ponto de entrada dinâmico para invocar funções do adaptador
+   * Mantém compatibilidade total com o Base44 SDK: base44.functions.invoke(name, params)
+   */
+  async invoke(functionName, params = {}) {
+    if (typeof this[functionName] === 'function') {
+      const result = await this[functionName](params);
+      if (functionName === 'listarUsuarios') {
+        return { data: { users: result } };
+      }
+      if (functionName === 'listarAdmins') {
+        return { data: { admins: result } };
+      }
+      return { data: result };
+    }
+    throw new Error(`Função "${functionName}" não encontrada no adaptador.`);
   }
 };
 
