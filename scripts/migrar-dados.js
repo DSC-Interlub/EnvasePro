@@ -338,11 +338,20 @@ export async function executarMigracao() {
   const embalagensParaInserir = Array.from(mapaEmbalagens.values());
   console.log(`   - Embalagens preparadas: ${embalagensParaInserir.length}`);
 
-  // 3. Products + Produtos Órfãos Históricos (Deduplicados por codigo, com categoria = NULL conforme instrução)
+  // 3. Products + Produtos Órfãos Históricos (Deduplicados por codigo)
   const rawProducts = carregarCSV('Product');
   const rawEnvase = carregarCSV('EnvaseRecord');
   const categoriasValidas = ['Graxa', 'Óleo', 'Pasta'];
   const mapaProdutos = new Map();
+
+  // Regras de desempate aprovadas pelo usuário para os 5 códigos divergentes:
+  const DECISOES_PRODUTOS = {
+    'IVP075461270': { consistencia: '1.5', nome: 'INTERPLEX GPTU 12.' },
+    'IVP073453220': { consistencia: '1.5', nome: 'LOW TEMP HF 1' },
+    'IVP110492310': { nome: 'INTEROIL CAD P' },
+    'IVP113632310': { nome: 'GEAR SYNT GL 68' },
+    'IVP110634350': { nome: 'GEAR 460' }
+  };
 
   rawProducts.forEach(p => {
     const codigo = String(p.codigo || '').trim();
@@ -351,13 +360,23 @@ export async function executarMigracao() {
     if (!categoriasValidas.includes(cat)) {
       cat = null; // Categoria nula se não estiver no enum
     }
+
+    let nome = (p.nome || '').trim();
+    let consistencia = (p.consistencia && p.consistencia.trim()) || 'N/A';
+
+    // Aplica decisão específica se for um dos códigos com divergência
+    if (DECISOES_PRODUTOS[codigo]) {
+      if (DECISOES_PRODUTOS[codigo].nome) nome = DECISOES_PRODUTOS[codigo].nome;
+      if (DECISOES_PRODUTOS[codigo].consistencia) consistencia = DECISOES_PRODUTOS[codigo].consistencia;
+    }
+
     mapaProdutos.set(codigo, {
       id: base44IdToUUID(p.id),
       codigo,
-      nome: (p.nome || '').trim(),
+      nome,
       unidade_medida: p.unidade_medida ? p.unidade_medida.trim() : null,
       categoria: cat,
-      consistencia: (p.consistencia && p.consistencia.trim()) || 'N/A',
+      consistencia,
       nsf_h1: parseBool(p.nsf_h1, false),
       nsf_3h: parseBool(p.nsf_3h, false),
       kosher: parseBool(p.kosher, false),
