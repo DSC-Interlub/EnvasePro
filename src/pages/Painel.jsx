@@ -340,34 +340,49 @@ function AlertaItem({ label, count, link, cor = "red" }) {
   );
 }
 
+function useIsVisible() {
+  const [visible, setVisible] = useState(() => (typeof document !== "undefined" ? !document.hidden : true));
+  useEffect(() => {
+    const handleVisibility = () => setVisible(!document.hidden);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+  return visible;
+}
+
 /* ── PAINEL PRINCIPAL ── */
 export default function Painel() {
   const { user } = useAuth();
   const role = user?.role === "user" ? "operator" : (user?.role || "operator");
   const isAdmin = role === "admin";
   const now = useNow();
+  const isVisible = useIsVisible();
+
+  // Polling consolidado com pausa em aba oculta (document.hidden)
+  const pollAtivo = isVisible ? 60000 : false;   // 60s para operações ativas
+  const pollLento = isVisible ? 300000 : false;  // 300s (5 min) para cadastros e KPIs lentos
 
   const hoje = format(now, "yyyy-MM-dd");
   const semanaInicio = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
 
-  /* ── Queries — fetch imediato ao montar, polling escalonado para evitar 429 ── */
-  const { data: envases = [], isLoading: l1 } = useQuery({ queryKey: ["painel-envases"], queryFn: () => base44.entities.EnvaseRecord.list("-data", 100), refetchInterval: 30000 });
-  const { data: checkoutItems = [] } = useQuery({ queryKey: ["painel-checkout-items"], queryFn: () => base44.entities.CheckoutItem.list("-created_date", 100), refetchInterval: 35000 });
-  const { data: checkoutProgs = [] } = useQuery({ queryKey: ["painel-checkout-progs"], queryFn: () => base44.entities.CheckoutProgramacao.list("-data_programada", 10), refetchInterval: 60000 });
-  const { data: empilhaLinhas = [] } = useQuery({ queryKey: ["painel-empilha-linhas"], queryFn: () => base44.entities.EmpilhaLinha.list("-created_date", 100), refetchInterval: 40000 });
-  const { data: empilhaParadas = [] } = useQuery({ queryKey: ["painel-empilha-paradas"], queryFn: () => base44.entities.EmpilhadeiraParada.list("-created_date", 30), refetchInterval: 45000 });
-  const { data: empilhaProgs = [] } = useQuery({ queryKey: ["painel-empilha-progs"], queryFn: () => base44.entities.EmpilhaProgramacao.list("-data_programada", 10), refetchInterval: 60000 });
-  const { data: recebimentos = [] } = useQuery({ queryKey: ["painel-recebimentos"], queryFn: () => base44.entities.Recebimento.list("-created_date", 50), refetchInterval: 35000 });
-  const { data: empilhaOcorrencias = [] } = useQuery({ queryKey: ["painel-empilha-ocorr"], queryFn: () => base44.entities.EmpilhaOcorrencia.list("-created_date", 50), refetchInterval: 50000 });
-  const { data: operators = [] } = useQuery({ queryKey: ["painel-operators"], queryFn: () => base44.entities.Operator.list(), refetchInterval: 120000 });
+  /* ── Queries operacionais ativas (polling a cada 60s, pausa em background) ── */
+  const { data: envases = [], isLoading: l1 } = useQuery({ queryKey: ["painel-envases"], queryFn: () => base44.entities.EnvaseRecord.list("-data", 100), refetchInterval: pollAtivo });
+  const { data: checkoutItems = [] } = useQuery({ queryKey: ["painel-checkout-items"], queryFn: () => base44.entities.CheckoutItem.list("-created_date", 100), refetchInterval: pollAtivo });
+  const { data: checkoutProgs = [] } = useQuery({ queryKey: ["painel-checkout-progs"], queryFn: () => base44.entities.CheckoutProgramacao.list("-data_programada", 10), refetchInterval: pollAtivo });
+  const { data: empilhaLinhas = [] } = useQuery({ queryKey: ["painel-empilha-linhas"], queryFn: () => base44.entities.EmpilhaLinha.list("-created_date", 100), refetchInterval: pollAtivo });
+  const { data: empilhaParadas = [] } = useQuery({ queryKey: ["painel-empilha-paradas"], queryFn: () => base44.entities.EmpilhadeiraParada.list("-created_date", 30), refetchInterval: pollAtivo });
+  const { data: empilhaProgs = [] } = useQuery({ queryKey: ["painel-empilha-progs"], queryFn: () => base44.entities.EmpilhaProgramacao.list("-data_programada", 10), refetchInterval: pollAtivo });
+  const { data: recebimentos = [] } = useQuery({ queryKey: ["painel-recebimentos"], queryFn: () => base44.entities.Recebimento.list("-created_date", 50), refetchInterval: pollAtivo });
+  const { data: empilhaOcorrencias = [] } = useQuery({ queryKey: ["painel-empilha-ocorr"], queryFn: () => base44.entities.EmpilhaOcorrencia.list("-created_date", 50), refetchInterval: pollAtivo });
+  const { data: recOcorrencias = [] } = useQuery({ queryKey: ["painel-rec-ocorr"], queryFn: () => base44.entities.RecebimentoOcorrencia.list("-created_date", 50), refetchInterval: pollAtivo });
+  const { data: recebimentoParticipantes = [] } = useQuery({ queryKey: ["painel-rec-participantes"], queryFn: () => base44.entities.RecebimentoParticipante.list("-created_date", 100), refetchInterval: pollAtivo });
 
-  /* ── Queries de KPI (polling lento) ── */
-  const { data: recOcorrencias = [] } = useQuery({ queryKey: ["painel-rec-ocorr"], queryFn: () => base44.entities.RecebimentoOcorrencia.list("-created_date", 50), refetchInterval: 60000 });
-  const { data: checklists = [] } = useQuery({ queryKey: ["painel-checklists"], queryFn: () => base44.entities.ChecklistRecebimento.list("-created_date", 100), refetchInterval: 120000 });
-  const { data: limpezas = [] } = useQuery({ queryKey: ["painel-limpezas"], queryFn: () => base44.entities.LimpezaProgramacao.list("-data_prevista", 100), refetchInterval: 120000 });
-  const { data: nfs = [] } = useQuery({ queryKey: ["painel-nfs"], queryFn: () => base44.entities.NotaFiscalArquivo.list("-created_date", 50), refetchInterval: 120000 });
-  const { data: empilhaConfig = [] } = useQuery({ queryKey: ["painel-empilha-config"], queryFn: () => base44.entities.EmpilhadeiraConfig.list(), refetchInterval: 300000 });
-  const { data: recebimentoParticipantes = [] } = useQuery({ queryKey: ["painel-rec-participantes"], queryFn: () => base44.entities.RecebimentoParticipante.list("-created_date", 100), refetchInterval: 60000 });
+  /* ── Queries de cadastros e KPIs lentos (polling a cada 300s, pausa em background) ── */
+  const { data: operators = [] } = useQuery({ queryKey: ["painel-operators"], queryFn: () => base44.entities.Operator.list(), refetchInterval: pollLento });
+  const { data: checklists = [] } = useQuery({ queryKey: ["painel-checklists"], queryFn: () => base44.entities.ChecklistRecebimento.list("-created_date", 100), refetchInterval: pollLento });
+  const { data: limpezas = [] } = useQuery({ queryKey: ["painel-limpezas"], queryFn: () => base44.entities.LimpezaProgramacao.list("-data_prevista", 100), refetchInterval: pollLento });
+  const { data: nfs = [] } = useQuery({ queryKey: ["painel-nfs"], queryFn: () => base44.entities.NotaFiscalArquivo.list("-created_date", 50), refetchInterval: pollLento });
+  const { data: empilhaConfig = [] } = useQuery({ queryKey: ["painel-empilha-config"], queryFn: () => base44.entities.EmpilhadeiraConfig.list(), refetchInterval: pollLento });
 
   const loading = l1;
 
