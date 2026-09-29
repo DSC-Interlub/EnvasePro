@@ -102,7 +102,9 @@ async function sanitizarPayload(tabela, data) {
         lowerKey.includes('termino') ||
         lowerKey.includes('hora') ||
         lowerKey.includes('created_at') ||
-        lowerKey.includes('updated_at')
+        lowerKey.includes('updated_at') ||
+        lowerKey.endsWith('_id') ||
+        lowerKey === 'id'
       ) {
         clone[key] = null;
       }
