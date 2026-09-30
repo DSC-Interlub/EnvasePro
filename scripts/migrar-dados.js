@@ -347,7 +347,7 @@ export async function executarMigracao() {
   // Regras de desempate aprovadas pelo usuário para os 5 códigos divergentes:
   const DECISOES_PRODUTOS = {
     'IVP075461270': { consistencia: '1.5', nome: 'INTERPLEX GPTU 12.' },
-    'IVP073453220': { consistencia: '1.5', nome: 'LOW TEMP HF 1' },
+    'IVP073453220': { consistencia: '1', nome: 'LOW TEMP HF 1' },
     'IVP110492310': { nome: 'INTEROIL CAD P' },
     'IVP113632310': { nome: 'GEAR SYNT GL 68' },
     'IVP110634350': { nome: 'GEAR 460' }
