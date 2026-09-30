@@ -9,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ShieldAlert, Info, Settings, Package, Box } from "lucide-react";
+import { Users, ShieldAlert, Info, Settings, Package, Box, Mail } from "lucide-react";
 import AbaProgramacaoLimpeza from "@/components/limpeza/AbaProgramacaoLimpeza";
 import AbaOperadores from "@/components/configuracoes/AbaOperadores";
 import AbaProdutos from "@/components/configuracoes/AbaProdutos";
 import AbaEmbalagens from "@/components/configuracoes/AbaEmbalagens";
+import AbaNotificacaoDestinatarios from "@/components/configuracoes/AbaNotificacaoDestinatarios";
 
 export default function GerenciarUsuarios() {
   const { user: currentUser } = useAuth();
@@ -92,6 +93,9 @@ export default function GerenciarUsuarios() {
             </TabsTrigger>
             <TabsTrigger value="limpeza" className="flex items-center gap-2">
               Programação de Limpeza
+            </TabsTrigger>
+            <TabsTrigger value="destinatarios" className="flex items-center gap-2">
+              <Mail className="w-4 h-4" /> Alertas de Ocorrência
             </TabsTrigger>
 
           </TabsList>
@@ -176,6 +180,11 @@ export default function GerenciarUsuarios() {
           {/* ABA PROGRAMAÇÃO DE LIMPEZA (inclui locais internamente) */}
           <TabsContent value="limpeza" className="mt-4">
             <AbaProgramacaoLimpeza currentUser={currentUser} isAdmin={isAdmin} />
+          </TabsContent>
+
+          {/* ABA DESTINATÁRIOS DE ALERTA DE OCORRÊNCIA */}
+          <TabsContent value="destinatarios" className="mt-4">
+            <AbaNotificacaoDestinatarios isAdmin={isAdmin} />
           </TabsContent>
 
         </Tabs>

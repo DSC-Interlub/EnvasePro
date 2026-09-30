@@ -6,22 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Warehouse, User, MapPin, Package, Clock, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useQueryClient } from "@tanstack/react-query";
-import { ensureTvSession } from "@/api/tvSessionClient";
 
 export default function TelevisaoEmpilha() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const queryClient = useQueryClient();
 
   useEffect(() => {
-    ensureTvSession().then((res) => {
-      if (res?.authenticated) {
-        queryClient.invalidateQueries();
-      }
-    });
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, [queryClient]);
+  }, []);
 
   const today = format(new Date(), "yyyy-MM-dd");
 

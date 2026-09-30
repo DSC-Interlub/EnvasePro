@@ -39,7 +39,8 @@ const TABELAS_MAPEAMENTO = {
   SapPedido: 'sap_pedidos',
   ChecklistRecebimento: 'checklist_recebimentos',
   NotaFiscalArquivo: 'nota_fiscal_arquivos',
-  User: 'user_profiles'
+  User: 'user_profiles',
+  NotificacaoDestinatario: 'notificacao_destinatarios'
 };
 
 // Cache de operadores para resolução rápida de operator_id

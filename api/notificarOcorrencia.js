@@ -46,14 +46,24 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Ocorrência não encontrada' });
     }
 
-    // 2. Buscar admins
-    const { data: admins, error: errAdmins } = await supabase
-      .from('user_profiles')
-      .select('email, full_name')
-      .eq('role', 'admin');
+    // 2. Buscar destinatários configurados na tabela notificacao_destinatarios (somente ativos)
+    const { data: destinatarios, error: errDest } = await supabase
+      .from('notificacao_destinatarios')
+      .select('email, nome')
+      .eq('ativo', true);
 
-    if (errAdmins || !admins || admins.length === 0) {
-      return res.status(200).json({ notificados: 0, message: 'Nenhum admin cadastrado' });
+    if (errDest) {
+      console.error('[notificarOcorrencia] Erro ao consultar tabela notificacao_destinatarios:', errDest.message);
+      return res.status(500).json({ error: `Erro ao buscar destinatários: ${errDest.message}` });
+    }
+
+    if (!destinatarios || destinatarios.length === 0) {
+      console.warn('[notificarOcorrencia] AVISO CRÍTICO: Nenhum destinatário ativo cadastrado em notificacao_destinatarios. Alerta não disparado.');
+      return res.status(200).json({
+        notificados: 0,
+        aviso: 'Nenhum destinatário ativo configurado no sistema.',
+        message: 'A ocorrência foi registrada, porém nenhum e-mail foi enviado pois a tabela notificacao_destinatarios está sem destinatários ativos.'
+      });
     }
 
     // 3. Buscar dados da linha vinculada se houver
@@ -83,9 +93,8 @@ Data/Hora: ${ocorrencia.data || ''} ${ocorrencia.hora || ''}${infoLinha}
 Acesse o sistema para visualizar e resolver a ocorrência:
 ${linkSistema}`;
 
-    console.log(`[notificarOcorrencia] Disparando notificação para ${admins.length} administradores:`, admins.map(a => a.email));
+    console.log(`[notificarOcorrencia] Disparando notificação para ${destinatarios.length} destinatário(s) cadastrado(s):`, destinatarios.map(d => d.email));
 
-    // Se houver provedor configurado (ex: RESEND_API_KEY ou SENDGRID_API_KEY)
     // Validação estrita do provedor de e-mail (Resend)
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
@@ -98,7 +107,7 @@ ${linkSistema}`;
     let notificados = 0;
     const errosEnvio = [];
 
-    for (const admin of admins) {
+    for (const dest of destinatarios) {
       try {
         const emailRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -108,7 +117,7 @@ ${linkSistema}`;
           },
           body: JSON.stringify({
             from: process.env.EMAIL_FROM || 'EnvasePro <onboarding@resend.dev>',
-            to: [admin.email],
+            to: [dest.email],
             subject: assunto,
             text: corpo
           })
@@ -116,14 +125,14 @@ ${linkSistema}`;
 
         const emailJson = await emailRes.json();
         if (!emailRes.ok) {
-          console.error(`Erro ao enviar e-mail para ${admin.email}:`, emailJson);
-          errosEnvio.push({ email: admin.email, error: emailJson });
+          console.error(`Erro ao enviar e-mail para ${dest.email}:`, emailJson);
+          errosEnvio.push({ email: dest.email, error: emailJson });
         } else {
           notificados++;
         }
       } catch (e) {
-        console.error(`Erro ao enviar e-mail para ${admin.email}:`, e);
-        errosEnvio.push({ email: admin.email, error: e.message });
+        console.error(`Erro ao enviar e-mail para ${dest.email}:`, e);
+        errosEnvio.push({ email: dest.email, error: e.message });
       }
     }
 
@@ -136,7 +145,7 @@ ${linkSistema}`;
 
     return res.status(200).json({
       notificados,
-      message: `Notificação processada para ${notificados} admin(s)`
+      message: `Notificação enviada com sucesso para ${notificados} destinatário(s).`
     });
   } catch (error) {
     console.error('[notificarOcorrencia] Erro:', error);
