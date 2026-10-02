@@ -16,9 +16,36 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Lição 5: Domínio fixo de produção
 const APP_BASE_URL = process.env.APP_BASE_URL || 'https://envase.interlub.com.br';
 
+// ── Rate limiting in-memory (por IP) ──────────────────────────────────────────
+// Item 15: Limita 10 chamadas por IP por janela de 60 segundos.
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const rateLimitMap = new Map(); // ip → { count, windowStart }
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { count: 1, windowStart: now });
+    return true; // OK
+  }
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX) return false; // Excedeu
+  return true;
+}
+
+// ── UUID v4 validator ─────────────────────────────────────────────────────────
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido. Use POST.' });
+  }
+
+  // Rate limiting (Item 15)
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+  if (!checkRateLimit(clientIp)) {
+    return res.status(429).json({ error: 'Muitas requisições. Aguarde antes de tentar novamente.' });
   }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -33,6 +60,11 @@ export default async function handler(req, res) {
     const { ocorrencia_id } = req.body || {};
     if (!ocorrencia_id) {
       return res.status(400).json({ error: 'ocorrencia_id obrigatório' });
+    }
+
+    // Item 3: Validação de tipo/formato do parâmetro — deve ser UUID v4
+    if (typeof ocorrencia_id !== 'string' || !UUID_REGEX.test(ocorrencia_id)) {
+      return res.status(400).json({ error: 'ocorrencia_id inválido.' });
     }
 
     // 1. Buscar a ocorrência
@@ -54,7 +86,7 @@ export default async function handler(req, res) {
 
     if (errDest) {
       console.error('[notificarOcorrencia] Erro ao consultar tabela notificacao_destinatarios:', errDest.message);
-      return res.status(500).json({ error: `Erro ao buscar destinatários: ${errDest.message}` });
+      return res.status(500).json({ error: 'Erro interno ao buscar destinatários.' });
     }
 
     if (!destinatarios || destinatarios.length === 0) {
@@ -148,7 +180,7 @@ ${linkSistema}`;
       message: `Notificação enviada com sucesso para ${notificados} destinatário(s).`
     });
   } catch (error) {
-    console.error('[notificarOcorrencia] Erro:', error);
-    return res.status(500).json({ error: error.message });
+    console.error('[notificarOcorrencia] Erro interno:', error);
+    return res.status(500).json({ error: 'Erro interno ao processar a notificação. Verifique os logs do servidor.' });
   }
 }

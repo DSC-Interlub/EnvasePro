@@ -487,6 +487,25 @@ const integrationsAdapter = {
     async UploadFile({ file, bucket }) {
       if (!file) throw new Error('Arquivo não fornecido para upload.');
 
+      // ── Item 11: Validação real de tipo MIME e tamanho ──────────────────────
+      const ALLOWED_MIME_IMAGES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
+      const ALLOWED_MIME_DOCS   = ['application/pdf'];
+      const ALL_ALLOWED         = [...ALLOWED_MIME_IMAGES, ...ALLOWED_MIME_DOCS];
+      const MAX_IMAGE_BYTES     = 10 * 1024 * 1024;  // 10 MB
+      const MAX_PDF_BYTES       = 20 * 1024 * 1024;  // 20 MB
+
+      const fileMime = file.type || '';
+      if (!ALL_ALLOWED.includes(fileMime)) {
+        throw new Error(`Tipo de arquivo não permitido: "${fileMime}". Envie imagens (JPG, PNG, WebP) ou PDF.`);
+      }
+      const isImageMime = ALLOWED_MIME_IMAGES.includes(fileMime);
+      const maxBytes = isImageMime ? MAX_IMAGE_BYTES : MAX_PDF_BYTES;
+      if (file.size > maxBytes) {
+        const limitMb = maxBytes / (1024 * 1024);
+        throw new Error(`Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)} MB). Limite: ${limitMb} MB.`);
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
       const fileExt = file.name.split('.').pop() || 'bin';
       const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
 
