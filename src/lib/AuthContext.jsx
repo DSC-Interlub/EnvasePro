@@ -10,6 +10,12 @@ const ROTAS_TV_PUBLICAS = [
   '/painel'
 ];
 
+// Configurações de Inatividade (Item 14 / Auditoria de Segurança)
+// Admin: logout automático após 60 minutos sem interação real
+export const ADMIN_INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutos
+export const STORAGE_KEY_LAST_ACTIVITY = 'envase_last_activity';
+const EVENTOS_INTERACAO = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+
 function ehRotaTvPublica(pathname) {
   if (!pathname) return false;
   const limpo = pathname.toLowerCase().replace(/[-_]/g, '');
@@ -49,6 +55,16 @@ export const AuthProvider = ({ children }) => {
   const clearOperator = useCallback(() => {
     selectOperator(null);
   }, [selectOperator]);
+
+  const logout = useCallback(async () => {
+    clearOperator();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY_LAST_ACTIVITY);
+    }
+    await supabase.auth.signOut().catch(() => {});
+    setUser(null);
+    setIsAuthenticated(false);
+  }, [clearOperator]);
 
   // Carrega perfil estendido com atraso seguro (Lição 2: fora do lock do auth)
   const carregarPerfilUsuario = useCallback((authUser) => {
@@ -142,6 +158,78 @@ export const AuthProvider = ({ children }) => {
     };
   }, [carregarPerfilUsuario, clearOperator]);
 
+  // 3. Monitor de inatividade exclusivo para administradores (Item 14 / Auditoria de Segurança)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Regra: monitor ativo APENAS para administradores; operadores e conta de TV (tv-fabrica@interlub.com) são 100% imunes
+    const ehAdmin = user?.role === 'admin';
+    const ehContaTv = user?.email === 'tv-fabrica@interlub.com';
+    const monitorarInatividade = ehAdmin && !ehContaTv;
+
+    if (!monitorarInatividade) {
+      return;
+    }
+
+    // A. Verificação imediata na inicialização / restauração de página
+    const rawLastActivity = localStorage.getItem(STORAGE_KEY_LAST_ACTIVITY);
+    const agora = Date.now();
+
+    if (rawLastActivity) {
+      const tempoInativo = agora - Number(rawLastActivity);
+      if (tempoInativo > ADMIN_INACTIVITY_TIMEOUT_MS) {
+        console.warn(`[AuthContext] Sessão admin expirada por inatividade (${Math.round(tempoInativo / 60000)} min). Deslogando.`);
+        logout();
+        setAuthError('Sessão encerrada por inatividade (limite de 60 minutos para administradores).');
+        setLoginModalAberto(true);
+        return;
+      }
+    } else {
+      localStorage.setItem(STORAGE_KEY_LAST_ACTIVITY, agora.toString());
+    }
+
+    // B. Ouvintes de interação real do usuário com throttle de 10 segundos
+    let ultimoRegistro = Date.now();
+    const handleInteracao = () => {
+      const current = Date.now();
+      if (current - ultimoRegistro > 10000) {
+        ultimoRegistro = current;
+        try {
+          localStorage.setItem(STORAGE_KEY_LAST_ACTIVITY, current.toString());
+        } catch {}
+      }
+    };
+
+    EVENTOS_INTERACAO.forEach(evento => {
+      window.addEventListener(evento, handleInteracao, { passive: true });
+    });
+
+    // C. Verificação periódica a cada 30 segundos durante a aba aberta
+    const intervalId = setInterval(() => {
+      try {
+        const lastRaw = localStorage.getItem(STORAGE_KEY_LAST_ACTIVITY);
+        const lastTime = lastRaw ? Number(lastRaw) : Date.now();
+        const decorrido = Date.now() - lastTime;
+        if (decorrido > ADMIN_INACTIVITY_TIMEOUT_MS) {
+          console.warn(`[AuthContext] 60 minutos de inatividade atingidos para admin. Deslogando.`);
+          clearInterval(intervalId);
+          logout();
+          setAuthError('Sessão encerrada por inatividade (limite de 60 minutos para administradores).');
+          setLoginModalAberto(true);
+        }
+      } catch (err) {
+        console.error('Erro na checagem de inatividade:', err);
+      }
+    }, 30000);
+
+    return () => {
+      EVENTOS_INTERACAO.forEach(evento => {
+        window.removeEventListener(evento, handleInteracao);
+      });
+      clearInterval(intervalId);
+    };
+  }, [user?.role, user?.email, logout]);
+
   const login = async (email, password) => {
     setAuthError(null);
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -152,15 +240,11 @@ export const AuthProvider = ({ children }) => {
       setAuthError(error.message);
       throw error;
     }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_LAST_ACTIVITY, Date.now().toString());
+    }
     setLoginModalAberto(false);
     return data;
-  };
-
-  const logout = async () => {
-    clearOperator();
-    await supabase.auth.signOut();
-    setUser(null);
-    setIsAuthenticated(false);
   };
 
   const navigateToLogin = () => {
