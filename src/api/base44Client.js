@@ -14,7 +14,7 @@
  * - Aliases bidirecionais created_at <-> created_date e updated_at <-> updated_date.
  */
 
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient.js';
 
 const TABELAS_MAPEAMENTO = {
   Product: 'products',
@@ -83,7 +83,7 @@ function obterOperadorAtivoLocalStorage() {
  * - Remove campos gerenciados pelo banco (created_date, updated_date).
  * - Injeta operator_id quando necessário (Lição 3).
  */
-async function sanitizarPayload(tabela, data) {
+async function sanitizarPayload(tabela, data, isCreate = false) {
   if (!data || typeof data !== 'object') return data;
   const clone = { ...data };
 
@@ -113,20 +113,27 @@ async function sanitizarPayload(tabela, data) {
   }
 
   // Resolução de operador para tabelas operacionais (Lição 3)
+  // Regra estrita: Injetar operator_id SÓ em create(), NUNCA em update()
   if (tabela === 'envase_records' || tabela === 'checkout_itens') {
-    if (!clone.operator_id) {
-      const operadorAtivo = obterOperadorAtivoLocalStorage();
-      if (operadorAtivo && operadorAtivo.id) {
-        clone.operator_id = operadorAtivo.id;
-        if (!clone.operador) clone.operador = operadorAtivo.nome;
-      } else if (clone.operador) {
-        const mapa = await obterMapaOperadores();
-        const norm = clone.operador.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const encontrado = mapa.get(norm);
-        if (encontrado) {
-          clone.operator_id = encontrado.id;
+    if (isCreate) {
+      if (!clone.operator_id) {
+        const operadorAtivo = obterOperadorAtivoLocalStorage();
+        if (operadorAtivo && operadorAtivo.id) {
+          clone.operator_id = operadorAtivo.id;
+          if (!clone.operador) clone.operador = operadorAtivo.nome;
+        } else if (clone.operador) {
+          const mapa = await obterMapaOperadores();
+          const norm = clone.operador.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const encontrado = mapa.get(norm);
+          if (encontrado) {
+            clone.operator_id = encontrado.id;
+          }
         }
       }
+    } else {
+      // Em update(), NUNCA altera operator_id nem operador para preservar a autoria original
+      delete clone.operator_id;
+      delete clone.operador;
     }
   }
 
@@ -145,6 +152,47 @@ function normalizarRetorno(item) {
     created_date: item.created_at,
     updated_date: item.updated_at
   };
+}
+
+/**
+ * Resolve URLs assinadas para operadores quando o bucket fotos-operadores é privado.
+ * Suporta tanto caminhos relativos de arquivo quanto URLs antigas herdadas.
+ */
+async function resolverFotosOperadores(items) {
+  if (!items) return items;
+  const isArray = Array.isArray(items);
+  const list = isArray ? items : [items];
+
+  const itemsComFoto = list.filter(op => op && op.foto_url);
+  if (itemsComFoto.length === 0) return items;
+
+  const paths = itemsComFoto.map(op => {
+    let raw = op.foto_url;
+    if (raw.includes('/fotos-operadores/')) {
+      raw = raw.split('/fotos-operadores/')[1].split('?')[0];
+    } else if (raw.startsWith('http')) {
+      raw = raw.split('/').pop().split('?')[0];
+    }
+    return raw;
+  });
+
+  try {
+    const { data, error } = await supabase.storage
+      .from('fotos-operadores')
+      .createSignedUrls(paths, 86400); // 24 horas de validade
+
+    if (data && !error) {
+      data.forEach((res, i) => {
+        if (res.signedUrl && itemsComFoto[i]) {
+          itemsComFoto[i].foto_url = res.signedUrl;
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Aviso ao resolver URLs assinadas de fotos de operadores:', err);
+  }
+
+  return isArray ? list : list[0];
 }
 
 /**
@@ -185,7 +233,8 @@ function createEntityAdapter(entityName) {
         query = query.range(0, limit - 1);
         const { data, error } = await query;
         if (error) throw error;
-        return normalizarRetorno(data || []);
+        const res = normalizarRetorno(data || []);
+        return entityName === 'Operator' ? await resolverFotosOperadores(res) : res;
       }
 
       // Paginação real em lotes de 1000 até exaurir ou atingir o limite
@@ -205,7 +254,8 @@ function createEntityAdapter(entityName) {
         from += pageSize;
       }
 
-      return normalizarRetorno(allRows);
+      const res = normalizarRetorno(allRows);
+      return entityName === 'Operator' ? await resolverFotosOperadores(res) : res;
     },
 
     /**
@@ -241,7 +291,8 @@ function createEntityAdapter(entityName) {
         query = query.range(0, limit - 1);
         const { data, error } = await query;
         if (error) throw error;
-        return normalizarRetorno(data || []);
+        const res = normalizarRetorno(data || []);
+        return entityName === 'Operator' ? await resolverFotosOperadores(res) : res;
       }
 
       while (true) {
@@ -261,7 +312,8 @@ function createEntityAdapter(entityName) {
         from += pageSize;
       }
 
-      return normalizarRetorno(allRows);
+      const res = normalizarRetorno(allRows);
+      return entityName === 'Operator' ? await resolverFotosOperadores(res) : res;
     },
 
     /**
@@ -275,14 +327,15 @@ function createEntityAdapter(entityName) {
         .maybeSingle();
 
       if (error) throw error;
-      return normalizarRetorno(data);
+      const res = normalizarRetorno(data);
+      return entityName === 'Operator' ? await resolverFotosOperadores(res) : res;
     },
 
     /**
      * Cria um novo registro aplicando sanitização de datas e injeção de operator_id.
      */
     async create(data) {
-      const payload = await sanitizarPayload(table, data);
+      const payload = await sanitizarPayload(table, data, true);
       const { data: created, error } = await supabase
         .from(table)
         .insert(payload)
@@ -290,14 +343,15 @@ function createEntityAdapter(entityName) {
         .single();
 
       if (error) throw error;
-      return normalizarRetorno(created);
+      const res = normalizarRetorno(created);
+      return entityName === 'Operator' ? await resolverFotosOperadores(res) : res;
     },
 
     /**
      * Atualiza um registro existente pelo ID.
      */
     async update(id, data) {
-      const payload = await sanitizarPayload(table, data);
+      const payload = await sanitizarPayload(table, data, false);
       const { data: updated, error } = await supabase
         .from(table)
         .update(payload)
@@ -306,7 +360,8 @@ function createEntityAdapter(entityName) {
         .single();
 
       if (error) throw error;
-      return normalizarRetorno(updated);
+      const res = normalizarRetorno(updated);
+      return entityName === 'Operator' ? await resolverFotosOperadores(res) : res;
     },
 
     /**
@@ -329,7 +384,7 @@ function createEntityAdapter(entityName) {
       if (!items || items.length === 0) return [];
       const sanitized = [];
       for (const item of items) {
-        sanitized.push(await sanitizarPayload(table, item));
+        sanitized.push(await sanitizarPayload(table, item, true));
       }
 
       const chunkSize = 500;
@@ -391,9 +446,15 @@ const functionsAdapter = {
    */
   async notificarOcorrencia(params) {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const res = await fetch('/api/notificarOcorrencia', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(params)
       });
       return await res.json();
@@ -539,7 +600,19 @@ const integrationsAdapter = {
         };
       }
 
-      // Se for bucket público (fotos-operadores)
+      // Se for fotos-operadores (privado), gera URL assinada para visualização imediata
+      if (bucketName === 'fotos-operadores') {
+        const { data: signedData } = await supabase.storage
+          .from('fotos-operadores')
+          .createSignedUrl(fileName, 86400); // 24 horas
+
+        return {
+          file_url: signedData?.signedUrl || fileName,
+          file_path: fileName,
+          bucket: bucketName
+        };
+      }
+
       const { data: { publicUrl } } = supabase.storage
         .from(bucketName)
         .getPublicUrl(fileName);
