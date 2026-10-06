@@ -540,10 +540,10 @@ export default function Televisao() {
     const product = products.find(p => p.codigo === codigoProduto);
     if (!product) return [];
     const certs = [];
-    if (product.halal) certs.push({ name: 'HALAL', color: 'bg-purple-500', logo: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68fa29e878bd339a5eae5637/19acf8e05_halal.png' });
-    if (product.kosher) certs.push({ name: 'KOSHER', color: 'bg-slate-700', logo: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68fa29e878bd339a5eae5637/51ef0c279_kosher.png' });
-    if (product.nsf_3h) certs.push({ name: 'NSF 3H', color: 'bg-blue-500', logo: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68fa29e878bd339a5eae5637/3cc22d637_NSFH1H3.png' });
-    if (product.nsf_h1) certs.push({ name: 'NSF H1', color: 'bg-green-500', logo: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68fa29e878bd339a5eae5637/3cc22d637_NSFH1H3.png' });
+    if (product.halal) certs.push({ name: 'HALAL', color: 'bg-purple-500', logo: '/certificacoes/halal.png' });
+    if (product.kosher) certs.push({ name: 'KOSHER', color: 'bg-slate-700', logo: '/certificacoes/kosher.png' });
+    if (product.nsf_3h) certs.push({ name: 'NSF 3H', color: 'bg-blue-500', logo: '/certificacoes/nsf.png' });
+    if (product.nsf_h1) certs.push({ name: 'NSF H1', color: 'bg-green-500', logo: '/certificacoes/nsf.png' });
     return certs;
   };
   const getOperatorPhoto = (nome) => operators.find(op => op.nome === nome)?.foto_url || null;
