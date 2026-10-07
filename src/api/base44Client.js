@@ -55,11 +55,37 @@ async function obterMapaOperadores() {
   const { data } = await supabase.from('operators').select('id, nome, ativo');
   const mapa = new Map();
   if (data) {
+    // Conta quantos operadores existem por nome normalizado ANTES de montar o mapa.
+    // Nome repetido torna a resolucao por nome ambigua: 'mapa.set' sobrescrevia em
+    // silencio e atribuia um id arbitrario, que e o errado em 12 de 13 casos quando
+    // ha homonimos (hoje existem 13 'Operador Teste Funcional QA' em producao).
+    const contagem = new Map();
+    const normalizar = (nome) =>
+      nome.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
     data.forEach(op => {
       if (op.nome) {
-        const norm = op.nome.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        mapa.set(norm, op);
+        const norm = normalizar(op.nome);
+        contagem.set(norm, (contagem.get(norm) || 0) + 1);
       }
+    });
+
+    data.forEach(op => {
+      if (!op.nome) return;
+      const norm = normalizar(op.nome);
+      if (contagem.get(norm) > 1) {
+        // Ambiguo: NAO resolve. Prefere falhar de forma visivel (coluna fica nula e
+        // o CHECK do banco recusa) a gravar a autoria da pessoa errada em silencio.
+        if (!mapa.has(norm)) {
+          console.warn(
+            `[base44Client] Nome de operador ambiguo ("${op.nome}": ${contagem.get(norm)} cadastros). ` +
+            'Resolucao por nome desativada para ele; envie operator_id direto do select.'
+          );
+          mapa.set(norm, null);
+        }
+        return;
+      }
+      mapa.set(norm, op);
     });
   }
   cacheOperadores = mapa;
@@ -113,7 +139,9 @@ async function sanitizarPayload(tabela, data, isCreate = false) {
   }
 
   // Resolução de operador para tabelas operacionais (Lição 3)
-  // Regra estrita: Injetar operator_id SÓ em create(), NUNCA em update()
+  // Regra: Em create(), injeta o operador ativo de localStorage se não fornecido.
+  // Em update(), NÃO injeta de localStorage (não altera autoria por acidente),
+  // MAS NÃO apaga valores que o usuário enviou explicitamente (permite atribuição manual/edição legítima).
   if (tabela === 'envase_records' || tabela === 'checkout_itens') {
     if (isCreate) {
       if (!clone.operator_id) {
@@ -131,9 +159,36 @@ async function sanitizarPayload(tabela, data, isCreate = false) {
         }
       }
     } else {
-      // Em update(), NUNCA altera operator_id nem operador para preservar a autoria original
-      delete clone.operator_id;
-      delete clone.operador;
+      // Em update(): NÃO injeta de localStorage, mas se o usuário enviou 'operador' e não 'operator_id',
+      // resolve o operator_id correspondente para manter integridade com as FKs/CHECKs
+      if (clone.operador && !clone.operator_id) {
+        const mapa = await obterMapaOperadores();
+        const norm = clone.operador.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const encontrado = mapa.get(norm);
+        if (encontrado) {
+          clone.operator_id = encontrado.id;
+        }
+      }
+    }
+  }
+
+  // Resolução para empilha_linhas: garantir que operador_empilhadeira_id e operador_ajudante_id sejam preenchidos
+  if (tabela === 'empilha_linhas') {
+    if (clone.operador_empilhadeira && !clone.operador_empilhadeira_id) {
+      const mapa = await obterMapaOperadores();
+      const norm = clone.operador_empilhadeira.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const encontrado = mapa.get(norm);
+      if (encontrado) {
+        clone.operador_empilhadeira_id = encontrado.id;
+      }
+    }
+    if (clone.operador_ajudante && !clone.operador_ajudante_id && clone.operador_ajudante !== 'nenhum') {
+      const mapa = await obterMapaOperadores();
+      const norm = clone.operador_ajudante.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const encontrado = mapa.get(norm);
+      if (encontrado) {
+        clone.operador_ajudante_id = encontrado.id;
+      }
     }
   }
 
