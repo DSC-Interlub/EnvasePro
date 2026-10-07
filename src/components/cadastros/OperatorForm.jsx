@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Save, Upload, User } from "lucide-react";
+import { mensagemDeErroSegura, registrarErro } from "@/lib/uploadSeguro";
 
 const operatorSchema = z.object({
   nome: z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -52,6 +53,7 @@ export default function OperatorForm({ operator, onClose }) {
   // CAMINHO do arquivo, não a URL assinada, que expira em 24h e é credencial.
   // A leitura (resolverFotosOperadores) assina o caminho de novo a cada consulta.
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [erroUpload, setErroUpload] = useState(null);
 
   const saveMutation = useMutation({
     mutationFn: (data) => {
@@ -75,11 +77,15 @@ export default function OperatorForm({ operator, onClose }) {
       const result = await base44.integrations.Core.UploadFile({ file, bucket: 'fotos-operadores' });
       // Grava o CAMINHO, não a URL assinada: a assinada expira em 24h e ficaria
       // guardada no banco (e nos backups) como credencial válida.
-      setValue("foto_url", result.file_path || result.file_url, { shouldValidate: true });
-      setPreviewUrl(result.file_url || null);
+      setValue("foto_url", result.file_path, { shouldValidate: true });
+      // preview_url é a URL assinada, só para mostrar a imagem agora.
+      setPreviewUrl(result.preview_url || null);
+      setErroUpload(null);
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      alert('Erro ao fazer upload da foto');
+      registrarErro('upload de foto de operador', error);
+      // Mostra o motivo (tamanho, formato, conteúdo que não bate com a
+      // extensão) sem expor detalhe técnico.
+      setErroUpload(mensagemDeErroSegura(error, 'enviar a foto'));
     } finally {
       setUploading(false);
     }
@@ -153,6 +159,9 @@ export default function OperatorForm({ operator, onClose }) {
           {/* Upload de Foto */}
           <div className="space-y-2">
             <Label htmlFor="foto">Foto do Operador</Label>
+            {erroUpload && (
+              <p className="text-xs text-red-600 font-medium">{erroUpload}</p>
+            )}
             <div className="flex items-center gap-4">
               {(previewUrl || fotoUrl) ? (
                 <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-slate-200">
