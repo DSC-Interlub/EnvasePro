@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:local-auth": "node scripts/seed-local-auth.js",
+    "seed:local": "npx supabase db reset && node scripts/seed-local-auth.js"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^17.0.0",
