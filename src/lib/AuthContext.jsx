@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }) => {
         setUser(prev => ({
           id: authUser.id,
           email: authUser.email,
-          role: profile?.role || authUser.user_metadata?.role || 'operator',
+          role: profile?.role || 'operator',
           full_name: profile?.full_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0],
           created_date: authUser.created_at
         }));
@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }) => {
         setUser({
           id: session.user.id,
           email: session.user.email,
-          role: session.user.user_metadata?.role || 'operator',
+          role: 'operator', // Papel inicial seguro; papel autoritativo vem de user_profiles via carregarPerfilUsuario
           full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
           created_date: session.user.created_at
         });
@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }) => {
         setUser({
           id: session.user.id,
           email: session.user.email,
-          role: session.user.user_metadata?.role || 'operator',
+          role: 'operator', // Papel inicial seguro; papel autoritativo vem de user_profiles via carregarPerfilUsuario
           full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
           created_date: session.user.created_at
         });
