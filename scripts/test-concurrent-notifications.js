@@ -10,6 +10,11 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+import { enforceNonProductionGuard } from './lib/db-guard.js';
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('test-concurrent-notifications');
+
 import handler from '../api/notificarOcorrencia.js';
 
 function createMockRes() {
@@ -72,7 +77,12 @@ async function runConcurrencyTest() {
   // Precisamos garantir que o handler use o cliente supabase mockado ou simule o comportamento atômico
   // Vamos configurar variáveis de ambiente mínimas
   process.env.RESEND_API_KEY = 're_test_key_mock_12345';
-  process.env.VITE_SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://xifzjpbkpxislqrowswd.supabase.co';
+  // Fallback para a URL de PRODUCAO removido em 07/10/2026 (Fase 0): um teste
+  // nunca deve ter producao como alvo padrao. Sem VITE_SUPABASE_URL, falhe.
+  if (!process.env.VITE_SUPABASE_URL) {
+    console.error('VITE_SUPABASE_URL nao definida. Aponte o .env.local para o Supabase local.');
+    process.exit(1);
+  }
   process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock_service_key';
 
   // Cenário A: Teste de Duas Chamadas Simultâneas (Promise.all)
