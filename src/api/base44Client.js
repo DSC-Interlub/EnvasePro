@@ -271,11 +271,34 @@ function createEntityAdapter(entityName) {
 
   return {
     /**
+     * Garante que a sessão já foi lida do armazenamento antes de consultar.
+     *
+     * O supabase-js carrega a sessão de forma assíncrona na inicialização. Uma
+     * consulta disparada nessa janela sai SEM o cabeçalho Authorization, como
+     * `anon`. Antes isso passava despercebido: `anon` tinha GRANT e o RLS
+     * devolvia lista vazia, então a tela só aparecia sem dados. Depois que o
+     * `anon` perdeu todos os privilégios (migration 20261007000002), o mesmo
+     * caso virou um 401 visível — foi assim que o problema apareceu, de forma
+     * intermitente, logo após o login.
+     *
+     * `getSession()` resolve essa leitura e fica em cache, então o custo é
+     * pago uma vez por carregamento de página.
+     */
+    async aguardarSessao() {
+      try {
+        await supabase.auth.getSession();
+      } catch {
+        // Sem sessão o RLS decide; não é este o lugar de tratar login.
+      }
+    },
+
+    /**
      * Lista registros com ordenação e limite.
      * Se limit for omitido ou > 1000, pagina automaticamente via .range()
      * até trazer a lista completa (Ajuste Obrigatório 1 - Paginação Real).
      */
     async list(orderBy, limit = null) {
+      await this.aguardarSessao();
       const sort = parseOrderBy(orderBy);
       const pageSize = 1000;
       let from = 0;
@@ -317,6 +340,7 @@ function createEntityAdapter(entityName) {
      * Filtra registros com condições, ordenação e suporte à paginação real.
      */
     async filter(conditions = {}, orderBy = null, limit = null) {
+      await this.aguardarSessao();
       const sort = parseOrderBy(orderBy);
       const pageSize = 1000;
       let from = 0;
@@ -375,6 +399,7 @@ function createEntityAdapter(entityName) {
      * Busca um único registro pelo ID.
      */
     async get(id) {
+      await this.aguardarSessao();
       const { data, error } = await supabase
         .from(table)
         .select('*')
@@ -390,6 +415,7 @@ function createEntityAdapter(entityName) {
      * Cria um novo registro aplicando sanitização de datas e injeção de operator_id.
      */
     async create(data) {
+      await this.aguardarSessao();
       const payload = await sanitizarPayload(table, data, true);
       const { data: created, error } = await supabase
         .from(table)
@@ -406,6 +432,7 @@ function createEntityAdapter(entityName) {
      * Atualiza um registro existente pelo ID.
      */
     async update(id, data) {
+      await this.aguardarSessao();
       const payload = await sanitizarPayload(table, data, false);
       const { data: updated, error } = await supabase
         .from(table)
@@ -423,6 +450,7 @@ function createEntityAdapter(entityName) {
      * Remove um registro pelo ID.
      */
     async delete(id) {
+      await this.aguardarSessao();
       const { error } = await supabase
         .from(table)
         .delete()
