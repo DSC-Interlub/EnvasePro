@@ -11,11 +11,11 @@ export default defineConfig(({ mode }) => {
       mode === 'development' && visualEditPlugin(),
       react(),
       errorOverlayPlugin(),
-      {
+      mode === 'development' && {
         name: 'iframe-hmr',
         configureServer(server) {
           server.middlewares.use((req, res, next) => {
-            // Allow iframe embedding
+            // Allow iframe embedding strictly in dev mode
             res.setHeader('X-Frame-Options', 'ALLOWALL');
             res.setHeader('Content-Security-Policy', "frame-ancestors *;");
             next();
@@ -23,6 +23,9 @@ export default defineConfig(({ mode }) => {
         }
       }
     ].filter(Boolean),
+    esbuild: mode === 'production' ? {
+      drop: ['console', 'debugger'],
+    } : {},
     server: {
       host: '0.0.0.0', // Bind to all interfaces for container access
       port: 5173,
