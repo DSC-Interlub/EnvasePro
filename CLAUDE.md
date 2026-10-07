@@ -99,6 +99,39 @@ Esta ordem **prevalece** sobre a numeração das fases da seção 3. As fases vi
 
 ---
 
+## 2.0 APLICADO EM PRODUÇÃO — 07/10/2026
+
+Autorizado pelo dono por escrito. Aplicado via Management API, uma migration por vez:
+
+| Migration | Estado |
+|---|---|
+| `20261006150001_domain_check_constraints` | **aplicada** — 11 CHECKs criadas, todas `validated` |
+| `20261006150003_notificar_ocorrencia_idempotency` | **aplicada** — `notificado_em` criada |
+| `20261007000001_reconcile_security` | **aplicada** |
+| `20261006150002_storage_buckets_privacy_and_limits` | **NÃO aplicada de propósito** — só com o deploy do código |
+
+Histórico reparado: as 2 entradas sem nome (`20261006000001`, `20261006000002`) receberam `name`;
+as 3 aplicadas foram registradas. A `150002` segue fora do histórico, então `supabase db push` no
+deploy aplica só ela.
+
+Backup e artefato de rollback (DDL completo do estado anterior): `C:\Users\kauan.pereira\EnvasePro-backups\prod_2026-10-07T14-08-31Z`
+
+**Pendência nova, encontrada na verificação:** `authenticated` continua com `TRUNCATE` nas 24
+tabelas, herdado do estado anterior. **`TRUNCATE` não passa por RLS** — é um privilégio que ignora
+política. Nada no app precisa dele e o PostgREST não o expõe, então o risco prático é baixo, mas é
+privilégio sobrando. Correção proposta, 1 comando, aguardando autorização:
+`REVOKE TRUNCATE ON ALL TABLES IN SCHEMA public FROM authenticated;`
+
+**Em aberto por decisão do dono:** `empilhadeira_manutencoes` e `empilhadeira_paradas` **não**
+devem ser apertadas para admin-only até ele confirmar quem registra isso na prática.
+
+**Efeito colateral declarado:** os testes de compatibilidade avançaram a sequence
+`seq_checkout_prog` em 3 (protocolos CKO-2026-000019 a 000021 não serão usados). `nextval` não é
+transacional, portanto o `ROLLBACK` desfez as linhas mas não o contador. Nenhum dado foi alterado:
+as contagens pós-teste conferem com o backup em todas as tabelas.
+
+---
+
 ## 2.1 ACHADOS DA FASE 0 (07/10/2026) — PROVADOS no banco local
 
 **F0-1 — As migrations do repo, sozinhas, produzem um banco INUTILIZAVEL. (BLOQUEIA a Fase 3.)**
@@ -343,6 +376,16 @@ Só executar depois das fases 0–4 aprovadas e da Fase 5 concluída. Até o go-
 - [ ] `fotos-operadores` privado; bucket `arquivos` resolvido (removido ou privatizado, após backup).
 - [ ] Senhas das 4 contas oficiais trocadas (as do histórico do git estão comprometidas).
 - [ ] Decidido o que fazer com `lauremank622@gmail.com`.
+
+**Pendências obrigatórias antes da virada:**
+- [ ] **Reenviar as 6 fotos que ainda estão na Base44 para o bucket `fotos-operadores`.**
+  Alisson, Wilber, Lucas, Matheus, William e Jorge Willian têm `operators.foto_url` apontando
+  para `https://base44.app/api/apps/68fa29e.../files/public/...`. Elas sobrevivem ao deploy do
+  novo código (quando a assinatura falha, `resolverFotosOperadores` mantém a URL original), mas
+  **morrem no instante em que a Base44 sair do ar**. As outras 13 fotos já estão no bucket e
+  passam a funcionar por URL assinada depois do deploy.
+- [ ] Aplicar `20261006150002` (buckets privados) **junto** com o deploy do código. Antes disso
+  as 13 fotos quebram, porque `resolverFotosOperadores()` não existe em `origin/main`.
 
 **Sequência da virada (janela de parada combinada com a operação):**
 1. **Congelar a Base44.** Avisar a fábrica, definir a hora do corte e deixar a Base44 **somente leitura** a partir dali. Nada de operação em dois sistemas ao mesmo tempo — dado lançado na Base44 após o export se perde.
