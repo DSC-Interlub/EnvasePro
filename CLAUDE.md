@@ -19,6 +19,28 @@ No início de uma sessão nova: responda com (1) o que entendeu, (2) as pergunta
 
 ---
 
+## -0.5 ORDEM DE PRIORIDADE DO DONO (07/10/2026) — manda na ordem das fases
+
+Esta ordem **prevalece** sobre a numeração das fases da seção 3. As fases viram o
+*como*; esta lista é o *quando*.
+
+| # | Prioridade | Onde está na seção 3 |
+|---|---|---|
+| 1 | Comparar o banco real com o repositório **e aplicar as permissões** | Fase 1 + o `GRANT` do achado F0-1 na Fase 2 |
+| 2 | Validação nas telas, validação no banco, travas nas colunas críticas | Fase 2 (triggers, CHECKs) + Zod da Fase 4 |
+| 3 | Testes de interface real dos fluxos do operador | Fase 3 |
+| 4 | Upload (fotos privadas, limites, bucket `arquivos`), vazamento de informação, bibliotecas, sessão/tokens, limite de requisições | Fase 4 |
+| 5 | Revisão de SQL injection | Fase 4 (feita em 07/10 — ver seção 2.2) |
+| 6 | Backup verificado e limpeza de dados de teste | Fase 5 |
+
+**Decisões do dono, já tomadas:**
+- **MFA e captcha são OPCIONAIS e ficam para depois.** Não insistir neles.
+- **Rotação da service key e troca de senhas: o dono cuida.** **NÃO TOCAR.** É pré-requisito do go-live (seção 8).
+- **Sessão/tokens:** remover o fallback que lê `user_metadata.role` em `AuthContext.jsx` está dentro da prioridade 4 e é explicitamente pedido.
+- **Limite de requisições:** propor a opção **mais simples e gratuita** e **PERGUNTAR antes** de criar conta em qualquer serviço novo.
+
+---
+
 ## 0. REGRAS INEGOCIÁVEIS
 
 1. **Nunca toque em produção.** O projeto Supabase `xifzjpbkpxislqrowswd` é PRODUÇÃO e é o único banco real. Todo teste, migration e script roda no **Supabase local** (`supabase start`, requer Docker Desktop). Não use a `SUPABASE_SERVICE_ROLE_KEY` de produção em nenhum comando seu.
@@ -121,6 +143,56 @@ scripts. Agora e **allowlist** (so `localhost`/`127.0.0.1`), checa `VITE_SUPABAS
 **Desvio documentado:** a segunda confirmacao do guard e `--confirm-ref=<ref>` digitado na linha de
 comando, nao um prompt interativo. Leitura sincrona de stdin e fragil no Windows, e tornar o guard
 assincrono criaria um risco pior (um `await` esquecido viraria bypass silencioso).
+
+---
+
+## 2.2 REVISÃO DE SQL INJECTION (prioridade 5) — 07/10/2026
+
+Resultado: **nenhuma injeção de SQL encontrada.** O que foi procurado e o que se achou:
+
+| Superfície | Resultado |
+|---|---|
+| `.or()`, `.rpc()`, `.textSearch()` no app | **Não existem.** Zero ocorrências em `src/` e `api/` |
+| `.ilike()` | 2 ocorrências, só em `scripts/check-residuals-timeline.js` e `scripts/find-test-residuals.js`, com o literal fixo `'%QA%'`. Sem entrada de usuário |
+| Camada de dados (`base44Client.filter`) | Usa **apenas** `.in()` e `.eq()`, com os valores passados como parâmetro ao PostgREST. Nenhuma concatenação de string em filtro |
+| Funções serverless (`api/`) | Só `.eq('id', <valor>)`. Valores parametrizados |
+| SQL dinâmico em plpgsql | 2 lugares, ambos corretamente escapados: `format('SELECT nextval(%L)', nome_sequence)` (`%L` = literal) e `format('... ON public.%I ...', tbl)` (`%I` = identificador) |
+| `SECURITY DEFINER` sem `search_path` fixo | **Nenhuma.** As 2 que existem (`handle_new_user`, `is_admin`) têm `search_path = public, pg_temp` |
+| Injeção de cabeçalho no e-mail de ocorrência | **Não há.** O `Subject` é montado só de `tipo` (enum), `data` (`date`) e `hora` (`time`) — nenhum campo `text` entra em cabeçalho |
+
+**Dois achados laterais (não são injeção), para a Fase 2:**
+
+**F0-7 — `gerar_protocolo` é um RPC aberto ao `anon`. PROVADO. (Entra na prioridade 1.)**
+Todas as funções de `public` estão com `EXECUTE` para `PUBLIC`, e o PostgREST expõe `public`
+como RPC. `anon`/`authenticated` também têm `UPDATE` nas sequences pelo default ACL. Resultado
+medido no banco local:
+
+```
+--- gerar_protocolo chamado como OPERADOR autenticado ---
+  tentativa 1: HTTP 200  "INVASOR-2026-000001"
+  tentativa 2: HTTP 200  "INVASOR-2026-000002"
+--- o mesmo como ANON (sem login) ---
+  HTTP 200  "INVASOR-2026-000003"
+```
+
+Qualquer um, **sem autenticação**, avança a sequence de protocolo de envase quantas vezes
+quiser. Não apaga nem lê dado, mas abre buracos arbitrários na numeração — e numeração de
+protocolo é justamente o que as travas de imutabilidade existem para proteger.
+Isto **contradiz a premissa de que `anon` perdeu o acesso** na migration
+`20260929000001_remove_anon_rls.sql`: ela tratou RLS de tabela e **nunca revogou `EXECUTE` de
+função**. Correção na migration da Fase 2: `REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public
+FROM PUBLIC, anon, authenticated` e reconceder só o que o app realmente chama (hoje: nada —
+protocolos são gerados por trigger, que roda com os direitos do dono da tabela).
+**Verificar no BLOCO 4e do inventário se produção está igual.**
+
+**F0-8 — `gerar_protocolo`, `calcular_nota_checklist` e `set_updated_at` sem `search_path` fixo.**
+   Risco baixo porque **não** são `SECURITY DEFINER` (rodam com os direitos de quem chama), mas o
+   linter do Supabase sinaliza e custa uma linha corrigir.
+
+**Observação de desenho, sem risco de segurança:** em `base44Client.filter()` o **nome da coluna**
+vem das chaves do objeto de condições, e `parseOrderBy` repassa a coluna de ordenação. Não é
+injeção — o PostgREST valida a coluna e devolve 400 — mas um nome errado falha em runtime em vez
+de em tempo de escrita.
 
 ---
 
