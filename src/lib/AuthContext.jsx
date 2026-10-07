@@ -95,10 +95,10 @@ export const AuthProvider = ({ children }) => {
     const ehTv = ehRotaTvPublica(pathname);
     setIsTvPage(ehTv);
 
-    // Se for tela de TV, não bloqueia com loading nem exige login (Ajuste 4)
-    if (ehTv) {
-      setIsLoadingAuth(false);
-    }
+    // isTvPage continua sendo usado para isentar a TV do logout por inatividade.
+    // O que NÃO se faz mais aqui: encerrar o loading antes de getSession(). Isso
+    // vinha da época da "TV pública" e, numa TV já logada, fazia a tela de login
+    // piscar por um instante antes de a sessão resolver.
 
     // 1. Checa sessão inicial existente
     supabase.auth.getSession().then(({ data: { session } }) => {
