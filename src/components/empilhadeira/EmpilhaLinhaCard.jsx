@@ -105,11 +105,15 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
   const handleIniciar = () => {
     if (!empilhador) return;
     const now = format(new Date(), "HH:mm");
+    const opObj = operators?.find(o => o.nome === empilhador);
+    const ajudObj = ajudante && ajudante !== "nenhum" ? operators?.find(o => o.nome === ajudante) : null;
     updateMutation.mutate({
       status: "Em Andamento",
       hora_inicio: linha.hora_inicio || now,
       operador_empilhadeira: empilhador,
-      operador_ajudante: ajudante,
+      operador_empilhadeira_id: opObj ? opObj.id : null,
+      operador_ajudante: ajudante === "nenhum" ? null : (ajudante || null),
+      operador_ajudante_id: ajudObj ? ajudObj.id : null,
     });
     setShowIniciarModal(false);
   };

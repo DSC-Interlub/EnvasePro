@@ -21,6 +21,7 @@ export default function CheckoutItemCard({ item, operators }) {
 
   const [formData, setFormData] = useState({
     operador: item.operador || "",
+    operator_id: item.operator_id || null,
     hora_inicio: item.hora_inicio || "",
     hora_termino: item.hora_termino || "",
     critico: item.critico || false,
@@ -214,7 +215,14 @@ export default function CheckoutItemCard({ item, operators }) {
                 <Label htmlFor={`operador-${item.id}`}>Operador *</Label>
                 <Select
                   value={formData.operador}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, operador: value }))}
+                  onValueChange={(value) => {
+                    const opObj = operators?.find(op => op.nome === value);
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      operador: value, 
+                      operator_id: opObj ? opObj.id : prev.operator_id 
+                    }));
+                  }}
                 >
                   <SelectTrigger id={`operador-${item.id}`}>
                     <SelectValue placeholder="Selecione o operador" />
