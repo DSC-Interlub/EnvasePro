@@ -1,6 +1,7 @@
 #env
 .env
 .env.*
+!.env.example
 
 # Logs
 logs
@@ -31,3 +32,15 @@ dist-ssr
 exports-base44/
 scratch/
 supabase/.temp/
+
+# Backups e dumps de dados (NUNCA versionar) - ver CLAUDE.md Fase 0
+backups/
+*.dump
+*_backup_*.sql
+*_dump*.sql
+backup_*.sql
+
+# Playwright
+playwright-report/
+test-results/
+supabase/.branches/
