@@ -1,18 +1,33 @@
 import { chromium } from 'playwright';
+import dotenv from 'dotenv';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
+dotenv.config({ path: '.env.local' });
+
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('verify-staging-deployment');
+
+const adminEmail = process.env.TEST_ADMIN_EMAIL || 'pcp-brasil@interlub.com';
+const adminPass = process.env.TEST_ADMIN_PASSWORD;
+
+if (!adminPass) {
+  console.error('❌ ERRO: TEST_ADMIN_PASSWORD é obrigatório no ambiente (.env.local).');
+  process.exit(1);
+}
 
 async function verify() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
-  console.log('1. Efetuando login como Admin pela raiz...');
+  console.log(`1. Efetuando login como Admin (${adminEmail}) pela raiz...`);
   await page.goto('https://envase-pro.vercel.app/', { waitUntil: 'networkidle' });
 
   const loginBtn = page.locator('text=Fazer Login no Sistema').first();
   if (await loginBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
     await loginBtn.click();
     await page.waitForTimeout(500);
-    await page.fill('input[type="email"]', 'pcp-brasil@interlub.com');
-    await page.fill('input[type="password"]', 'Interlub@2026');
+    await page.fill('input[type="email"]', adminEmail);
+    await page.fill('input[type="password"]', adminPass);
     await page.click('button:has-text("Entrar")');
     await page.waitForTimeout(3000);
   }

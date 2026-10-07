@@ -1,7 +1,12 @@
 import { chromium } from 'playwright';
 import { spawn } from 'child_process';
 import dotenv from 'dotenv';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
 dotenv.config({ path: '.env.local' });
+
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('test-inactivity-timeout');
 
 const PORT = 4173;
 const BASE_URL = `http://localhost:${PORT}`;
@@ -15,6 +20,16 @@ async function runInactivityTests() {
   console.log('🧪 TESTE AUTOMATIZADO: TIMEOUT DE INATIVIDADE POR PAPEL (ADMIN vs TV)');
   console.log(`🌐 Alvo Local: ${BASE_URL} (Vite Preview)`);
   console.log('='.repeat(78));
+
+  const adminEmail = process.env.TEST_ADMIN_EMAIL || 'pcp-brasil@interlub.com';
+  const adminPass = process.env.TEST_ADMIN_PASSWORD;
+  const tvEmail = process.env.TEST_TV_EMAIL || 'tv-fabrica@interlub.com';
+  const tvPass = process.env.TEST_TV_PASSWORD;
+
+  if (!adminPass || !tvPass) {
+    console.error('❌ ERRO: TEST_ADMIN_PASSWORD e TEST_TV_PASSWORD são obrigatórios no ambiente (.env.local).');
+    process.exit(1);
+  }
 
   // Inicia vite preview
   console.log('\n[0/4] 🚀 Iniciando servidor local Vite Preview na porta 4173...');
@@ -41,7 +56,7 @@ async function runInactivityTests() {
     // ------------------------------------------------------------------------
     // TESTE 1: ADMIN (pcp-brasil@interlub.com) - DEVE DESLOGAR COM 60+ MIN INATIVO
     // ------------------------------------------------------------------------
-    console.log('\n[1/4] 👤 Testando Conta ADMIN: Login com pcp-brasil@interlub.com...');
+    console.log(`\n[1/4] 👤 Testando Conta ADMIN: Login com ${adminEmail}...`);
     const adminContext = await browser.newContext();
     const adminPage = await adminContext.newPage();
 
@@ -63,8 +78,8 @@ async function runInactivityTests() {
       await sleep(500);
     }
 
-    await adminPage.fill('input#email', 'pcp-brasil@interlub.com');
-    await adminPage.fill('input#password', 'Interlub@Pcp2026!');
+    await adminPage.fill('input#email', adminEmail);
+    await adminPage.fill('input#password', adminPass);
     await adminPage.click('button[type="submit"]:has-text("Entrar no Sistema")');
     await sleep(3000);
 
@@ -137,8 +152,8 @@ async function runInactivityTests() {
       await sleep(500);
     }
 
-    await tvPage.fill('input#email', 'tv-fabrica@interlub.com');
-    await tvPage.fill('input#password', 'Interlub@Tv2026!');
+    await tvPage.fill('input#email', tvEmail);
+    await tvPage.fill('input#password', tvPass);
     await tvPage.click('button[type="submit"]:has-text("Entrar no Sistema")');
     await sleep(3000);
 

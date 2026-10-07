@@ -1,6 +1,11 @@
 import { chromium } from 'playwright';
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
+
+import { enforceNonProductionGuard } from './lib/db-guard.js';
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('medir-desempenho-ensaio');
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -72,13 +77,20 @@ async function medir() {
   }
 
   // 1. LOGIN
-  console.log('\n[1/5] Realizando login como PCP/Admin...');
+  const adminEmail = process.env.TEST_ADMIN_EMAIL || 'pcp-brasil@interlub.com';
+  const adminPass = process.env.TEST_ADMIN_PASSWORD;
+  if (!adminPass) {
+    console.error('❌ ERRO: TEST_ADMIN_PASSWORD é obrigatório no ambiente (.env.local).');
+    process.exit(1);
+  }
+
+  console.log(`\n[1/5] Realizando login como PCP/Admin (${adminEmail})...`);
   await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
   await page.waitForSelector('text=Fazer Login no Sistema', { timeout: 15000 });
   await page.click('text=Fazer Login no Sistema');
   await page.waitForSelector('text=Acesso ao EnvasePro');
-  await page.fill('input#email', 'pcp-brasil@interlub.com');
-  await page.fill('input#password', 'Interlub@Pcp2026!');
+  await page.fill('input#email', adminEmail);
+  await page.fill('input#password', adminPass);
   await page.click('button[type="submit"]:has-text("Entrar no Sistema")');
   await page.waitForTimeout(3000);
 

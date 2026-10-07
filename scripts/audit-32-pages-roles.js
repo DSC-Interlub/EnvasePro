@@ -1,6 +1,11 @@
 import { chromium } from 'playwright';
 import dotenv from 'dotenv';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
 dotenv.config({ path: '.env.local' });
+
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('audit-32-pages-roles');
 
 const BASE_URL = 'https://envase-pro.vercel.app';
 
@@ -154,10 +159,15 @@ async function auditarComRole(roleName, userEmail, userPass) {
 }
 
 async function main() {
-  const adminEmail = 'pcp-brasil@interlub.com';
-  const adminPass = 'Interlub@2026';
-  const operatorEmail = 'tv-fabrica@interlub.com';
-  const operatorPass = 'Interlub@2026';
+  const adminEmail = process.env.TEST_ADMIN_EMAIL || 'pcp-brasil@interlub.com';
+  const adminPass = process.env.TEST_ADMIN_PASSWORD;
+  const operatorEmail = process.env.TEST_OPERATOR_EMAIL || 'tv-fabrica@interlub.com';
+  const operatorPass = process.env.TEST_OPERATOR_PASSWORD;
+
+  if (!adminPass || !operatorPass) {
+    console.error('❌ ERRO: TEST_ADMIN_PASSWORD e TEST_OPERATOR_PASSWORD são obrigatórios no ambiente (.env.local).');
+    process.exit(1);
+  }
 
   const relAdmin = await auditarComRole('admin', adminEmail, adminPass);
   const relOperator = await auditarComRole('operator', operatorEmail, operatorPass);

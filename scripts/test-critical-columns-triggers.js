@@ -11,8 +11,10 @@
 
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
 
 dotenv.config({ path: '.env.local' });
+enforceNonProductionGuard('test-critical-columns-triggers');
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
