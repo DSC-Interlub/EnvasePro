@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import CheckoutItemCard from "../components/checkout/CheckoutItemCard";
+import { formatarData } from '@/lib/datas';
 
 export default function ExecutarCheckout() {
   const navigate = useNavigate();
@@ -233,10 +234,10 @@ export default function ExecutarCheckout() {
           </Button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-slate-900">
-              Check-out - {programacao?.data_programada ? format(new Date(programacao.data_programada + 'T00:00:00'), "dd/MM/yyyy") : ''}
+              Check-out - {programacao?.data_programada ? formatarData(programacao.data_programada, "dd/MM/yyyy") : ''}
             </h1>
             <p className="text-slate-600 mt-1">
-              {programacao?.data_programada ? format(new Date(programacao.data_programada + 'T00:00:00'), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR }) : ''}
+              {programacao?.data_programada ? formatarData(programacao.data_programada, "EEEE, d 'de' MMMM 'de' yyyy") : ''}
             </p>
           </div>
           {programacao && (

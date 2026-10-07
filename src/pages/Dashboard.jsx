@@ -28,6 +28,7 @@ import AnalysisGrid from "../components/dashboard/AnalysisGrid";
 import CategoryStatsGrid from "../components/dashboard/CategoryStatsGrid";
 import CheckoutStatsGrid from "../components/dashboard/CheckoutStatsGrid"; 
 import CheckoutAnalysisGrid from "../components/dashboard/CheckoutAnalysisGrid"; 
+import { formatarData, paraData } from '@/lib/datas';
 
 export default function Dashboard() {
   const { user: currentUser } = useAuth();
@@ -80,8 +81,10 @@ export default function Dashboard() {
     
     let dateMatch = true;
     if (selectedMonth) {
-      const recordDate = new Date(record.data + 'T00:00:00');
-      const recordMonth = format(recordDate, "yyyy-MM");
+      const recordDate = paraData(record.data);
+      // Sem data válida o registro não pertence a mês nenhum: fica de fora do
+      // filtro em vez de derrubar a tela com "Invalid time value".
+      const recordMonth = recordDate ? format(recordDate, "yyyy-MM") : null;
       dateMatch = recordMonth === selectedMonth;
       
       if (startDate || endDate) {
@@ -120,7 +123,7 @@ export default function Dashboard() {
         dateMatch = itemDateStr <= endDate;
       }
     } else if (selectedMonth) {
-      const itemMonth = format(new Date(itemDateStr + 'T00:00:00'), "yyyy-MM");
+      const itemMonth = formatarData(itemDateStr, "yyyy-MM");
       dateMatch = itemMonth === selectedMonth;
     }
     
@@ -144,7 +147,7 @@ export default function Dashboard() {
         dateMatch = programacaoDateStr <= endDate;
       }
     } else if (selectedMonth) {
-      const programacaoMonth = format(new Date(programacaoDateStr + 'T00:00:00'), "yyyy-MM");
+      const programacaoMonth = formatarData(programacaoDateStr, "yyyy-MM");
       dateMatch = programacaoMonth === selectedMonth;
     }
 
@@ -186,7 +189,7 @@ export default function Dashboard() {
       
       recordsToExport.forEach(record => {
         const row = [
-          format(new Date(record.data + 'T00:00:00'), "dd/MM/yyyy"),
+          formatarData(record.data, "dd/MM/yyyy"),
           record.mes || "",
           record.ano || "",
           record.op || "",
@@ -260,7 +263,7 @@ export default function Dashboard() {
       
       itemsToExport.forEach(item => {
         const programacao = checkoutProgramacoes.find(p => p.id === item.programacao_id);
-        const dataProgramada = programacao ? format(new Date(programacao.data_programada + 'T00:00:00'), "dd/MM/yyyy") : '';
+        const dataProgramada = programacao ? formatarData(programacao.data_programada, "dd/MM/yyyy") : '';
         
         // Calcular atrasos e durações
         const previsaoInicio = programacao?.previsao_inicio ? new Date(`2000-01-01T${programacao.previsao_inicio}`) : null;
@@ -299,11 +302,11 @@ export default function Dashboard() {
           programacao?.turno || "",
           item.numero_pedido || "",
           item.cliente || "",
-          item.data_entrega ? format(new Date(item.data_entrega + 'T00:00:00'), "dd/MM/yyyy") : "",
+          item.data_entrega ? formatarData(item.data_entrega, "dd/MM/yyyy") : "",
           item.operador || "",
           item.status || "",
           item.critico ? "Sim" : "Não",
-          item.data_saida ? format(new Date(item.data_saida + 'T00:00:00'), "dd/MM/yyyy") : "",
+          item.data_saida ? formatarData(item.data_saida, "dd/MM/yyyy") : "",
           programacao?.previsao_inicio || "",
           item.hora_inicio || "",
           atrasoInicio,
@@ -313,7 +316,7 @@ export default function Dashboard() {
           duracaoPrevista,
           duracaoReal,
           item.finalizado_fora_do_prazo ? "Sim" : "Não",
-          item.data_finalizacao_real ? format(new Date(item.data_finalizacao_real + 'T00:00:00'), "dd/MM/yyyy") : "",
+          item.data_finalizacao_real ? formatarData(item.data_finalizacao_real, "dd/MM/yyyy") : "",
           item.motivo_atraso || "",
           programacao?.observacoes || "",
           item.observacoes || ""
@@ -354,7 +357,8 @@ export default function Dashboard() {
   };
 
   const todayRecords = filteredRecords.filter(r => {
-    const recordDate = new Date(r.data + 'T00:00:00');
+    const recordDate = paraData(r.data);
+    if (!recordDate) return false; // sem data válida, não conta como "de hoje"
     const today = new Date();
     return recordDate.toDateString() === today.toDateString();
   });
@@ -502,11 +506,11 @@ export default function Dashboard() {
               {(startDate || endDate) && (
                 <p className="text-xs text-slate-500 mt-2">
                   {startDate && endDate ? (
-                    <>Mostrando registros de {format(new Date(startDate + 'T00:00:00'), "dd/MM/yyyy")} até {format(new Date(endDate + 'T00:00:00'), "dd/MM/yyyy")}</>
+                    <>Mostrando registros de {formatarData(startDate, "dd/MM/yyyy")} até {formatarData(endDate, "dd/MM/yyyy")}</>
                   ) : startDate ? (
-                    <>Mostrando registros a partir de {format(new Date(startDate + 'T00:00:00'), "dd/MM/yyyy")}</>
+                    <>Mostrando registros a partir de {formatarData(startDate, "dd/MM/yyyy")}</>
                   ) : (
-                    <>Mostrando registros até {format(new Date(endDate + 'T00:00:00'), "dd/MM/yyyy")}</>
+                    <>Mostrando registros até {formatarData(endDate, "dd/MM/yyyy")}</>
                   )}
                 </p>
               )}
@@ -635,11 +639,11 @@ export default function Dashboard() {
             {(exportStartDate || exportEndDate) && (
               <p className="text-xs text-slate-500">
                 {exportStartDate && exportEndDate ? (
-                  <>Exportando registros de {format(new Date(exportStartDate + 'T00:00:00'), "dd/MM/yyyy")} até {format(new Date(exportEndDate + 'T00:00:00'), "dd/MM/yyyy")}</>
+                  <>Exportando registros de {formatarData(exportStartDate, "dd/MM/yyyy")} até {formatarData(exportEndDate, "dd/MM/yyyy")}</>
                 ) : exportStartDate ? (
-                  <>Exportando registros a partir de {format(new Date(exportStartDate + 'T00:00:00'), "dd/MM/yyyy")}</>
+                  <>Exportando registros a partir de {formatarData(exportStartDate, "dd/MM/yyyy")}</>
                 ) : (
-                  <>Exportando registros até {format(new Date(exportEndDate + 'T00:00:00'), "dd/MM/yyyy")}</>
+                  <>Exportando registros até {formatarData(exportEndDate, "dd/MM/yyyy")}</>
                 )}
               </p>
             )}
