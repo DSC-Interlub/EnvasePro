@@ -12,6 +12,22 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Play, Square, Save, Edit, Calendar, User, Package, Clock, AlertCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
+/**
+ * Formata uma data vinda do banco (texto "AAAA-MM-DD") sem derrubar a tela.
+ *
+ * `format(new Date(null + 'T00:00:00'))` produz "nullT00:00:00", que vira Data
+ * Invalida, e date-fns lanca "Invalid time value". Como isso acontece durante o
+ * render, o React desmonta a arvore inteira e a pagina fica EM BRANCO.
+ * E facil de acontecer: data_entrega e data_saida sao colunas anulaveis, logo
+ * um item sem data de entrega apagava a tela de check-out inteira.
+ */
+function formatarData(valor, vazio = "—") {
+  if (!valor) return vazio;
+  const d = new Date(`${valor}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return vazio;
+  return format(d, "dd/MM/yyyy");
+}
+
 export default function CheckoutItemCard({ item, operators }) {
   const queryClient = useQueryClient();
 
@@ -21,6 +37,7 @@ export default function CheckoutItemCard({ item, operators }) {
 
   const [formData, setFormData] = useState({
     operador: item.operador || "",
+    operator_id: item.operator_id || null,
     hora_inicio: item.hora_inicio || "",
     hora_termino: item.hora_termino || "",
     critico: item.critico || false,
@@ -169,7 +186,7 @@ export default function CheckoutItemCard({ item, operators }) {
               </div>
               <p className="text-slate-700 font-medium">{item.cliente}</p>
               <p className="text-sm text-slate-500">
-                Entrega: {format(new Date(item.data_entrega + 'T00:00:00'), "dd/MM/yyyy")}
+                Entrega: {formatarData(item.data_entrega, "sem data")}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -214,7 +231,14 @@ export default function CheckoutItemCard({ item, operators }) {
                 <Label htmlFor={`operador-${item.id}`}>Operador *</Label>
                 <Select
                   value={formData.operador}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, operador: value }))}
+                  onValueChange={(value) => {
+                    const opObj = operators?.find(op => op.nome === value);
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      operador: value, 
+                      operator_id: opObj ? opObj.id : prev.operator_id 
+                    }));
+                  }}
                 >
                   <SelectTrigger id={`operador-${item.id}`}>
                     <SelectValue placeholder="Selecione o operador" />
@@ -414,7 +438,7 @@ export default function CheckoutItemCard({ item, operators }) {
                     <Calendar className="w-4 h-4" />
                     Data de Saída
                   </p>
-                  <p className="font-semibold">{format(new Date(item.data_saida + 'T00:00:00'), "dd/MM/yyyy")}</p>
+                  <p className="font-semibold">{formatarData(item.data_saida)}</p>
                 </div>
               )}
               {item.finalizado_fora_do_prazo && (
@@ -422,7 +446,7 @@ export default function CheckoutItemCard({ item, operators }) {
                   <div>
                     <p className="text-slate-500 mb-1">Data Real de Finalização</p>
                     <p className="font-semibold text-orange-600">
-                      {item.data_finalizacao_real ? format(new Date(item.data_finalizacao_real + 'T00:00:00'), "dd/MM/yyyy") : "N/A"}
+                      {formatarData(item.data_finalizacao_real, "N/A")}
                     </p>
                   </div>
                   <div className="md:col-span-2">

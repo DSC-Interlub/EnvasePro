@@ -2,6 +2,11 @@ import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
+
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('test-functional-audit');
 
 // Carrega .env.local
 const envLocalPath = path.resolve(process.cwd(), '.env.local');
@@ -54,13 +59,20 @@ async function runDefinitiveFunctionalAudit() {
   });
 
   // LOGIN ADMIN
-  console.log('\n[LOGIN] 🔑 Efetuando login como Admin (pcp-brasil@interlub.com)...');
+  const adminEmail = process.env.TEST_ADMIN_EMAIL || 'pcp-brasil@interlub.com';
+  const adminPass = process.env.TEST_ADMIN_PASSWORD;
+  if (!adminPass) {
+    console.error('❌ ERRO: TEST_ADMIN_PASSWORD é obrigatório no ambiente (.env.local).');
+    process.exit(1);
+  }
+
+  console.log(`\n[LOGIN] 🔑 Efetuando login como Admin (${adminEmail})...`);
   await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
   await page.waitForSelector('text=Fazer Login no Sistema', { timeout: 15000 });
   await page.click('text=Fazer Login no Sistema');
   await page.waitForSelector('text=Acesso ao EnvasePro');
-  await page.fill('input#email', 'pcp-brasil@interlub.com');
-  await page.fill('input#password', 'Interlub@Pcp2026!');
+  await page.fill('input#email', adminEmail);
+  await page.fill('input#password', adminPass);
   await page.click('button[type="submit"]:has-text("Entrar no Sistema")');
   await page.waitForTimeout(3000);
 

@@ -35,20 +35,24 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
-// Lista de rotas públicas de TV que funcionam sem login (Ajuste 4)
-function ehRotaTv(pathname) {
-  if (!pathname) return false;
-  const p = pathname.toLowerCase();
-  return p.includes('televisao') || p === '/painel';
-}
+// As telas de TV NÃO são mais públicas, e o código que as tratava como tal foi
+// removido daqui.
+//
+// A exceção vinha da época em que `anon` tinha acesso de leitura. Hoje não tem:
+// a migration `remove_anon_rls` tirou as políticas e a `reconcile_security`
+// revogou os GRANTs, portanto uma TV sem sessão não carregaria dado nenhum —
+// renderizaria a moldura vazia e encheria o console de erro de permissão.
+//
+// As TVs da fábrica usam a conta `tv-fabrica`, com sessão persistente, e
+// seguem imunes ao logout por inatividade (a isenção vive no AuthContext, via
+// isTvPage, que continua existindo).
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isAuthenticated, setLoginModalAberto } = useAuth();
   const location = useLocation();
-  const isPublicTv = ehRotaTv(location.pathname);
 
-  // Spinner enquanto carrega sessão (exceto para TV pública)
-  if (isLoadingAuth && !isPublicTv) {
+  // Spinner enquanto carrega a sessão, inclusive nas telas de TV.
+  if (isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
         <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
@@ -56,8 +60,8 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Se não estiver autenticado e não for tela de TV, exibe tela para login
-  if (!isAuthenticated && !isPublicTv) {
+  // Sem sessão, exibe a tela de login — inclusive nas rotas de TV.
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex items-center justify-center p-4">
         <LoginModal />

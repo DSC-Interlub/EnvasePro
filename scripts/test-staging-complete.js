@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +22,10 @@ const SCRATCH_DIR = path.join(__dirname, '..', 'scratch');
 const ARTIFACT_DIR = 'C:/Users/kauan.pereira/.gemini/antigravity/brain/17e52817-9948-4001-b5fb-875daf584a4c';
 
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
+
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('test-staging-complete');
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const BASE_URL = 'https://envase-pro.vercel.app';

@@ -1,7 +1,12 @@
 import https from 'https';
 import dotenv from 'dotenv';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
 
 dotenv.config({ path: '.env.local' });
+
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('verify-bundle-vercel');
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!serviceKey) {

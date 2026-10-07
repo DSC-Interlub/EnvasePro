@@ -16,6 +16,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,10 @@ if (fs.existsSync(envLocalPath)) {
   dotenv.config({ path: envLocalPath });
 } else {
   dotenv.config();
+
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('migrar-dados');
 }
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;

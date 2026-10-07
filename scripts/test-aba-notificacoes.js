@@ -1,7 +1,12 @@
 import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
 dotenv.config({ path: '.env.local' });
+
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('test-aba-notificacoes');
 
 const BASE_URL = 'https://envase-pro.vercel.app';
 const ARTIFACT_DIR = 'C:/Users/kauan.pereira/.gemini/antigravity/brain/17e52817-9948-4001-b5fb-875daf584a4c';
@@ -12,11 +17,18 @@ async function runTest() {
   console.log('='.repeat(70));
 
   // 1. Teste via Supabase Client Autenticado como Admin
-  console.log('1. Autenticando cliente Supabase como Admin (pcp-brasil@interlub.com)...');
+  const adminEmail = process.env.TEST_ADMIN_EMAIL || 'pcp-brasil@interlub.com';
+  const adminPass = process.env.TEST_ADMIN_PASSWORD;
+  if (!adminPass) {
+    console.error('❌ ERRO: TEST_ADMIN_PASSWORD é obrigatório no ambiente (.env.local).');
+    process.exit(1);
+  }
+
+  console.log(`1. Autenticando cliente Supabase como Admin (${adminEmail})...`);
   const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
   const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
-    email: 'pcp-brasil@interlub.com',
-    password: 'Interlub@Pcp2026!'
+    email: adminEmail,
+    password: adminPass
   });
   if (authErr) throw new Error(`Falha no login: ${authErr.message}`);
   console.log('   ✅ Admin autenticado com sucesso. UID:', authData.user.id);
@@ -60,8 +72,8 @@ async function runTest() {
   if (await loginBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
     await loginBtn.click();
     await page.waitForTimeout(500);
-    await page.fill('input#email', 'pcp-brasil@interlub.com');
-    await page.fill('input#password', 'Interlub@Pcp2026!');
+    await page.fill('input#email', adminEmail);
+    await page.fill('input#password', adminPass);
     await page.click('button[type="submit"]:has-text("Entrar no Sistema")');
     await page.waitForTimeout(3000);
   }

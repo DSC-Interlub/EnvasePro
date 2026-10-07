@@ -1,6 +1,11 @@
 import { chromium } from 'playwright';
 import dotenv from 'dotenv';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
 dotenv.config({ path: '.env.local' });
+
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('test-tv-authenticated');
 
 const BASE_URL = 'https://envase-pro.vercel.app';
 const ARTIFACT_DIR = 'C:/Users/kauan.pereira/.gemini/antigravity/brain/17e52817-9948-4001-b5fb-875daf584a4c';
@@ -41,8 +46,15 @@ async function runTvAuthTest() {
     console.log('   ❌ Page Error:', err.message);
   });
 
-  // 1. Login Manual Inicial com tv-fabrica@interlub.com
-  console.log('\n[1/3] 🔑 Efetuando login inicial com a conta compartilhada de TV (tv-fabrica@interlub.com)...');
+  // 1. Login Manual Inicial com conta compartilhada de TV
+  const tvEmail = process.env.TEST_TV_EMAIL || 'tv-fabrica@interlub.com';
+  const tvPass = process.env.TEST_TV_PASSWORD;
+  if (!tvPass) {
+    console.error('❌ ERRO: TEST_TV_PASSWORD é obrigatório no ambiente (.env.local).');
+    process.exit(1);
+  }
+
+  console.log(`\n[1/3] 🔑 Efetuando login inicial com a conta compartilhada de TV (${tvEmail})...`);
   await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
 
   const loginBtn = page.locator('text=Fazer Login no Sistema').first();
@@ -50,8 +62,8 @@ async function runTvAuthTest() {
   await loginBtn.click();
   await page.waitForTimeout(500);
 
-  await page.fill('input#email', 'tv-fabrica@interlub.com');
-  await page.fill('input#password', 'Interlub@Tv2026!');
+  await page.fill('input#email', tvEmail);
+  await page.fill('input#password', tvPass);
   await page.click('button[type="submit"]:has-text("Entrar no Sistema")');
   await page.waitForTimeout(3500);
 

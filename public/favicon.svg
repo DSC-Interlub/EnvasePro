@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#grad)" />
+  <!-- Industrial drop and package emblem -->
+  <path d="M16 6 C16 6, 9 14.5, 9 19 C9 22.866 12.134 26 16 26 C19.866 26 23 22.866 23 19 C23 14.5, 16 6, 16 6 Z" fill="#ffffff" fill-opacity="0.95" />
+  <path d="M16 11 C16 11, 12 16.5, 12 19.5 C12 21.7 13.8 23.5 16 23.5 C18.2 23.5 20 21.7 20 19.5 C20 16.5, 16 11, 16 11 Z" fill="#0284c7" />
+</svg>

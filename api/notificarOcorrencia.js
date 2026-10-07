@@ -57,6 +57,21 @@ export default async function handler(req, res) {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
+    // Item 4: Exigir Authorization Bearer e validar com supabase.auth.getUser(token)
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Autenticação obrigatória. Forneça o cabeçalho Authorization: Bearer <token>.' });
+    }
+    const token = authHeader.substring(7).trim();
+    if (!token) {
+      return res.status(401).json({ error: 'Token de autenticação ausente.' });
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Token de autenticação inválido ou expirado.' });
+    }
+
     const { ocorrencia_id } = req.body || {};
     if (!ocorrencia_id) {
       return res.status(400).json({ error: 'ocorrencia_id obrigatório' });
@@ -76,6 +91,16 @@ export default async function handler(req, res) {
 
     if (errOcorr || !ocorrencia) {
       return res.status(404).json({ error: 'Ocorrência não encontrada' });
+    }
+
+    // Item 4: Idempotência — se já possui notificado_em preenchido, aborta disparo duplicado
+    if (ocorrencia.notificado_em) {
+      return res.status(200).json({
+        notificados: 0,
+        ja_notificado: true,
+        notificado_em: ocorrencia.notificado_em,
+        message: `Esta ocorrência já foi notificada anteriormente em ${ocorrencia.notificado_em}. Disparo duplicado prevenido com sucesso.`
+      });
     }
 
     // 2. Buscar destinatários configurados na tabela notificacao_destinatarios (somente ativos)
@@ -136,6 +161,37 @@ ${linkSistema}`;
       });
     }
 
+    // Item 3: Reserva atômica de notificado_em ANTES de disparar e-mails
+    // Impede race conditions onde duas chamadas simultâneas tentam enviar emails ao mesmo tempo
+    const agoraIso = new Date().toISOString();
+    const { data: reservado, error: errReserva } = await supabase
+      .from('empilha_ocorrencias')
+      .update({ notificado_em: agoraIso })
+      .eq('id', ocorrencia_id)
+      .is('notificado_em', null)
+      .select('id, notificado_em');
+
+    if (errReserva) {
+      console.error('[notificarOcorrencia] Erro ao reservar atomicamente notificado_em:', errReserva.message);
+      return res.status(500).json({ error: 'Erro ao reservar notificação da ocorrência.' });
+    }
+
+    if (!reservado || reservado.length === 0) {
+      // Outra requisição paralela reservou ou notificou milissegundos antes
+      const { data: atual } = await supabase
+        .from('empilha_ocorrencias')
+        .select('notificado_em')
+        .eq('id', ocorrencia_id)
+        .maybeSingle();
+
+      return res.status(200).json({
+        notificados: 0,
+        ja_notificado: true,
+        notificado_em: atual?.notificado_em || agoraIso,
+        message: 'Esta ocorrência já foi reservada ou notificada por outra requisição simultânea. Disparo concorrente prevenido com sucesso.'
+      });
+    }
+
     let notificados = 0;
     const errosEnvio = [];
 
@@ -168,7 +224,13 @@ ${linkSistema}`;
       }
     }
 
+    // Se todos os envios falharam, reverte a reserva atômica (rollback)
     if (notificados === 0 && errosEnvio.length > 0) {
+      await supabase
+        .from('empilha_ocorrencias')
+        .update({ notificado_em: null })
+        .eq('id', ocorrencia_id);
+
       return res.status(502).json({
         error: 'Falha no envio de e-mails pelo provedor.',
         detalhes: errosEnvio
@@ -177,6 +239,7 @@ ${linkSistema}`;
 
     return res.status(200).json({
       notificados,
+      notificado_em: agoraIso,
       message: `Notificação enviada com sucesso para ${notificados} destinatário(s).`
     });
   } catch (error) {

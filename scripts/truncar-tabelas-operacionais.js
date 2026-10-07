@@ -1,5 +1,10 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
+
+import { enforceNonProductionGuard } from './lib/db-guard.js';
+// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
+// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+enforceNonProductionGuard('truncar-tabelas-operacionais');
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(

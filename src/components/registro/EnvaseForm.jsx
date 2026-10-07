@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,25 @@ import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCurrentOperator } from "@/lib/AuthContext";
+import * as z from "zod";
+
+const envaseSchema = z.object({
+  sala: z.enum(["Bio", "Industrial"], {
+    errorMap: () => ({ message: "Selecione uma sala válida (Bio ou Industrial)" })
+  }),
+  data: z.string().min(1, "Data é obrigatória"),
+  op: z.string().optional().default(""),
+  operador: z.string().min(1, "Operador é obrigatório"),
+  codigo_produto: z.string().min(1, "Selecione um produto"),
+  codigo_embalagem: z.string().min(1, "Selecione uma embalagem"),
+  quantidade_produzida: z.coerce.number().min(0, "Quantidade produzida não pode ser negativa"),
+  inicio: z.string().min(1, "Horário de início é obrigatório"),
+  termino: z.string().optional().default(""),
+  dificuldade_codigo: z.coerce.number().default(0),
+  lote_embalagem: z.string().optional().default(""),
+  lotes_tampa: z.string().optional().default(""),
+  observacoes: z.string().optional().default("")
+});
 
 const DIFICULDADES = [
   { codigo: 0, descricao: "Normal" },
@@ -24,6 +43,9 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
   const formId = initialData?.id || `envase-${Date.now()}`;
   const storageKey = `envase-form-${formId}`;
   const [recordId, setRecordId] = useState(initialData?.id || null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  const inFlightAutoSaveRef = useRef(null);
 
   const [formData, setFormData] = useState(() => {
     if (!initialData) {
@@ -114,6 +136,9 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
 
   // SALVAR AUTOMATICAMENTE quando início for definido ou alterado
   useEffect(() => {
+    // Não dispara autosave em segundo plano se submissão manual estiver em andamento
+    if (isSubmitting) return;
+
     // Verificar se tem os campos mínimos necessários E tem início
     if (formData.inicio && formData.sala && formData.operador) {
       console.log('🚀 Iniciando auto-save porque início foi definido:', formData.inicio);
@@ -144,7 +169,10 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
         observacoes: formData.observacoes || ""
       };
       
-      autoSaveMutation.mutate(dataToSave);
+      const savePromise = autoSaveMutation.mutateAsync(dataToSave).catch((err) => {
+        console.error('Erro no autoSave assíncrono:', err);
+      });
+      inFlightAutoSaveRef.current = savePromise;
     }
   }, [
     formData.inicio, 
@@ -168,18 +196,48 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
     formData.lote_embalagem,
     formData.lotes_tampa,
     formData.observacoes,
-    recordId // Include recordId to ensure the autoSaveMutation function gets the latest ID state
+    recordId,
+    isSubmitting
   ]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Se já existe um recordId, significa que foi auto-salvo ou é uma edição de registro existente
-    // Então vamos apenas atualizar e finalizar
-    if (recordId) {
-      console.log('📋 Finalizando registro existente (submit):', recordId);
-      
-      // Reconstruct the full data object to send for a complete update
+    if (isSubmitting) return;
+
+    // 1. Validação via Zod Schema
+    const parseResult = envaseSchema.safeParse(formData);
+    if (!parseResult.success) {
+      const errMap = {};
+      parseResult.error.errors.forEach((err) => {
+        const fieldName = err.path[0];
+        if (fieldName) errMap[fieldName] = err.message;
+      });
+      setFormErrors(errMap);
+      return;
+    }
+    setFormErrors({});
+    setIsSubmitting(true);
+
+    try {
+      // 2. Lock anti-corrida: se houver autosave em andamento, aguarda conclusão
+      if (inFlightAutoSaveRef.current) {
+        console.log('⏳ Aguardando auto-save em andamento finalizar antes de finalizar registro...');
+        await inFlightAutoSaveRef.current;
+        inFlightAutoSaveRef.current = null;
+      }
+
+      // Re-verificar se recordId foi obtido pelo autosave ou localStorage
+      let currentRecordId = recordId;
+      if (!currentRecordId && !initialData) {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed.recordId) currentRecordId = parsed.recordId;
+          } catch (err) {}
+        }
+      }
+
       const finalDataForUpdate = {
         sala: formData.sala,
         data: formData.data,
@@ -206,26 +264,24 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
         observacoes: formData.observacoes || ""
       };
 
-      base44.entities.EnvaseRecord.update(recordId, finalDataForUpdate)
-        .then(() => {
-          console.log('✅ Registro atualizado no submit:', recordId);
-          if (!initialData) {
-            localStorage.removeItem(storageKey);
-          }
-          onSubmit(formData); // Call onSubmit (prop from parent) after the update is successful
-        })
-        .catch((error) => {
-          console.error('❌ Erro ao atualizar registro no submit:', error);
-          // Depending on parent's onSubmit contract, we might want to pass error or re-throw
-        });
-    } else {
-      // Se não existe recordId, criar novo (auto-save não ocorreu ou falhou em setar ID)
-      console.log('📋 Criando novo registro no submit (sem recordId prévio)');
-      // In this case, the onSubmit prop is responsible for the actual creation logic.
-      onSubmit(formData);
-      if (!initialData) {
-        localStorage.removeItem(storageKey);
+      if (currentRecordId) {
+        console.log('📋 Finalizando registro existente (submit):', currentRecordId);
+        await base44.entities.EnvaseRecord.update(currentRecordId, finalDataForUpdate);
+        if (!initialData) {
+          localStorage.removeItem(storageKey);
+        }
+        await onSubmit({ ...formData, id: currentRecordId });
+      } else {
+        console.log('📋 Criando novo registro no submit (sem recordId prévio)');
+        await onSubmit(formData);
+        if (!initialData) {
+          localStorage.removeItem(storageKey);
+        }
       }
+    } catch (error) {
+      console.error('❌ Erro ao atualizar/criar registro no submit:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -344,6 +400,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
               <SelectItem value="Industrial">Sala Industrial</SelectItem>
             </SelectContent>
           </Select>
+          {formErrors.sala && <p className="text-xs text-red-500">{formErrors.sala}</p>}
         </div>
 
         <div className="space-y-2">
@@ -355,6 +412,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
             onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
             required
           />
+          {formErrors.data && <p className="text-xs text-red-500">{formErrors.data}</p>}
         </div>
       </div>
 
@@ -368,6 +426,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
             onChange={(e) => setFormData(prev => ({ ...prev, op: e.target.value }))}
             placeholder="Ex: OP-2025-001"
           />
+          {formErrors.op && <p className="text-xs text-red-500">{formErrors.op}</p>}
         </div>
 
         <div className="space-y-2">
@@ -388,6 +447,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
               ))}
             </SelectContent>
           </Select>
+          {formErrors.operador && <p className="text-xs text-red-500">{formErrors.operador}</p>}
         </div>
       </div>
 
@@ -400,6 +460,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
           onChange={(e) => setFormData(prev => ({ ...prev, codigo_produto: e.target.value }))}
           placeholder="Digite o código do produto"
         />
+        {formErrors.codigo_produto && <p className="text-xs text-red-500">{formErrors.codigo_produto}</p>}
         {selectedProduct && (
           <div className="text-sm text-slate-600 mt-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="font-semibold text-blue-900 mb-2">{selectedProduct.nome}</p>
@@ -441,6 +502,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
           onChange={(e) => setFormData(prev => ({ ...prev, quantidade_produzida: parseFloat(e.target.value) || 0 }))}
           placeholder="Ex: 1000"
         />
+        {formErrors.quantidade_produzida && <p className="text-xs text-red-500">{formErrors.quantidade_produzida}</p>}
       </div>
 
       {/* Controle de Tempo */}
@@ -448,7 +510,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
         <Label>Controle de Tempo</Label>
         <div className="grid md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="inicio">Início</Label>
+            <Label htmlFor="inicio">Início *</Label>
             <div className="flex gap-2">
               <Input
                 id="inicio"
@@ -465,6 +527,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
                 <Play className="w-4 h-4" />
               </Button>
             </div>
+            {formErrors.inicio && <p className="text-xs text-red-500">{formErrors.inicio}</p>}
           </div>
 
           <div className="space-y-2">
@@ -560,18 +623,18 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
         />
       </div>
 
-      {/* Botão Salvar */}
+      {/* Botão Salvar com trava anti-corrida */}
       <Button
         type="submit"
         className="w-full bg-blue-600 hover:bg-blue-700"
-        disabled={isLoading}
+        disabled={isLoading || isSubmitting || autoSaveMutation.isPending}
       >
         <Save className="w-4 h-4 mr-2" />
-        {isLoading ? "Salvando..." : "Finalizar Registro"}
+        {isSubmitting ? "Finalizando..." : isLoading ? "Salvando..." : "Finalizar Registro"}
       </Button>
       
       {autoSaveMutation.isPending && (
-        <p className="text-sm text-blue-600 text-center">Salvando automaticamente...</p>
+        <p className="text-sm text-blue-600 text-center animate-pulse">Salvando automaticamente em segundo plano...</p>
       )}
     </form>
   );
