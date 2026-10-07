@@ -366,35 +366,154 @@ Para cada tarefa: **o que mudou (arquivos/commit) → como provou (comando) → 
 
 ---
 
-## 8. PLANO DE VIRADA (GO-LIVE) — Base44 → EnvasePro
+## 8. CHECKLIST DE GO-LIVE — Base44 → EnvasePro
 
-Só executar depois das fases 0–4 aprovadas e da Fase 5 concluída. Até o go-live a **Base44 é o sistema real**; o EnvasePro é ambiente de testes. Cada passo precisa de autorização do usuário.
+Ordem **exata**. Cada passo tem o que conferir **antes** e como **desfazer**. Um passo não começa
+antes do anterior estar conferido. Até o go-live a **Base44 é o sistema real**.
 
-**Pré-requisitos (bloqueiam a virada):**
-- [ ] Fases 0–4 aprovadas; suíte Playwright da Fase 3 verde contra o banco local.
-- [ ] Migration de reconciliação (Fase 2) aplicada em produção e **conferida** com as mesmas consultas de leitura da Fase 1.
-- [ ] `fotos-operadores` privado; bucket `arquivos` resolvido (removido ou privatizado, após backup).
-- [ ] Senhas das 4 contas oficiais trocadas (as do histórico do git estão comprometidas).
-- [ ] Decidido o que fazer com `lauremank622@gmail.com`.
+**Pré-requisitos que bloqueiam o início:** Fase 3 (testes de tela) verde; migration de
+reconciliação aplicada e conferida em produção (feito em 07/10); backup com restauração testada;
+janela de parada combinada com a fábrica; critério escrito de desistência.
 
-**Pendências obrigatórias antes da virada:**
-- [ ] **Reenviar as 6 fotos que ainda estão na Base44 para o bucket `fotos-operadores`.**
-  Alisson, Wilber, Lucas, Matheus, William e Jorge Willian têm `operators.foto_url` apontando
-  para `https://base44.app/api/apps/68fa29e.../files/public/...`. Elas sobrevivem ao deploy do
-  novo código (quando a assinatura falha, `resolverFotosOperadores` mantém a URL original), mas
-  **morrem no instante em que a Base44 sair do ar**. As outras 13 fotos já estão no bucket e
-  passam a funcionar por URL assinada depois do deploy.
-- [ ] Aplicar `20261006150002` (buckets privados) **junto** com o deploy do código. Antes disso
-  as 13 fotos quebram, porque `resolverFotosOperadores()` não existe em `origin/main`.
+---
 
-**Sequência da virada (janela de parada combinada com a operação):**
-1. **Congelar a Base44.** Avisar a fábrica, definir a hora do corte e deixar a Base44 **somente leitura** a partir dali. Nada de operação em dois sistemas ao mesmo tempo — dado lançado na Base44 após o export se perde.
-2. **Export NOVO da Base44**, completo, depois do congelamento. Guardar fora do repositório; `exports-base44/` antigo permanece intocado como referência. Registrar as contagens de origem por entidade.
-3. **Ensaio no banco local primeiro:** rodar `migrar-dados.js` (com o guard) contra o Supabase local usando o export novo. Validar contagens linha a linha (origem × destino), amostras de campos calculados (`nota_final` dentro de −90..+90), enums (`sala`), FKs de `operators`, e os CHECKs de `empilha_linhas`/`checkout_itens`. Só depois de bater 100% no local a importação toca produção.
-4. **Rotação de chaves** (só o usuário): `SUPABASE_SERVICE_ROLE_KEY` e, se quiser, a anon key, no painel do Supabase; atualizar a Vercel; `.env.local` permanece apontando para o **local**, sem chave de produção. Confirmar que a aplicação na Vercel volta a subir depois da rotação.
-5. **Importação em produção**, com o usuário executando, em transação quando possível, e relatório de contagens antes/depois. Erro de validação ⇒ `ROLLBACK` e a Base44 continua sendo o sistema real.
-6. **Smoke test na UI de produção**, com conta real, nos fluxos da Fase 3 (empilhadeira, check-out, envase, recebimento, limpeza, NF) — interface, não API.
-7. **Troca das TVs:** apontar `/Televisao`, `/TelevisaoEmpilha` e `/Painel` para o EnvasePro, com a conta `tv-fabrica` logada e sessão persistente. Confirmar **in loco** que a tela não cai por inatividade e que as fotos carregam por URL assinada do bucket privado.
-8. **Plano de retorno (rollback):** critério escrito de quando desistir, e como voltar a operar na Base44 (que fica congelada mas intacta por pelo menos 30 dias após a virada). Não remover a Base44 no mesmo dia.
-9. **Pós-virada:** acompanhar os relatórios de CSP, erros da Vercel e as contagens diárias nos primeiros dias; só então passar a CSP para modo bloqueante, se ainda não estiver.
+### (a) Publicar o código novo
 
+**Conferir antes**
+- [ ] Fase 3 passou: os fluxos de operador verdes na interface real.
+- [ ] `git log origin/main..HEAD` revisado; PR aprovado.
+- [ ] `npm run build` sem erro e `npm audit --omit=dev` sem vulnerabilidade alta.
+- [ ] A busca por segredos no diff está limpa.
+- [ ] Confirmar que `resolverFotosOperadores()` está no commit que vai subir — é o que faz as
+      fotos funcionarem com bucket privado no passo (b).
+
+**Como desfazer**
+- Vercel → Deployments → o deploy anterior → **Promote to Production**. É instantâneo e não
+  depende de git. É o rollback mais rápido que existe neste projeto; use este, não `git revert`.
+- O banco **não** precisa ser revertido: a reconciliação é compatível com o código antigo
+  (provado em 07/10), com uma exceção conhecida — "iniciar linha da empilhadeira" não funciona
+  no código antigo, porque ele grava só o nome e o CHECK exige `operador_empilhadeira_id`.
+
+---
+
+### (b) Aplicar a `20261006150002` — fotos privadas
+
+**Conferir antes**
+- [ ] O passo (a) está no ar e funcionando. **Esta ordem não é negociável:** com bucket privado e
+      código antigo, as 13 fotos quebram na hora.
+- [ ] `select id, public from storage.buckets;` → anotar o estado atual, para poder voltar.
+- [ ] A política `fotos_authenticated_read` existe (conferida em 07/10).
+- [ ] Abrir uma tela de TV logada e ver que as fotos carregam **antes** de mexer.
+
+**Aplicar:** `supabase db push` — só esta migration está fora do histórico, então é a única que roda.
+
+**Conferir depois**
+- [ ] `select id, public, file_size_limit from storage.buckets;` → os 3 com `public = false`.
+- [ ] Recarregar `/Televisao`, `/TelevisaoEmpilha`, `/Painel` e o modal de seleção de operador:
+      as 13 fotos continuam aparecendo (agora por URL assinada).
+
+**Como desfazer** — um comando, reversível na hora:
+`update storage.buckets set public = true where id in ('fotos-operadores','arquivos');`
+
+---
+
+### (c) Reenviar as 6 fotos que estão na Base44
+
+Alisson, Wilber, Lucas, Matheus, William e Jorge Willian têm `foto_url` apontando para
+`https://base44.app/api/apps/68fa29e.../files/public/...`. **Sobrevivem ao deploy** (quando a
+assinatura falha, o código mantém a URL original) mas **morrem no instante em que a Base44 sair
+do ar**.
+
+**Conferir antes**
+- [ ] A Base44 ainda está no ar — é de onde as fotos serão baixadas. **Fazer isto ANTES de
+      desligá-la**, não depois.
+- [ ] Baixar os 6 arquivos e guardar fora do repositório.
+
+**Fazer:** subir os 6 pelo cadastro de operador (como admin), para que `UploadFile` grave o
+caminho novo. Guardar antes o `foto_url` antigo das 6 linhas.
+
+**Conferir depois**
+- [ ] `select nome, foto_url from operators where foto_url like '%base44%';` → **0 linhas**.
+- [ ] As 6 fotos aparecem nas telas.
+
+**Como desfazer:** regravar o `foto_url` antigo das 6 linhas (só funciona enquanto a Base44
+estiver no ar).
+
+---
+
+### (d) Trocar a chave `service_role` e as senhas das contas
+
+**Isto é do dono. O Claude não toca.** As senhas antigas (padrão `Interlub@...`) estão no
+histórico do git e estão comprometidas, junto com os tokens que passaram por chat.
+
+**Conferir antes**
+- [ ] Lista de onde a `service_role` é usada: variáveis da Vercel e nada mais. O `.env.local` de
+      desenvolvimento aponta para o Supabase **local** e não tem chave de produção.
+- [ ] Combinar a janela: entre rotacionar e atualizar a Vercel, as funções serverless
+      (`notificarOcorrencia`) ficam fora do ar.
+
+**Fazer, nesta ordem:** rotacionar no painel do Supabase → atualizar a variável na Vercel →
+**forçar novo deploy** (a Vercel não recarrega variável sem redeploy) → trocar as senhas das 4
+contas → reautenticar as TVs.
+
+**Conferir depois**
+- [ ] Login nas 4 contas com a senha nova.
+- [ ] Registrar uma ocorrência de empilhadeira e confirmar que o e-mail sai (exercita a
+      `service_role` nova).
+
+**Como desfazer:** chave rotacionada **não volta**. Se algo quebrar, o caminho é rotacionar de
+novo e corrigir onde a chave está configurada. Por isso este passo vem depois de (a), (b) e (c),
+que são todos reversíveis.
+
+---
+
+### (e) Limpeza dos dados de teste
+
+**Conferir antes**
+- [ ] Autorização **por escrito** do dono, para este passo especificamente.
+- [ ] Backup novo, **imediatamente antes**, incluindo os **bytes** dos arquivos de storage —
+      e com restauração testada num banco local. Sem restauração testada, não é backup. O plano
+      do Supabase é gratuito: **não existe backup automático**.
+- [ ] `ROLLBACK` executado, com as contagens antes/depois de cada tabela, aprovado pelo dono.
+- [ ] Ordem das FKs respeitada. Há **5 FKs com `ON DELETE RESTRICT`** apontando para `operators`:
+      `checkout_itens.operator_id`, `empilha_linhas.operador_empilhadeira_id`,
+      `envase_records.operator_id`, `recebimento_participantes.operator_id`,
+      `recebimentos.coordenador_id`.
+- [ ] `empilhadeira_configs` **não** entra sem confirmação explícita.
+- [ ] `operacoes@interlub.com` (22 caracteres) comparado **caractere a caractere** com
+      `operacoes.equipe@interlub.com` (29), mostrando o UID antes de remover.
+
+**Fazer:** transação com `ROLLBACK` primeiro; `COMMIT` só após o "sim" por escrito.
+
+**Como desfazer:** restaurar do backup do passo anterior. **Arquivo de NF real nunca é apagado**
+— retenção legal de 5 anos.
+
+---
+
+### (f) Trocar as TVs de sistema
+
+Último passo, porque é o que a fábrica vê.
+
+**Conferir antes**
+- [ ] (a) a (e) conferidos.
+- [ ] A conta `tv-fabrica` loga com a senha nova e a sessão persiste.
+- [ ] Confirmado **in loco**, não por suposição: a tela não cai por inatividade (só admin cai,
+      aos 60 min) e as fotos carregam por URL assinada.
+
+**Fazer:** apontar `/Televisao`, `/TelevisaoEmpilha` e `/Painel` para o EnvasePro e deixar
+rodando sob observação por um turno inteiro.
+
+**Como desfazer:** apontar as TVs de volta para a Base44 — por isso ela fica **congelada mas
+intacta por no mínimo 30 dias**. Não desligar a Base44 no mesmo dia da virada.
+
+---
+
+### Depois da virada
+
+- [ ] Acompanhar relatórios de CSP, erros da Vercel e contagens diárias nos primeiros dias.
+- [ ] Só então passar a CSP de `Report-Only` para bloqueante.
+- [ ] Reimportação do histórico (5.884 envases, 7.874 itens de check-out, 36 checklists): export
+      **novo** da Base44, ensaio no banco **local** primeiro, validação de contagens linha a
+      linha, e só então produção.
+- [ ] Conferir que `authenticated` não voltou a ter `TRUNCATE` (tabela criada pelo painel nasce
+      com ele; `ALTER DEFAULT PRIVILEGES` não cobre o que o `supabase_admin` cria).
