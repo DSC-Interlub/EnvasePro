@@ -16,6 +16,7 @@
 
 import { supabase } from '../lib/supabaseClient.js';
 import { validarUpload, tipoRealDoArquivo, ErroDeUpload, mensagemDeErroSegura, registrarErro } from '@/lib/uploadSeguro';
+import { executarComRenovacao as repetirSeSessao } from '@/lib/sessaoRetry';
 
 const TABELAS_MAPEAMENTO = {
   Product: 'products',
@@ -267,6 +268,13 @@ function parseOrderBy(orderBy) {
 /**
  * Cria a interface de CRUD para uma entidade, com suporte a paginação real via .range()
  */
+/**
+ * Repete UMA vez quando a falha for de sessao. A regra vive em
+ * src/lib/sessaoRetry.js; aqui so se injeta COMO renovar a sessao.
+ */
+const executarComRenovacao = (construir) =>
+  repetirSeSessao(construir, () => supabase.auth.refreshSession());
+
 function createEntityAdapter(entityName) {
   const table = TABELAS_MAPEAMENTO[entityName] || entityName.toLowerCase();
 
@@ -307,10 +315,11 @@ function createEntityAdapter(entityName) {
 
       // Se foi solicitado um limite pequeno (<= 1000), busca diretamente
       if (limit && limit <= pageSize) {
-        let query = supabase.from(table).select('*');
-        if (sort) query = query.order(sort.column, { ascending: sort.ascending });
-        query = query.range(0, limit - 1);
-        const { data, error } = await query;
+        const { data, error } = await executarComRenovacao(() => {
+          let q = supabase.from(table).select('*');
+          if (sort) q = q.order(sort.column, { ascending: sort.ascending });
+          return q.range(0, limit - 1);
+        });
         if (error) throw error;
         const res = normalizarRetorno(data || []);
         return entityName === 'Operator' ? await resolverFotosOperadores(res) : res;
@@ -318,13 +327,12 @@ function createEntityAdapter(entityName) {
 
       // Paginação real em lotes de 1000 até exaurir ou atingir o limite
       while (true) {
-        let query = supabase.from(table).select('*');
-        if (sort) query = query.order(sort.column, { ascending: sort.ascending });
-
         const to = limit ? Math.min(from + pageSize - 1, limit - 1) : from + pageSize - 1;
-        query = query.range(from, to);
-
-        const { data, error } = await query;
+        const { data, error } = await executarComRenovacao(() => {
+          let q = supabase.from(table).select('*');
+          if (sort) q = q.order(sort.column, { ascending: sort.ascending });
+          return q.range(from, to);
+        });
         if (error) throw error;
         if (!data || data.length === 0) break;
 
