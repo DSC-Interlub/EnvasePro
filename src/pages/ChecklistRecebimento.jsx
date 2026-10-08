@@ -15,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 import ChecklistNotaBadge from "@/components/checklist/ChecklistNotaBadge";
 import AbaBaseSAP from "@/components/checklist/AbaBaseSAP";
 import IndicadoresChecklist from "@/components/checklist/IndicadoresChecklist";
+import { corTexto } from "@/lib/checklist";
 
 export default function ChecklistRecebimento() {
   const navigate = useNavigate();
@@ -122,7 +123,7 @@ export default function ChecklistRecebimento() {
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-4 text-center shadow-sm">
               <p className="text-xs text-slate-500">Nota Média</p>
-              <p className={`text-3xl font-bold ${notaMedia >= 80 ? "text-green-700" : notaMedia >= 0 ? "text-yellow-700" : "text-red-700"}`}>{notaMedia}</p>
+              <p className={`text-3xl font-bold ${corTexto(notaMedia)}`}>{notaMedia}</p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-4 text-center shadow-sm">
               <p className="text-xs text-slate-500">% Conformidade</p>

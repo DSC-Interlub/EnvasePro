@@ -14,6 +14,7 @@ import {
   ClipboardCheck, FileText, AlertTriangle, CheckCircle2,
   Activity, Calendar, User, Factory, OctagonX, Sparkles, XCircle
 } from "lucide-react";
+import { corNome } from "@/lib/checklist";
 
 /* ── helpers ── */
 function useNow() {
@@ -495,7 +496,7 @@ export default function Painel() {
             label="Checklists realizados"
             value={checklistsHoje.length}
             sub={notaMedia !== null ? `Nota média: ${notaMedia}` : "Nenhum hoje"}
-            color={notaMedia === null ? "slate" : notaMedia >= 80 ? "green" : notaMedia >= 0 ? "yellow" : "red"}
+            color={corNome(notaMedia)}
             icon={ClipboardCheck}
             link="/ChecklistRecebimento"
           />
@@ -546,7 +547,7 @@ export default function Painel() {
             label="Checklists · nota média"
             value={checklistsSemana.length}
             sub={notaMediaSemana !== null ? `Média: ${notaMediaSemana}` : "—"}
-            color={notaMediaSemana === null ? "slate" : notaMediaSemana >= 80 ? "green" : "yellow"}
+            color={corNome(notaMediaSemana)}
             icon={ClipboardCheck}
           />
           <Card>

@@ -10,6 +10,7 @@ import { ArrowLeft, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { notaColor, notaLabel } from "@/components/checklist/ChecklistNotaBadge";
+import { corTexto, corCaixa } from "@/lib/checklist";
 
 const CHECKLIST_CAMPOS = [
   { key: "pedido_disponivel_etapa5", label: "O Pedido de Compras Está Disponível na Etapa 5?" },
@@ -76,10 +77,10 @@ export default function ChecklistDetalhe() {
       </div>
 
       {/* Card de nota final */}
-      <div className={`p-6 rounded-xl border-2 text-center ${nota >= 80 ? "bg-green-50 border-green-300" : nota >= 0 ? "bg-yellow-50 border-yellow-300" : "bg-red-50 border-red-300"}`}>
+      <div className={`p-6 rounded-xl border-2 text-center ${corCaixa(nota)}`}>
         <p className="text-sm text-slate-500 mb-1">Nota Final</p>
-        <p className={`text-5xl font-bold ${nota >= 80 ? "text-green-700" : nota >= 0 ? "text-yellow-700" : "text-red-700"}`}>{nota}</p>
-        <p className={`text-lg font-semibold mt-1 ${nota >= 80 ? "text-green-700" : nota >= 0 ? "text-yellow-700" : "text-red-700"}`}>{label}</p>
+        <p className={`text-5xl font-bold ${corTexto(nota)}`}>{nota}</p>
+        <p className={`text-lg font-semibold mt-1 ${corTexto(nota)}`}>{label}</p>
         <p className="text-xs text-slate-500 mt-2">
           {checklist.total_sim} Sim (+{checklist.soma_sim}) · {checklist.total_nao} Não ({checklist.soma_nao})
         </p>
