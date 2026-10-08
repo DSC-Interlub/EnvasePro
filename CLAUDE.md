@@ -575,7 +575,16 @@ intacta por no mínimo 30 dias**. Não desligar a Base44 no mesmo dia da virada.
 ### Depois da virada
 
 - [ ] Acompanhar relatórios de CSP, erros da Vercel e contagens diárias nos primeiros dias.
-- [ ] Só então passar a CSP de `Report-Only` para bloqueante.
+- [ ] **Passar a CSP de `Report-Only` para bloqueante.** Medido em 08/10/2026 com
+      `scripts/test-csp.js`, que serve a build de produção com a política **bloqueando**:
+      **zero violações** em 12 telas, mais login, modal de operador, exportação xlsx e
+      imagem por URL assinada. A mudança é trocar a chave
+      `Content-Security-Policy-Report-Only` por `Content-Security-Policy` no `vercel.json`
+      — **mantendo o `report-uri`**, para que a violação seja bloqueada E reportada.
+      Rodar `npx vite build && node scripts/test-csp.js` antes, porque a medição vale para
+      o código daquele momento: tela nova ou biblioteca nova pode introduzir violação.
+      `frame-ancestors` é ignorado em Report-Only (hoje quem cobre é o `X-Frame-Options`);
+      ao bloquear, ele passa a valer de fato.
 - [ ] Reimportação do histórico (5.884 envases, 7.874 itens de check-out, 36 checklists): export
       **novo** da Base44, ensaio no banco **local** primeiro, validação de contagens linha a
       linha, e só então produção.
