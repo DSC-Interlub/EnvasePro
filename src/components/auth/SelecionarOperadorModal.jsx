@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { UserCheck, Users, ShieldAlert, Sparkles } from 'lucide-react';
@@ -17,17 +17,21 @@ export default function SelecionarOperadorModal({ abertoManualmente = false, aoF
   useEffect(() => {
     if (aberto) {
       setLoading(true);
-      supabase
-        .from('operators')
-        .select('*')
-        .eq('ativo', true)
-        .order('nome')
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setOperadores(data);
-          }
-          setLoading(false);
-        });
+      // Vai pelo adaptador, NÃO direto pelo supabase.
+      //
+      // O adaptador é quem troca o caminho da foto por uma URL assinada
+      // (resolverFotosOperadores). Consultando direto, `foto_url` chegava aqui
+      // como caminho cru — `<img src="arquivo.png">` — e a foto não carregava.
+      // Antes isso passava despercebido porque o banco guardava a URL pública
+      // inteira; desde que o upload passou a gravar o caminho (que é o que faz
+      // o bucket privado funcionar), consultar direto quebra a imagem.
+      base44.entities.Operator
+        .filter({ ativo: true }, 'nome')
+        .then((data) => {
+          if (data) setOperadores(data);
+        })
+        .catch(() => { /* lista vazia: o modal mostra o estado de vazio */ })
+        .finally(() => setLoading(false));
     }
   }, [aberto]);
 
