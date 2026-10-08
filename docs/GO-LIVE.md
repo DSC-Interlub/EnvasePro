@@ -274,6 +274,28 @@ cada um.
 - [ ] A tela **continua ligada** depois de 1 hora sem ninguém tocar.
 - [ ] Recarregar a página **não pede login de novo**.
 
+### Depois da V1 (e)(f)(g) — como **admin**, no **tablet**
+
+Estes três itens mudaram telas que você usa todo dia; valem uma conferida
+separada.
+
+- [ ] **Listas** (Produtos, Embalagens, Operadores, Registros): o rodapé diz
+      "Mostrando 50 de 1599" e **Carregar mais 50** soma mais 50.
+- [ ] **Busca**: procurar um código que esteja lá no fim do catálogo —
+      tem de achar **sem** você carregar as páginas anteriores.
+- [ ] **Excluir** um produto: o aviso diz **qual** produto é, e **Cancelar**
+      não apaga nada.
+- [ ] Nenhuma dessas telas **rola para o lado** no tablet nem no celular.
+- [ ] **No celular** as listas viram cartões, não tabela.
+- [ ] **Checklist**: os botões Sim / Não / N-A dão para acertar com o dedo,
+      inclusive os dois primeiros (Etapa 5 e Data de Entrega), que eram os
+      menores.
+- [ ] **Contador do menu**: o número ao lado de Empilhadeira e de Recebimento
+      bate com as pendências de verdade.
+- [ ] **Contador do menu, com a internet caindo**: desligue o wi-fi por um
+      minuto. Tem de aparecer o aviso **"Contadores desatualizados"** no menu.
+      Antes a falha era escondida e o número velho continuava na tela.
+
 ### Em qualquer conta
 
 - [ ] Abrir o console do navegador (F12) e conferir que **não há erro
