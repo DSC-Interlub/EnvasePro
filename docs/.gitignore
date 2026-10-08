@@ -1,0 +1,6 @@
+# As 111 capturas da auditoria NAO entram no repositorio: sao 26 MB que
+# ficariam no historico do git para sempre, e o valor delas e de consulta
+# pontual. Ficam na pasta de backups, fora do repositorio. As MEDICOES de todas
+# elas estao versionadas em auditoria/medidas.json e auditoria/desempenho.json.
+# Para refazer: node scripts/auditoria-v2-capturas.js
+auditoria/*.png
