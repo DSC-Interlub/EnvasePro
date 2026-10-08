@@ -223,15 +223,20 @@ export default function NovoChecklist() {
           {/* Pedido disponível */}
           <div>
             <Label className="text-sm font-medium">O Pedido de Compras Está Disponível na Etapa 5? *</Label>
-            <div className="flex gap-2 mt-1.5">
-              {["Sim", "Não"].map(op => (
-                <button type="button" key={op} onClick={() => set("pedido_disponivel_etapa5", op)}
-                  className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-colors ${formValues.pedido_disponivel_etapa5 === op
-                    ? op === "Sim" ? "bg-green-600 text-white border-green-600" : "bg-red-600 text-white border-red-600"
-                    : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}>
-                  {op}
-                </button>
-              ))}
+            <div className="flex gap-2 mt-1.5" role="radiogroup" aria-label="O Pedido de Compras Está Disponível na Etapa 5?">
+              {["Sim", "Não"].map(op => {
+                const marcado = formValues.pedido_disponivel_etapa5 === op;
+                return (
+                  <button type="button" key={op} onClick={() => set("pedido_disponivel_etapa5", op)}
+                    role="radio" aria-checked={marcado}
+                    aria-label={`O Pedido de Compras Está Disponível na Etapa 5?: ${op}`}
+                    className={`min-h-[48px] min-w-[64px] px-4 rounded-xl border-2 text-sm font-semibold transition-colors ${marcado
+                      ? op === "Sim" ? "bg-green-600 text-white border-green-600" : "bg-red-600 text-white border-red-600"
+                      : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"}`}>
+                    {op}
+                  </button>
+                );
+              })}
             </div>
             {errors.pedido_disponivel_etapa5 && <p className="text-xs text-red-500 mt-1">{errors.pedido_disponivel_etapa5.message}</p>}
           </div>
@@ -316,15 +321,20 @@ export default function NovoChecklist() {
 
           <div>
             <Label className="text-sm font-medium">A Data de Entrega Está Conforme Com a Data Prevista? *</Label>
-            <div className="flex gap-2 mt-1.5">
-              {["Sim", "Não"].map(op => (
-                <button type="button" key={op} onClick={() => set("entrega_conforme_prevista", op)}
-                  className={`px-4 py-1.5 rounded-full border text-sm font-medium transition-colors ${formValues.entrega_conforme_prevista === op
-                    ? op === "Sim" ? "bg-green-600 text-white border-green-600" : "bg-red-600 text-white border-red-600"
-                    : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}>
-                  {op}
-                </button>
-              ))}
+            <div className="flex gap-2 mt-1.5" role="radiogroup" aria-label="A Data de Entrega Está Conforme Com a Data Prevista?">
+              {["Sim", "Não"].map(op => {
+                const marcado = formValues.entrega_conforme_prevista === op;
+                return (
+                  <button type="button" key={op} onClick={() => set("entrega_conforme_prevista", op)}
+                    role="radio" aria-checked={marcado}
+                    aria-label={`A Data de Entrega Está Conforme Com a Data Prevista?: ${op}`}
+                    className={`min-h-[48px] min-w-[64px] px-4 rounded-xl border-2 text-sm font-semibold transition-colors ${marcado
+                      ? op === "Sim" ? "bg-green-600 text-white border-green-600" : "bg-red-600 text-white border-red-600"
+                      : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"}`}>
+                    {op}
+                  </button>
+                );
+              })}
             </div>
             {errors.entrega_conforme_prevista && <p className="text-xs text-red-500 mt-1">{errors.entrega_conforme_prevista.message}</p>}
           </div>
@@ -437,17 +447,31 @@ export default function NovoChecklist() {
                     {campo.label}
                     {isSprayField && isSpray && <Badge className="ml-2 bg-blue-200 text-blue-800 text-[10px]">Spray</Badge>}
                   </span>
-                  <div className="flex gap-1.5 flex-shrink-0">
-                    {campo.opcoes.map(op => (
-                      <button type="button" key={op} onClick={() => set(campo.key, op)}
-                        className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${formValues[campo.key] === op
-                          ? op === "Sim" ? "bg-green-600 text-white border-green-600"
-                            : op === "Não" ? "bg-red-600 text-white border-red-600"
-                            : "bg-slate-500 text-white border-slate-500"
-                          : "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"}`}>
-                        {op}
-                      </button>
-                    ))}
+                  <div className="flex gap-2 flex-shrink-0" role="radiogroup" aria-label={campo.label}>
+                    {campo.opcoes.map(op => {
+                      const marcado = formValues[campo.key] === op;
+                      // Alvo de toque de 48 px: a inspeção é feita em pé, no
+                      // chão de fábrica, muitas vezes de luva. Os botões eram
+                      // px-3 py-1 com texto xs — perto de 24 px de altura.
+                      const cor = marcado
+                        ? op === "Sim" ? "bg-green-600 text-white border-green-600"
+                          : op === "Não" ? "bg-red-600 text-white border-red-600"
+                          : "bg-slate-500 text-white border-slate-500"
+                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100";
+                      return (
+                        <button
+                          type="button"
+                          key={op}
+                          onClick={() => set(campo.key, op)}
+                          role="radio"
+                          aria-checked={marcado}
+                          aria-label={`${campo.label}: ${op}`}
+                          className={`min-h-[48px] min-w-[64px] px-4 rounded-xl border-2 text-sm font-semibold transition-colors ${cor}`}
+                        >
+                          {op}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
                 {errors[campo.key] && <p className="text-xs text-red-500 px-1">{errors[campo.key].message}</p>}
