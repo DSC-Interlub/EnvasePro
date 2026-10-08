@@ -614,6 +614,27 @@ const functionsAdapter = {
   },
 
   /**
+   * Contadores dos selos do menu, contados NO BANCO.
+   *
+   * Antes o menu baixava sete tabelas inteiras a cada 60 segundos e contava
+   * no navegador. A regra de cada contador está na função SQL
+   * `public.contadores_do_menu()` — ela roda com os direitos de quem chama,
+   * então o RLS continua valendo igual.
+   *
+   * Lança em caso de erro, de propósito: o chamador precisa poder mostrar que
+   * os números estão velhos. Antes, um `catch {}` escondia a falha e o menu
+   * exibia um número desatualizado como se fosse o atual.
+   */
+  async contadoresDoMenu() {
+    const { data, error } = await executarComRenovacao(() =>
+      supabase.rpc('contadores_do_menu'));
+    if (error) throw error;
+    const linha = Array.isArray(data) ? data[0] : data;
+    if (!linha) throw new Error('contadores_do_menu não devolveu nenhuma linha');
+    return linha;
+  },
+
+  /**
    * Ponto de entrada dinâmico para invocar funções do adaptador
    * Mantém compatibilidade total com o Base44 SDK: base44.functions.invoke(name, params)
    */
