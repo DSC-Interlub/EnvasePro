@@ -79,6 +79,41 @@ for (const t of TABELAS) {
 }
 
 sql += `
+-- ----------------------------------------------------------------------------
+-- SINCRONIZA AS SEQUENCES DE PROTOCOLO
+--
+-- Restaurar linhas NAO avanca a sequence: ela e um contador separado. Sem este
+-- passo, o primeiro registro novo depois da restauracao tenta reusar um
+-- protocolo que ja existe e esbarra na restricao de unicidade:
+--   duplicate key value violates unique constraint
+--     "checkout_programacoes_codigo_programacao_key"
+--
+-- Descoberto em 08/10/2026, depois de restaurar o backup e tentar criar um
+-- registro. Vale para a reimportacao do historico no go-live.
+--
+-- Cada protocolo tem o formato PREFIXO-ANO-NNNNNN; o contador e o ultimo campo.
+do $$
+declare
+  pares constant text[][] := array[
+    array['seq_checkout_prog',         'checkout_programacoes',  'codigo_programacao'],
+    array['seq_empilha_prog',          'empilha_programacoes',   'codigo_programacao'],
+    array['seq_envase_protocolo',      'envase_records',         'protocolo'],
+    array['seq_recebimento_protocolo', 'recebimentos',           'protocolo_recebimento'],
+    array['seq_checklist_recebimento', 'checklist_recebimentos', 'numero_checklist'],
+    array['seq_nf_arquivo_protocolo',  'nota_fiscal_arquivos',   'protocolo_arquivo']
+  ];
+  i int;
+  maior bigint;
+begin
+  for i in 1 .. array_length(pares, 1) loop
+    execute format(
+      'select coalesce(max(split_part(%I, ''-'', 3)::bigint), 0) from public.%I where %I is not null',
+      pares[i][3], pares[i][2], pares[i][3]) into maior;
+    execute format('alter sequence public.%I restart with %s', pares[i][1], maior + 1);
+    raise notice 'sequence % ajustada para %', pares[i][1], maior + 1;
+  end loop;
+end $$;
+
 SET session_replication_role = origin;
 COMMIT;
 

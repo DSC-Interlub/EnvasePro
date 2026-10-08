@@ -14,6 +14,7 @@ import { ArrowLeft, Search, AlertTriangle, CheckCircle2, User } from "lucide-rea
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { corTexto, corCaixa, rotulo } from "@/lib/checklist";
 
 const CHECKLIST_CAMPOS = [
   { key: "quantidade_conforme_nf", label: "A Quantidade Recebida Está Conforme Com a Nota Fiscal?", opcoes: ["Sim", "Não"] },
@@ -178,8 +179,9 @@ export default function NovoChecklist() {
 
   const { total_sim, total_nao, soma_sim, soma_nao, nota_final } = calcNota(formValues);
 
-  const notaColor = nota_final >= 80 ? "text-green-700" : nota_final >= 0 ? "text-yellow-700" : "text-red-700";
-  const notaLabel = nota_final >= 80 ? "Aprovado" : nota_final >= 0 ? "Atenção" : "Reprovado";
+  // Classificacao pela funcao unica (src/lib/checklist.js).
+  const notaColor = corTexto(nota_final);
+  const notaLabel = rotulo(nota_final);
 
   const mutation = useMutation({
     mutationFn: (data) => base44.entities.ChecklistRecebimento.create(data),
@@ -483,7 +485,7 @@ export default function NovoChecklist() {
           </div>
 
           {/* Preview nota final */}
-          <div className={`p-4 rounded-xl border-2 text-center ${nota_final >= 80 ? "bg-green-50 border-green-300" : nota_final >= 0 ? "bg-yellow-50 border-yellow-300" : "bg-red-50 border-red-300"}`}>
+          <div className={`p-4 rounded-xl border-2 text-center ${corCaixa(nota_final)}`}>
             <p className="text-xs text-slate-500 mb-1">Nota Final</p>
             <p className={`text-4xl font-bold ${notaColor}`}>{nota_final}</p>
             <p className={`text-sm font-semibold mt-1 ${notaColor}`}>{notaLabel}</p>

@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
 import { ClipboardCheck } from "lucide-react";
+import { contarPorFaixa, corTexto } from "@/lib/checklist";
 
 const CAMPOS_LABELS = {
   pedido_disponivel_etapa5: "Pedido Etapa 5",
@@ -30,9 +31,12 @@ export default function IndicadoresChecklist({ checklists }) {
 
   const total = checklists.length;
   const notaMedia = Math.round(checklists.reduce((s, c) => s + (c.nota_final ?? 0), 0) / total);
-  const aprovados = checklists.filter(c => (c.nota_final ?? 0) >= 80).length;
-  const atencao = checklists.filter(c => (c.nota_final ?? 0) >= 0 && (c.nota_final ?? 0) < 80).length;
-  const reprovados = checklists.filter(c => (c.nota_final ?? 0) < 0).length;
+  // Classificacao pela funcao unica: antes eram tres filtros com os limites
+  // escritos a mao aqui, que precisavam combinar com os de outras seis telas.
+  const porFaixa = contarPorFaixa(checklists);
+  const aprovados = porFaixa.APROVADO;
+  const atencao = porFaixa.ATENCAO;
+  const reprovados = porFaixa.REPROVADO;
 
   const pieData = [
     { name: "Aprovado", value: aprovados },
@@ -109,7 +113,7 @@ export default function IndicadoresChecklist({ checklists }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { label: "Total checklists", value: total, cls: "text-slate-700" },
-              { label: "Nota média", value: notaMedia, cls: notaMedia >= 80 ? "text-green-700" : notaMedia >= 0 ? "text-yellow-700" : "text-red-700" },
+              { label: "Nota média", value: notaMedia, cls: corTexto(notaMedia) },
               { label: "Aprovados (≥80)", value: aprovados, cls: "text-green-700" },
               { label: "Reprovados (<0)", value: reprovados, cls: "text-red-700" },
             ].map(k => (
@@ -222,7 +226,7 @@ export default function IndicadoresChecklist({ checklists }) {
                   <tr key={i.nome} className="border-t border-slate-100">
                     <td className="px-3 py-2">{i.nome}</td>
                     <td className="px-3 py-2 text-center font-bold">{i.count}</td>
-                    <td className={`px-3 py-2 text-center font-bold ${i.media >= 80 ? "text-green-700" : i.media >= 0 ? "text-yellow-700" : "text-red-700"}`}>
+                    <td className={`px-3 py-2 text-center font-bold ${corTexto(i.media)}`}>
                       {i.media}
                     </td>
                   </tr>
@@ -257,7 +261,7 @@ export default function IndicadoresChecklist({ checklists }) {
                   <td className="px-3 py-2">{c.data_entrega || "—"}</td>
                   <td className="px-3 py-2">{c.material_recebimento}</td>
                   <td className="px-3 py-2 text-center">
-                    <span className={`font-bold ${(c.nota_final ?? 0) >= 80 ? "text-green-700" : (c.nota_final ?? 0) >= 0 ? "text-yellow-700" : "text-red-700"}`}>
+                    <span className={`font-bold ${corTexto(c.nota_final ?? 0)}`}>
                       {c.nota_final ?? "—"}
                     </span>
                   </td>

@@ -26,6 +26,15 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
+  // "O papel autoritativo ja chegou?"
+  //
+  // Nao basta isLoadingAuth: quando a sessao resolve, o usuario entra com
+  // role 'operator' como valor inicial SEGURO, e so depois carregarPerfilUsuario
+  // le o papel de verdade em user_profiles. Quem decidir permissao nessa janela
+  // trata um admin como operador. Foi o que aconteceu ao proteger as rotas de
+  // catalogo: a guarda redirecionava o admin antes de o papel chegar.
+  const [perfilCarregado, setPerfilCarregado] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [loginModalAberto, setLoginModalAberto] = useState(false);
   const [isTvPage, setIsTvPage] = useState(false);
@@ -86,6 +95,11 @@ export const AuthProvider = ({ children }) => {
         }));
       } catch (err) {
         console.warn('Aviso ao carregar perfil do usuário:', err.message);
+      } finally {
+        // Tanto no sucesso quanto na falha: a tentativa terminou e quem espera
+        // o papel pode decidir. Sem o finally, uma falha deixaria a tela presa
+        // no carregando para sempre.
+        setPerfilCarregado(true);
       }
     }, 0);
   }, []);
@@ -256,6 +270,7 @@ export const AuthProvider = ({ children }) => {
       user,
       isAuthenticated,
       isLoadingAuth,
+      perfilCarregado,
       isLoadingPublicSettings: false,
       authError,
       appPublicSettings: { id: 'envasepro' },

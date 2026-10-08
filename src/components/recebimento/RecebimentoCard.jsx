@@ -5,6 +5,7 @@ import { AlertTriangle, PenLine, Play, Eye, ClipboardCheck } from "lucide-react"
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { corSelo, classificar } from "@/lib/checklist";
 
 const TIPO_COLOR = {
   "Importação": "bg-purple-100 text-purple-700",
@@ -51,15 +52,13 @@ export default function RecebimentoCard({ recebimento, itens, ocorrencias, parti
             {checklist ? (
               <button
                 className={`text-xs font-semibold px-2 py-0.5 rounded-full border cursor-pointer transition-opacity hover:opacity-80 flex items-center gap-1 ${
-                  (checklist.nota_final ?? 0) >= 80 ? "bg-green-100 text-green-700 border-green-200"
-                  : (checklist.nota_final ?? 0) >= 0 ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                  : "bg-red-100 text-red-700 border-red-200"
+                  corSelo(checklist.nota_final ?? 0)
                 }`}
                 onClick={e => { e.stopPropagation(); navigate(`/ChecklistDetalhe?id=${checklist.id}`); }}>
                 <ClipboardCheck className="w-3 h-3" />
-                {(checklist.nota_final ?? 0) >= 80 ? `✓ Checklist (${checklist.nota_final})`
-                  : (checklist.nota_final ?? 0) >= 0 ? `⚠ Checklist (${checklist.nota_final})`
-                  : `✗ Checklist (${checklist.nota_final})`}
+                {{ APROVADO: "✓", ATENCAO: "⚠", REPROVADO: "✗", SEM_NOTA: "–" }[
+                  classificar(checklist.nota_final ?? 0)
+                ]} Checklist ({checklist.nota_final})
               </button>
             ) : (
               <span className="text-xs text-slate-400 border border-slate-200 px-2 py-0.5 rounded-full flex items-center gap-1">
