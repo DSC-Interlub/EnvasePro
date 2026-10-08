@@ -196,7 +196,12 @@ export default function Layout({ children }) {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 flex flex-col">
+        {/* min-w-0: um item flex nao encolhe abaixo da largura do conteudo por
+            padrao (min-width:auto). Sem isto, uma tabela larga empurra o
+            <main> e a PAGINA inteira passa a rolar na horizontal, em vez de
+            so a tabela rolar dentro do proprio overflow-x-auto. Media no
+            tablet (820px): Registros estourava 375px, Produtos 211px. */}
+        <main className="flex-1 min-w-0 flex flex-col">
           <header className="bg-white border-b border-slate-200 px-6 py-4 md:hidden">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">

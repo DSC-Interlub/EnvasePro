@@ -72,9 +72,35 @@ async function login(page, email, senha) {
 }
 
 /** Para onde a URL foi parar depois de carregar. */
-async function abrirEVerDestino(page, rota) {
+/**
+ * Abre a rota e devolve onde o navegador PAROU.
+ *
+ * Espera por condicao, nao por tempo: a guarda so decide depois de o papel
+ * chegar de `user_profiles`, e a pagina e carregada sob demanda. Com uma
+ * espera fixa de 2,5s a PRIMEIRA rota da lista pegava a compilacao fria do
+ * Vite e era lida antes do redirecionamento, acusando uma falha de permissao
+ * que nao existia.
+ *
+ * O limite de tempo e generoso e NAO mascara falha: se a rota de fato nao
+ * redirecionar, a espera estoura e devolvemos o caminho onde ficou, que e
+ * justamente o que reprova o teste.
+ */
+async function abrirEVerDestino(page, rota, esperaSair) {
   await page.goto(`${APP}/${rota}`, { waitUntil: 'domcontentloaded' });
-  await esperar(2500);
+
+  // 1) a guarda decidiu (o spinner "Verificando permissão" saiu)
+  await page.waitForFunction(
+    () => !document.querySelector('[aria-label="Verificando permissão"]'),
+    null, { timeout: 60000 }).catch(() => {});
+
+  // 2) o desfecho esperado. Dizer qual e evita a corrida entre o fim do
+  //    spinner e a troca de URL: esperar "sair" quando o certo e sair, e
+  //    esperar a tela montar quando o certo e ficar.
+  await page.waitForFunction(({ r, sair }) => {
+    const fora = !location.pathname.toLowerCase().includes(r.toLowerCase());
+    return sair ? fora : (document.body.innerText || '').trim().length > 0;
+  }, { r: rota, sair: esperaSair }, { timeout: 60000 }).catch(() => {});
+
   const url = new URL(page.url());
   return { caminho: url.pathname, busca: url.search };
 }
@@ -93,7 +119,7 @@ async function main() {
   await login(op, process.env.TEST_OPERATOR_EMAIL, process.env.TEST_OPERATOR_PASSWORD);
 
   for (const rota of SOMENTE_ADMIN) {
-    const { caminho, busca } = await abrirEVerDestino(op, rota);
+    const { caminho, busca } = await abrirEVerDestino(op, rota, true);
     // Recusado = redirecionado para outra rota, com o aviso de acesso restrito.
     const saiu = !caminho.toLowerCase().includes(rota.toLowerCase());
     const avisou = busca.includes('acesso=restrito');
@@ -102,7 +128,7 @@ async function main() {
 
   console.log('\n[2] operador nas rotas que PODE abrir — nao pode barrar demais');
   for (const rota of LIBERADAS) {
-    const { caminho } = await abrirEVerDestino(op, rota);
+    const { caminho } = await abrirEVerDestino(op, rota, false);
     checar(`/${rota} continua aberta ao operador`,
       caminho.toLowerCase().includes(rota.toLowerCase()), `foi parar em ${caminho}`);
   }
@@ -114,7 +140,7 @@ async function main() {
   const ad = await ctxAd.newPage();
   await login(ad, process.env.TEST_ADMIN_EMAIL, process.env.TEST_ADMIN_PASSWORD);
   for (const rota of SOMENTE_ADMIN) {
-    const { caminho } = await abrirEVerDestino(ad, rota);
+    const { caminho } = await abrirEVerDestino(ad, rota, false);
     checar(`/${rota} abre para o admin`,
       caminho.toLowerCase().includes(rota.toLowerCase()), `foi parar em ${caminho}`);
   }
