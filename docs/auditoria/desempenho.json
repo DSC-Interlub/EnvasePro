@@ -1,0 +1,250 @@
+{
+  "bundle": [
+    {
+      "arquivo": "index-BIsChyVy.css",
+      "bytes": 100572,
+      "kb": 98
+    },
+    {
+      "arquivo": "index-CSEujXOH.js",
+      "bytes": 2020139,
+      "kb": 1973
+    }
+  ],
+  "telas": [
+    {
+      "rota": "Dashboard",
+      "ms": 757,
+      "requisicoes": 24,
+      "kb": 2697,
+      "tabelas": {
+        "user_profiles": 2,
+        "operators": 3,
+        "recebimento_ocorrencias": 2,
+        "limpeza_programacoes": 2,
+        "recebimentos": 2,
+        "products": 2,
+        "envase_records": 1,
+        "empilhadeira_paradas": 1,
+        "empilha_ocorrencias": 1,
+        "empilhadeira_configs": 1,
+        "empilha_linhas": 1
+      }
+    },
+    {
+      "rota": "Registros",
+      "ms": 756,
+      "requisicoes": 22,
+      "kb": 2688,
+      "tabelas": {
+        "user_profiles": 2,
+        "operators": 3,
+        "envase_records": 1,
+        "embalagens": 1,
+        "empilha_linhas": 1,
+        "empilhadeira_configs": 1,
+        "products": 2,
+        "empilha_ocorrencias": 1,
+        "empilhadeira_paradas": 1,
+        "limpeza_programacoes": 1,
+        "recebimentos": 1,
+        "recebimento_ocorrencias": 1
+      }
+    },
+    {
+      "rota": "Produtos",
+      "ms": 714,
+      "requisicoes": 18,
+      "kb": 2617,
+      "tabelas": {
+        "user_profiles": 2,
+        "operators": 2,
+        "empilha_ocorrencias": 1,
+        "empilhadeira_paradas": 1,
+        "empilhadeira_configs": 1,
+        "empilha_linhas": 1,
+        "limpeza_programacoes": 1,
+        "products": 2,
+        "recebimentos": 1,
+        "recebimento_ocorrencias": 1
+      }
+    },
+    {
+      "rota": "Checkout",
+      "ms": 816,
+      "requisicoes": 18,
+      "kb": 2141,
+      "tabelas": {
+        "user_profiles": 2,
+        "checkout_programacoes": 1,
+        "operators": 2,
+        "checkout_itens": 1,
+        "empilha_linhas": 1,
+        "empilhadeira_configs": 1,
+        "empilha_ocorrencias": 1,
+        "empilhadeira_paradas": 1,
+        "limpeza_programacoes": 1,
+        "recebimentos": 1,
+        "recebimento_ocorrencias": 1
+      }
+    },
+    {
+      "rota": "Empilhadeira",
+      "ms": 711,
+      "requisicoes": 23,
+      "kb": 2157,
+      "tabelas": {
+        "user_profiles": 2,
+        "empilhadeira_configs": 2,
+        "empilha_linhas": 2,
+        "empilhadeira_manutencoes": 1,
+        "empilha_ocorrencias": 2,
+        "operators": 2,
+        "empilhadeira_paradas": 2,
+        "empilha_programacoes": 1,
+        "limpeza_programacoes": 2,
+        "recebimentos": 1,
+        "recebimento_ocorrencias": 1
+      }
+    },
+    {
+      "rota": "Recebimento",
+      "ms": 727,
+      "requisicoes": 24,
+      "kb": 2166,
+      "tabelas": {
+        "user_profiles": 2,
+        "recebimento_ocorrencias": 2,
+        "recebimento_itens": 1,
+        "recebimento_participantes": 1,
+        "operators": 3,
+        "recebimento_fornecedores": 1,
+        "recebimentos": 2,
+        "empilhadeira_paradas": 1,
+        "empilha_ocorrencias": 1,
+        "checklist_recebimentos": 1,
+        "empilha_linhas": 1,
+        "empilhadeira_configs": 1,
+        "limpeza_programacoes": 1
+      }
+    },
+    {
+      "rota": "NotasFiscais",
+      "ms": 740,
+      "requisicoes": 17,
+      "kb": 2135,
+      "tabelas": {
+        "user_profiles": 2,
+        "operators": 2,
+        "empilha_linhas": 1,
+        "empilhadeira_configs": 1,
+        "nota_fiscal_arquivos": 1,
+        "empilhadeira_paradas": 1,
+        "empilha_ocorrencias": 1,
+        "limpeza_programacoes": 1,
+        "recebimentos": 1,
+        "recebimento_ocorrencias": 1
+      }
+    },
+    {
+      "rota": "Operadores",
+      "ms": 694,
+      "requisicoes": 18,
+      "kb": 2136,
+      "tabelas": {
+        "user_profiles": 2,
+        "operators": 3,
+        "empilha_linhas": 1,
+        "empilhadeira_paradas": 1,
+        "empilha_ocorrencias": 1,
+        "empilhadeira_configs": 1,
+        "limpeza_programacoes": 1,
+        "recebimentos": 1,
+        "recebimento_ocorrencias": 1
+      }
+    },
+    {
+      "rota": "IndicadoresEmpilha",
+      "ms": 769,
+      "requisicoes": 23,
+      "kb": 2157,
+      "tabelas": {
+        "user_profiles": 2,
+        "operators": 2,
+        "empilhadeira_configs": 2,
+        "empilha_linhas": 2,
+        "empilhadeira_manutencoes": 1,
+        "empilha_ocorrencias": 2,
+        "empilha_programacoes": 1,
+        "empilhadeira_paradas": 2,
+        "limpeza_programacoes": 2,
+        "recebimentos": 1,
+        "recebimento_ocorrencias": 1
+      }
+    },
+    {
+      "rota": "Painel",
+      "ms": 738,
+      "requisicoes": 28,
+      "kb": 2246,
+      "tabelas": {
+        "user_profiles": 2,
+        "empilha_linhas": 2,
+        "envase_records": 1,
+        "empilhadeira_paradas": 2,
+        "checkout_itens": 1,
+        "checkout_programacoes": 1,
+        "empilha_ocorrencias": 2,
+        "operators": 1,
+        "empilha_programacoes": 1,
+        "recebimento_participantes": 1,
+        "recebimentos": 2,
+        "recebimento_ocorrencias": 2,
+        "nota_fiscal_arquivos": 1,
+        "checklist_recebimentos": 1,
+        "empilhadeira_configs": 2,
+        "limpeza_programacoes": 2
+      }
+    },
+    {
+      "rota": "Televisao",
+      "ms": 788,
+      "requisicoes": 32,
+      "kb": 3351,
+      "tabelas": {
+        "user_profiles": 2,
+        "operators": 1,
+        "empilha_linhas": 2,
+        "empilha_programacoes": 1,
+        "empilhadeira_paradas": 2,
+        "empilha_ocorrencias": 2,
+        "envase_records": 4,
+        "empilhadeira_configs": 2,
+        "checkout_itens": 2,
+        "checkout_programacoes": 2,
+        "products": 4,
+        "sap_pedidos": 1,
+        "limpeza_programacoes": 1,
+        "recebimentos": 1,
+        "recebimento_ocorrencias": 1
+      }
+    }
+  ],
+  "polling": {
+    "segundos": 120,
+    "total": 30,
+    "porMinuto": 15,
+    "porTabela": {
+      "envase_records": 8,
+      "checkout_itens": 5,
+      "empilha_linhas": 3,
+      "empilhadeira_paradas": 2,
+      "empilha_ocorrencias": 2,
+      "checkout_programacoes": 4,
+      "empilha_programacoes": 2,
+      "sap_pedidos": 1,
+      "operators": 1,
+      "products": 2
+    }
+  }
+}
