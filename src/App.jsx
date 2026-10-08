@@ -31,6 +31,32 @@ const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 
+/**
+ * Páginas que só admin pode abrir.
+ *
+ * Antes, só 5 rotas declaradas uma a uma tinham `RotaProtegidaAdmin`. As telas
+ * de catálogo e de importação vinham do mapa genérico de `Pages` e **não eram
+ * protegidas**: não aparecem no menu do operador, mas quem digitasse a URL
+ * abria a tela, via a lista inteira e via botões de editar que iam falhar no
+ * RLS. O dado estava protegido; faltava a rota recusar antes de desenhar.
+ *
+ * Centralizado numa lista para que página nova entre aqui, e não em sete
+ * lugares diferentes.
+ */
+const PAGINAS_SOMENTE_ADMIN = new Set([
+  'Produtos',
+  'Embalagens',
+  'Operadores',
+  'ImportarProdutos',
+  'ImportarEmbalagens',
+  'ImportarCategorias',
+  'GerenciarUsuarios',
+  'NovaEmpilhaProgramacao',
+  'EmpilhadeiraConfig',
+  'IndicadoresEmpilha',
+  'IndicadoresRecebimento',
+]);
+
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
@@ -98,12 +124,14 @@ const AuthenticatedApp = () => {
             path={`/${path}`}
             element={
               <LayoutWrapper currentPageName={path}>
-                <Page />
+                {PAGINAS_SOMENTE_ADMIN.has(path)
+                  ? <RotaProtegidaAdmin><Page /></RotaProtegidaAdmin>
+                  : <Page />}
               </LayoutWrapper>
             }
           />
         ))}
-        <Route path="/ImportarCategorias" element={<LayoutWrapper currentPageName="ImportarCategorias"><ImportarCategorias /></LayoutWrapper>} />
+        <Route path="/ImportarCategorias" element={<LayoutWrapper currentPageName="ImportarCategorias"><RotaProtegidaAdmin><ImportarCategorias /></RotaProtegidaAdmin></LayoutWrapper>} />
         <Route path="/Empilhadeira" element={<LayoutWrapper currentPageName="Empilhadeira"><Empilhadeira /></LayoutWrapper>} />
         <Route path="/NovaEmpilhaProgramacao" element={<LayoutWrapper currentPageName="NovaEmpilhaProgramacao"><RotaProtegidaAdmin><NovaEmpilhaProgramacao /></RotaProtegidaAdmin></LayoutWrapper>} />
         <Route path="/ExecutarEmpilha" element={<LayoutWrapper currentPageName="ExecutarEmpilha"><ExecutarEmpilha /></LayoutWrapper>} />
