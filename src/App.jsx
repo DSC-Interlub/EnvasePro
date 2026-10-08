@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -8,24 +8,45 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import LoginModal from '@/components/auth/LoginModal';
 import SelecionarOperadorModal from '@/components/auth/SelecionarOperadorModal';
-import ImportarCategorias from '@/pages/ImportarCategorias';
-import Empilhadeira from '@/pages/Empilhadeira';
-import NovaEmpilhaProgramacao from '@/pages/NovaEmpilhaProgramacao';
-import ExecutarEmpilha from '@/pages/ExecutarEmpilha';
-import EmpilhadeiraConfigPage from '@/pages/EmpilhadeiraConfig';
-import IndicadoresEmpilha from '@/pages/IndicadoresEmpilha';
+
+
+
+
+
+
 import RotaProtegidaAdmin from '@/components/empilhadeira/RotaProtegidaAdmin';
-import GerenciarUsuarios from '@/pages/GerenciarUsuarios';
-import Recebimento from '@/pages/Recebimento';
-import ExecutarRecebimento from '@/pages/ExecutarRecebimento';
-import IndicadoresRecebimento from '@/pages/IndicadoresRecebimento';
-import ChecklistRecebimentoPage from '@/pages/ChecklistRecebimento';
-import NovoChecklist from '@/pages/NovoChecklist';
-import ChecklistDetalhe from '@/pages/ChecklistDetalhe';
-import Painel from '@/pages/Painel';
-import NotasFiscais from '@/pages/NotasFiscais';
-import NovaNotaFiscal from '@/pages/NovaNotaFiscal';
-import NotaFiscalDetalhe from '@/pages/NotaFiscalDetalhe';
+
+
+
+
+
+
+
+
+
+
+
+import LimiteDeErro, { CarregandoTela } from '@/components/LimiteDeErro';
+
+// Cada pagina vira um pedaco de JavaScript proprio, baixado so quando
+// alguem abre aquela rota.
+const ImportarCategorias = lazy(() => import('@/pages/ImportarCategorias'));
+const Empilhadeira = lazy(() => import('@/pages/Empilhadeira'));
+const NovaEmpilhaProgramacao = lazy(() => import('@/pages/NovaEmpilhaProgramacao'));
+const ExecutarEmpilha = lazy(() => import('@/pages/ExecutarEmpilha'));
+const EmpilhadeiraConfigPage = lazy(() => import('@/pages/EmpilhadeiraConfig'));
+const IndicadoresEmpilha = lazy(() => import('@/pages/IndicadoresEmpilha'));
+const GerenciarUsuarios = lazy(() => import('@/pages/GerenciarUsuarios'));
+const Recebimento = lazy(() => import('@/pages/Recebimento'));
+const ExecutarRecebimento = lazy(() => import('@/pages/ExecutarRecebimento'));
+const IndicadoresRecebimento = lazy(() => import('@/pages/IndicadoresRecebimento'));
+const ChecklistRecebimentoPage = lazy(() => import('@/pages/ChecklistRecebimento'));
+const NovoChecklist = lazy(() => import('@/pages/NovoChecklist'));
+const ChecklistDetalhe = lazy(() => import('@/pages/ChecklistDetalhe'));
+const Painel = lazy(() => import('@/pages/Painel'));
+const NotasFiscais = lazy(() => import('@/pages/NotasFiscais'));
+const NovaNotaFiscal = lazy(() => import('@/pages/NovaNotaFiscal'));
+const NotaFiscalDetalhe = lazy(() => import('@/pages/NotaFiscalDetalhe'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -112,6 +133,12 @@ const AuthenticatedApp = () => {
 
   return (
     <>
+      {/* Um Suspense e um limite de erro em volta de TODAS as rotas:
+          o Suspense mostra o indicador enquanto o pedaco daquela pagina
+          baixa, e o limite de erro evita a tela em branco se o download
+          falhar ou o render quebrar. */}
+      <LimiteDeErro>
+      <Suspense fallback={<CarregandoTela />}>
       <Routes>
         <Route path="/" element={
           <LayoutWrapper currentPageName={mainPageKey}>
@@ -150,6 +177,8 @@ const AuthenticatedApp = () => {
         <Route path="/NotaFiscalDetalhe" element={<LayoutWrapper currentPageName="NotaFiscalDetalhe"><NotaFiscalDetalhe /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+      </Suspense>
+      </LimiteDeErro>
 
       <LoginModal />
       <SelecionarOperadorModal />
