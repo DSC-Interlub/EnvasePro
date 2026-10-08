@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Calendar, Package, CheckCircle, Clock, Filter, AlertCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatarData } from '@/lib/datas';
 
 export default function Checkout() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
@@ -78,7 +79,7 @@ export default function Checkout() {
     if (!prog.data_programada) return false;
     
     const progDate = prog.data_programada;
-    const progMonth = format(new Date(progDate + 'T00:00:00'), "yyyy-MM");
+    const progMonth = formatarData(progDate, "yyyy-MM");
     
     let dateMatch = true;
     
@@ -180,11 +181,11 @@ export default function Checkout() {
             {(startDate || endDate) && (
               <p className="text-xs text-slate-500 mt-2">
                 {startDate && endDate ? (
-                  <>Mostrando programações de {format(new Date(startDate + 'T00:00:00'), "dd/MM/yyyy")} até {format(new Date(endDate + 'T00:00:00'), "dd/MM/yyyy")}</>
+                  <>Mostrando programações de {formatarData(startDate, "dd/MM/yyyy")} até {formatarData(endDate, "dd/MM/yyyy")}</>
                 ) : startDate ? (
-                  <>Mostrando programações a partir de {format(new Date(startDate + 'T00:00:00'), "dd/MM/yyyy")}</>
+                  <>Mostrando programações a partir de {formatarData(startDate, "dd/MM/yyyy")}</>
                 ) : (
-                  <>Mostrando programações até {format(new Date(endDate + 'T00:00:00'), "dd/MM/yyyy")}</>
+                  <>Mostrando programações até {formatarData(endDate, "dd/MM/yyyy")}</>
                 )}
               </p>
             )}
@@ -282,7 +283,7 @@ export default function Checkout() {
                             <div className="flex items-center gap-3 mb-2">
                               <Calendar className="w-5 h-5 text-blue-600" />
                               <h3 className="text-lg font-bold text-slate-900">
-                                {format(new Date(prog.data_programada + 'T00:00:00'), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                {formatarData(prog.data_programada, "EEEE, dd 'de' MMMM 'de' yyyy")}
                               </h3>
                             </div>
                             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">

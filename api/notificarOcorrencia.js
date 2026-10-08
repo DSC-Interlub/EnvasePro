@@ -16,14 +16,36 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Lição 5: Domínio fixo de produção
 const APP_BASE_URL = process.env.APP_BASE_URL || 'https://envase.interlub.com.br';
 
-// ── Rate limiting in-memory (por IP) ──────────────────────────────────────────
-// Item 15: Limita 10 chamadas por IP por janela de 60 segundos.
+// ── Freio em memória, por IP ──────────────────────────────────────────────────
+//
+// LIMITAÇÃO, declarada de propósito: isto NÃO é um limite de requisições de
+// verdade. O contador vive na memória de UMA instância serverless. A Vercel
+// pode atender cada chamada numa instância diferente, e instância fria nasce
+// com o contador zerado — logo este freio é "melhor que nada", não garantia.
+//
+// O limite que vale é a regra do Vercel Firewall em /api/*, criada no painel.
+// Ver docs/LIMITE-DE-REQUISICOES.md. Ela roda na borda, antes desta função.
+//
+// Este freio fica porque é barato e corta a rajada óbvia dentro de uma mesma
+// instância quente.
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_IPS = 5000; // teto de memória
 const rateLimitMap = new Map(); // ip → { count, windowStart }
 
 function checkRateLimit(ip) {
   const now = Date.now();
+
+  // Sem esta limpeza o Map cresce para sempre numa instância que fique quente:
+  // cada IP novo acrescenta uma entrada que nunca saía.
+  if (rateLimitMap.size > RATE_LIMIT_MAX_IPS) {
+    for (const [chave, valor] of rateLimitMap) {
+      if (now - valor.windowStart > RATE_LIMIT_WINDOW_MS) rateLimitMap.delete(chave);
+    }
+    // Ainda cheio depois da limpeza: zera, para não virar vazamento de memória.
+    if (rateLimitMap.size > RATE_LIMIT_MAX_IPS) rateLimitMap.clear();
+  }
+
   const entry = rateLimitMap.get(ip);
   if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
     rateLimitMap.set(ip, { count: 1, windowStart: now });
@@ -49,7 +71,7 @@ export default async function handler(req, res) {
   }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    return res.status(500).json({ error: 'Configurações de servidor Supabase ausentes.' });
+    return res.status(500).json({ error: 'Serviço indisponível no momento. Avise o suporte.' });
   }
 
   try {
@@ -110,7 +132,7 @@ export default async function handler(req, res) {
       .eq('ativo', true);
 
     if (errDest) {
-      console.error('[notificarOcorrencia] Erro ao consultar tabela notificacao_destinatarios:', errDest.message);
+      console.error('[notificarOcorrencia] falha ao buscar destinatarios', { codigo: errDest?.code || 'desconhecido' });
       return res.status(500).json({ error: 'Erro interno ao buscar destinatários.' });
     }
 
@@ -119,7 +141,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         notificados: 0,
         aviso: 'Nenhum destinatário ativo configurado no sistema.',
-        message: 'A ocorrência foi registrada, porém nenhum e-mail foi enviado pois a tabela notificacao_destinatarios está sem destinatários ativos.'
+        message: 'A ocorrência foi registrada, mas nenhum e-mail foi enviado: não há destinatários ativos cadastrados.'
       });
     }
 
@@ -157,7 +179,7 @@ ${linkSistema}`;
     if (!resendApiKey) {
       console.error('[notificarOcorrencia] ERRO: RESEND_API_KEY não configurada no ambiente.');
       return res.status(500).json({
-        error: 'Provedor de e-mail não configurado. Defina a variável de ambiente RESEND_API_KEY na Vercel.'
+        error: 'Envio de e-mail indisponível no momento. Avise o suporte.'
       });
     }
 
@@ -172,7 +194,7 @@ ${linkSistema}`;
       .select('id, notificado_em');
 
     if (errReserva) {
-      console.error('[notificarOcorrencia] Erro ao reservar atomicamente notificado_em:', errReserva.message);
+      console.error('[notificarOcorrencia] falha ao reservar notificado_em', { codigo: errReserva?.code || 'desconhecido' });
       return res.status(500).json({ error: 'Erro ao reservar notificação da ocorrência.' });
     }
 

@@ -132,6 +132,33 @@ as contagens pós-teste conferem com o backup em todas as tabelas.
 
 ---
 
+## 2.0.1 CORREÇÃO — o que há de verdade no storage (07/10/2026)
+
+Levantado baixando os bytes dos 25 arquivos, não por suposição. **Corrige o que eu havia
+relatado antes.**
+
+| | Quantidade | O que é de fato |
+|---|---|---|
+| `fotos-operadores` | 13 arquivos | PNGs de **70 bytes** (1 pixel). Pertencem **todos** aos 13 operadores de teste `QA` |
+| `notas-fiscais` | 12 arquivos | também 70 bytes cada; os 14 registros de `nota_fiscal_arquivos` **todos** têm marcador de teste |
+| `arquivos` | **0** | vazio, agora privado |
+
+**Não existe um único arquivo real no storage.** Consequências:
+
+- A retenção legal de 5 anos das notas fiscais **ainda não protege nada**, porque não há NF
+  real. Passa a valer quando o sistema entrar em uso.
+- Eu havia dito que privatizar o bucket "quebraria 13 fotos". A ordem (publicar o código
+  antes) continuava certa, mas **as 13 eram de teste** — não havia nada real em risco.
+- As **únicas fotos reais** são as 6 que ainda estão no `base44.app`. Ver o passo (c) do
+  go-live.
+
+Backup completo (banco + os 25 arquivos) e **teste de restauração no banco local em
+07/10/2026: 24 de 24 tabelas, 1869 de 1869 linhas.** Ferramentas em `scripts/backup/`.
+A restauração **não** inclui senhas: a Management API não as expõe, logo as 4 contas
+precisam ser recriadas e as senhas redefinidas num cenário de desastre.
+
+---
+
 ## 2.1 ACHADOS DA FASE 0 (07/10/2026) — PROVADOS no banco local
 
 **F0-1 — As migrations do repo, sozinhas, produzem um banco INUTILIZAVEL. (BLOQUEIA a Fase 3.)**
@@ -419,6 +446,16 @@ janela de parada combinada com a fábrica; critério escrito de desistência.
 
 ### (c) Reenviar as 6 fotos que estão na Base44
 
+> **CORREÇÃO DE 07/10/2026, depois de baixar os arquivos:** estas 6 são as **únicas fotos
+  reais que existem**. Os 13 arquivos que estão no bucket pertencem todos aos 13 operadores
+> de teste `QA` e são PNGs de **70 bytes** (1 pixel), gerados por teste automatizado. **Nenhum
+> operador real tem foto no bucket.** Depois da limpeza dos 13 QA o bucket fica vazio.
+> Outros 8 operadores reais (Lucas Araujo, Lucas Fontes, Rodrigo, Mike, Márcio, Elder, Victor,
+> Renan) não têm foto nenhuma — decidir se entram sem foto ou se alguém vai fotografá-los.
+>
+> Portanto este passo deixou de ser "completar as fotos" e passou a ser **a única forma de
+> haver qualquer foto real no sistema**.
+
 Alisson, Wilber, Lucas, Matheus, William e Jorge Willian têm `foto_url` apontando para
 `https://base44.app/api/apps/68fa29e.../files/public/...`. **Sobrevivem ao deploy** (quando a
 assinatura falha, o código mantém a URL original) mas **morrem no instante em que a Base44 sair
@@ -469,6 +506,22 @@ que são todos reversíveis.
 
 ### (e) Limpeza dos dados de teste
 
+**Os 13 operadores `QA`, com números levantados em 07/10/2026 (dry-run executado, nada
+apagado):** o critério é duplo — `nome = 'Operador Teste Funcional QA'` **E**
+`matricula LIKE 'QA-%'` — e o script **aborta sozinho** se não casar exatamente 13 e deixar
+14. Referências que bloqueiam, pelas 5 chaves estrangeiras `ON DELETE RESTRICT`:
+`recebimento_participantes` 10, `recebimentos` 3, `envase_records` 1, `checkout_itens` 0,
+`empilha_linhas` 0. Ordem: participantes → envases → itens de check-out → recebimentos
+(que faz `CASCADE` nos filhos) → operadores.
+Dois efeitos a confirmar antes do `COMMIT`: `recebimento_ocorrencias` vai de 2 para **0**
+(ambas são filhas dos 3 recebimentos de teste, por `CASCADE`), e os 6
+`checklist_recebimentos` **já são órfãos hoje** (`recebimento_id IS NULL`), portanto a
+limpeza **não** orfana nada novo. Resultado esperado: 14 operadores, 60 envases,
+16 recebimentos, catálogo intacto (1599 produtos, 52 embalagens).
+Apagar também os 13 arquivos do bucket `fotos-operadores`, que pertencem a esses operadores.
+
+
+
 **Conferir antes**
 - [ ] Autorização **por escrito** do dono, para este passo especificamente.
 - [ ] Backup novo, **imediatamente antes**, incluindo os **bytes** dos arquivos de storage —
@@ -491,6 +544,17 @@ que são todos reversíveis.
 ---
 
 ### (f) Trocar as TVs de sistema
+
+> **As telas de TV PRECISAM de sessão.** Desde 07/10/2026 `/Televisao`,
+> `/TelevisaoEmpilha` e `/Painel` exigem login como qualquer outra rota. Não existe mais
+> "TV pública": a `remove_anon_rls` tirou as políticas do `anon` e a `reconcile_security`
+> revogou os GRANTs, então uma TV sem sessão não carregaria dado nenhum — mostraria a
+> moldura vazia e encheria o console de erro de permissão.
+>
+> Na prática: **cada TV da fábrica precisa estar logada na conta `tv-fabrica`**, uma vez,
+> com a sessão persistida no navegador daquele equipamento. Se o navegador da TV limpar
+> dados do site, ou se o equipamento for trocado, **é preciso logar de novo**. A conta
+> `tv-fabrica` continua imune ao logout por inatividade (só o admin cai, aos 60 min).
 
 Último passo, porque é o que a fábrica vê.
 
@@ -515,5 +579,16 @@ intacta por no mínimo 30 dias**. Não desligar a Base44 no mesmo dia da virada.
 - [ ] Reimportação do histórico (5.884 envases, 7.874 itens de check-out, 36 checklists): export
       **novo** da Base44, ensaio no banco **local** primeiro, validação de contagens linha a
       linha, e só então produção.
-- [ ] Conferir que `authenticated` não voltou a ter `TRUNCATE` (tabela criada pelo painel nasce
-      com ele; `ALTER DEFAULT PRIVILEGES` não cobre o que o `supabase_admin` cria).
+- [ ] **Conferir que `authenticated` não voltou a ter `TRUNCATE`.** `TRUNCATE` **não passa
+      por RLS**: quem o tem esvazia a tabela inteira, qualquer que seja a política. A
+      migration `20261007000002` o revogou, e o `ALTER DEFAULT PRIVILEGES` impede que tabela
+      nova criada por `postgres` (ou seja, por migration) volte a nascer com ele.
+      **O que NÃO está coberto:** `ALTER DEFAULT PRIVILEGES` só vale para objetos criados
+      pelo papel que o executou. **Tabela criada pelo painel do Supabase nasce pelo
+      `supabase_admin`, com `arwdDxtm` — ou seja, com `TRUNCATE` de volta.** Não há como
+      cobrir isso por migration. Toda vez que uma tabela for criada pelo painel, rodar:
+      `REVOKE TRUNCATE ON ALL TABLES IN SCHEMA public FROM authenticated;`
+      Conferência: `select count(*) from information_schema.table_privileges where
+      table_schema='public' and grantee='authenticated' and privilege_type='TRUNCATE';`
+      → tem de dar **0**.
+

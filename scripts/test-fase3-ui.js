@@ -93,15 +93,37 @@ async function estaAutenticado(page) {
   return temBotaoLogin === 0 && temCampoEmail === 0;
 }
 
+/**
+ * Espera uma condicao virar verdadeira, em vez de dormir um tempo fixo.
+ *
+ * Espera fixa e a origem classica de teste intermitente: em 1 de cada 5
+ * rodadas o login nao cabia nos 3,5 s (servidor de desenvolvimento frio,
+ * maquina ocupada) e o teste relatava "ficou na tela de login" como se fosse
+ * defeito do app. Isso e falso negativo, e falso negativo custa tanto quanto
+ * falso positivo: faz perder tempo investigando o que nao esta quebrado.
+ */
+async function esperarPor(condicao, limiteMs = 20000, intervaloMs = 250) {
+  const fim = Date.now() + limiteMs;
+  while (Date.now() < fim) {
+    if (await condicao()) return true;
+    await new Promise((r) => setTimeout(r, intervaloMs));
+  }
+  return false;
+}
+
 async function login(page, conta) {
   await page.goto(APP, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1500);
 
   // A tela inicial deslogada traz um botao que abre o modal de login.
+  await esperarPor(async () =>
+    (await page.getByRole('button', { name: /fazer login/i }).count()) > 0 ||
+    (await page.locator('#email').count()) > 0 ||
+    (await estaAutenticado(page)));
+
   const botaoAbrir = page.getByRole('button', { name: /fazer login/i });
   if (await botaoAbrir.count()) {
     await botaoAbrir.first().click();
-    await page.waitForTimeout(900);
+    await esperarPor(async () => (await page.locator('#email').count()) > 0, 10000);
   }
 
   const campoEmail = page.locator('#email');
@@ -109,16 +131,21 @@ async function login(page, conta) {
     await campoEmail.fill(conta.email);
     await page.locator('#password').fill(conta.senha);
     await page.locator('button[type="submit"]').first().click();
-    await page.waitForTimeout(3500);
+    // Espera a sessao de fato, ou o modal de operador aparecer.
+    await esperarPor(async () =>
+      (await estaAutenticado(page)) ||
+      (await page.locator('button').filter({ hasText: /SEED-/ }).count()) > 0);
   }
 
   // Modal do operador fisico. O overlay intercepta o ponteiro, por isso force.
   const opcoes = page.locator('button').filter({ hasText: /SEED-/ });
   if (await opcoes.count()) {
     await opcoes.first().click({ force: true });
-    await page.waitForTimeout(1500);
+    await esperarPor(async () =>
+      (await page.locator('button').filter({ hasText: /SEED-/ }).count()) === 0, 10000);
   }
 
+  await esperarPor(() => estaAutenticado(page), 10000);
   return estaAutenticado(page);
 }
 
@@ -246,15 +273,31 @@ async function main() {
   // Aqui a tela nao e so aberta: a acao e executada e o resultado e CONFERIDO
   // NO BANCO. Abrir tela nao prova nada; isso foi o erro dos testes anteriores.
 
-  /** Escolhe um valor num Select do shadcn/Radix pelo texto da opcao. */
-  async function escolherNoSelect(page, rotulo, textoOpcao) {
-    const grupo = page.locator('div').filter({ hasText: new RegExp(rotulo, 'i') });
-    const gatilho = page.getByRole('combobox').filter({ hasNotText: '___nunca___' });
-    const alvo = (await grupo.count()) ? grupo.last().getByRole('combobox').first() : gatilho.first();
-    await alvo.click({ force: true });
-    await page.waitForTimeout(500);
-    await page.getByRole('option', { name: textoOpcao, exact: false }).first().click({ force: true });
-    await page.waitForTimeout(400);
+  /**
+   * Escolhe um valor num Select do shadcn/Radix.
+   *
+   * @param escopo   Locator onde procurar (o dialogo aberto, ou a pagina)
+   * @param indice   qual combobox dentro do escopo, na ordem do formulario
+   * @param texto    texto da opcao
+   *
+   * Versao anterior clicava sem esperar e usava um filtro improvisado
+   * (`hasNotText: '___nunca___'`) so para pegar "qualquer combobox". Em
+   * algumas rodadas o modal ainda nao tinha renderizado e o clique estourava
+   * em 30 s, derrubando a suite inteira. Agora espera o elemento existir.
+   */
+  async function escolherNoSelect(page, escopo, indice, texto) {
+    const caixas = escopo.getByRole('combobox');
+    const apareceu = await esperarPor(async () => (await caixas.count()) > indice, 15000);
+    if (!apareceu) throw new Error(`combobox ${indice} nao apareceu para escolher "${texto}"`);
+
+    await caixas.nth(indice).click({ force: true });
+
+    const opcao = page.getByRole('option', { name: texto, exact: false });
+    const abriu = await esperarPor(async () => (await opcao.count()) > 0, 10000);
+    if (!abriu) throw new Error(`opcao "${texto}" nao apareceu na lista`);
+
+    await opcao.first().click({ force: true });
+    await esperarPor(async () => (await opcao.count()) === 0, 5000);
   }
 
   console.log('\n[EMPILHADEIRA] iniciar linha com operador e ajudante (escrita real)');
@@ -274,11 +317,22 @@ async function main() {
       await print(op, 'empilha_linha_pendente'));
 
     if (achouBotao) {
-      await botaoIniciar.first().click({ force: true });
-      await op.waitForTimeout(900);
+      // O dialogo nem sempre abre no primeiro clique: a pagina ainda esta
+      // hidratando e o React troca o nó sob o ponteiro. Em vez de dormir e
+      // torcer, confirma que abriu e tenta de novo se nao abriu.
+      const tituloModal = op.getByText(/iniciar movimenta/i);
+      let abriu = false;
+      for (let tentativa = 1; tentativa <= 3 && !abriu; tentativa += 1) {
+        await botaoIniciar.first().click({ force: true });
+        abriu = await esperarPor(async () => (await tituloModal.count()) > 0, 6000);
+      }
+      registrar('empilhadeira', 'modal Iniciar Movimentacao abre', abriu);
       await print(op, 'empilha_modal_iniciar');
-      await escolherNoSelect(op, 'Operador Empilhadeira', 'SEED-Bruno Empilhador');
-      await escolherNoSelect(op, 'Operador Ajudante', 'SEED-Carla Ajudante');
+
+      const dialogo = op.getByRole('dialog');
+      await esperarPor(async () => (await dialogo.getByRole('combobox').count()) >= 2, 12000);
+      await escolherNoSelect(op, dialogo, 0, 'SEED-Bruno Empilhador'); // Operador Empilhadeira
+      await escolherNoSelect(op, dialogo, 1, 'SEED-Carla Ajudante');   // Operador Ajudante
       await print(op, 'empilha_modal_preenchido');
       await op.getByRole('button', { name: /iniciar agora/i }).first().click({ force: true });
       await op.waitForTimeout(2500);
@@ -322,7 +376,7 @@ async function main() {
       await print(op, 'checkout_item_edicao'));
 
     if (temSelect) {
-      await escolherNoSelect(op, 'Operador', 'SEED-Ana Operadora');
+      await escolherNoSelect(op, op.locator('body'), 0, 'SEED-Ana Operadora');
       await print(op, 'checkout_operador_escolhido');
       // ATENCAO: a pagina tem OUTRO "Salvar" no topo, o das Observacoes da
       // Programacao. Pegar o primeiro clicava no botao errado e o item nunca

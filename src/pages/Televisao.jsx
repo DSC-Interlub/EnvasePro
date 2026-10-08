@@ -8,6 +8,7 @@ import { Factory, Package, Clock, User, TrendingUp, CheckCircle, AlertCircle, Ch
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ImportacoesCard from "@/components/tv/ImportacoesCard";
+import { formatarData } from '@/lib/datas';
 
 /* ===================== UTILITÁRIOS ===================== */
 function calcElapsed(startTime) {
@@ -212,7 +213,7 @@ function SlideCheckout({ checkoutItems, loadingCheckout, getOperatorPhoto, impor
                       <div className="col-span-2">
                         <p className="text-slate-500 text-[10px] font-bold uppercase mb-1">Cliente</p>
                         <p className="text-2xl font-bold text-white leading-tight mb-1">{item.cliente}</p>
-                        <p className="text-slate-400 text-[10px]">Entrega: {format(new Date(item.data_entrega + 'T00:00:00'), "dd/MM/yyyy")}</p>
+                        <p className="text-slate-400 text-[10px]">Entrega: {formatarData(item.data_entrega, "dd/MM/yyyy")}</p>
                       </div>
                       <div></div><div></div>
                       <div className="col-span-2 text-right">

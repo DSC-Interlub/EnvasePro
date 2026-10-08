@@ -13,6 +13,7 @@ import { ArrowLeft, Save, Upload, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { formatarData } from '@/lib/datas';
 
 export default function NovaProgramacaoCheckout() {
   const navigate = useNavigate();
@@ -230,7 +231,7 @@ PV-20.237	22/10/2025	Tec Tor Indústria e Comércio de"
                         <p className="font-semibold text-slate-900">{pedido.numero_pedido}</p>
                         <p className="text-sm text-slate-600">{pedido.cliente}</p>
                         <p className="text-xs text-slate-500 mt-1">
-                          Entrega: {format(new Date(pedido.data_entrega + 'T00:00:00'), "dd/MM/yyyy")}
+                          Entrega: {formatarData(pedido.data_entrega, "dd/MM/yyyy")}
                         </p>
                       </div>
                       <Button

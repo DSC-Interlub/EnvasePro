@@ -11,22 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Play, Square, Save, Edit, Calendar, User, Package, Clock, AlertCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { formatarData } from "@/lib/datas";
 
-/**
- * Formata uma data vinda do banco (texto "AAAA-MM-DD") sem derrubar a tela.
- *
- * `format(new Date(null + 'T00:00:00'))` produz "nullT00:00:00", que vira Data
- * Invalida, e date-fns lanca "Invalid time value". Como isso acontece durante o
- * render, o React desmonta a arvore inteira e a pagina fica EM BRANCO.
- * E facil de acontecer: data_entrega e data_saida sao colunas anulaveis, logo
- * um item sem data de entrega apagava a tela de check-out inteira.
- */
-function formatarData(valor, vazio = "—") {
-  if (!valor) return vazio;
-  const d = new Date(`${valor}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return vazio;
-  return format(d, "dd/MM/yyyy");
-}
 
 export default function CheckoutItemCard({ item, operators }) {
   const queryClient = useQueryClient();
@@ -186,7 +172,7 @@ export default function CheckoutItemCard({ item, operators }) {
               </div>
               <p className="text-slate-700 font-medium">{item.cliente}</p>
               <p className="text-sm text-slate-500">
-                Entrega: {formatarData(item.data_entrega, "sem data")}
+                Entrega: {formatarData(item.data_entrega, "dd/MM/yyyy", "sem data")}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -446,7 +432,7 @@ export default function CheckoutItemCard({ item, operators }) {
                   <div>
                     <p className="text-slate-500 mb-1">Data Real de Finalização</p>
                     <p className="font-semibold text-orange-600">
-                      {formatarData(item.data_finalizacao_real, "N/A")}
+                      {formatarData(item.data_finalizacao_real, "dd/MM/yyyy", "N/A")}
                     </p>
                   </div>
                   <div className="md:col-span-2">

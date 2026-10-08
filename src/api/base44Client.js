@@ -15,6 +15,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient.js';
+import { validarUpload, tipoRealDoArquivo, ErroDeUpload, mensagemDeErroSegura, registrarErro } from '@/lib/uploadSeguro';
 
 const TABELAS_MAPEAMENTO = {
   Product: 'products',
@@ -271,11 +272,34 @@ function createEntityAdapter(entityName) {
 
   return {
     /**
+     * Garante que a sessão já foi lida do armazenamento antes de consultar.
+     *
+     * O supabase-js carrega a sessão de forma assíncrona na inicialização. Uma
+     * consulta disparada nessa janela sai SEM o cabeçalho Authorization, como
+     * `anon`. Antes isso passava despercebido: `anon` tinha GRANT e o RLS
+     * devolvia lista vazia, então a tela só aparecia sem dados. Depois que o
+     * `anon` perdeu todos os privilégios (migration 20261007000002), o mesmo
+     * caso virou um 401 visível — foi assim que o problema apareceu, de forma
+     * intermitente, logo após o login.
+     *
+     * `getSession()` resolve essa leitura e fica em cache, então o custo é
+     * pago uma vez por carregamento de página.
+     */
+    async aguardarSessao() {
+      try {
+        await supabase.auth.getSession();
+      } catch {
+        // Sem sessão o RLS decide; não é este o lugar de tratar login.
+      }
+    },
+
+    /**
      * Lista registros com ordenação e limite.
      * Se limit for omitido ou > 1000, pagina automaticamente via .range()
      * até trazer a lista completa (Ajuste Obrigatório 1 - Paginação Real).
      */
     async list(orderBy, limit = null) {
+      await this.aguardarSessao();
       const sort = parseOrderBy(orderBy);
       const pageSize = 1000;
       let from = 0;
@@ -317,6 +341,7 @@ function createEntityAdapter(entityName) {
      * Filtra registros com condições, ordenação e suporte à paginação real.
      */
     async filter(conditions = {}, orderBy = null, limit = null) {
+      await this.aguardarSessao();
       const sort = parseOrderBy(orderBy);
       const pageSize = 1000;
       let from = 0;
@@ -375,6 +400,7 @@ function createEntityAdapter(entityName) {
      * Busca um único registro pelo ID.
      */
     async get(id) {
+      await this.aguardarSessao();
       const { data, error } = await supabase
         .from(table)
         .select('*')
@@ -390,6 +416,7 @@ function createEntityAdapter(entityName) {
      * Cria um novo registro aplicando sanitização de datas e injeção de operator_id.
      */
     async create(data) {
+      await this.aguardarSessao();
       const payload = await sanitizarPayload(table, data, true);
       const { data: created, error } = await supabase
         .from(table)
@@ -406,6 +433,7 @@ function createEntityAdapter(entityName) {
      * Atualiza um registro existente pelo ID.
      */
     async update(id, data) {
+      await this.aguardarSessao();
       const payload = await sanitizarPayload(table, data, false);
       const { data: updated, error } = await supabase
         .from(table)
@@ -423,6 +451,7 @@ function createEntityAdapter(entityName) {
      * Remove um registro pelo ID.
      */
     async delete(id) {
+      await this.aguardarSessao();
       const { error } = await supabase
         .from(table)
         .delete()
@@ -601,81 +630,47 @@ const functionsAdapter = {
 const integrationsAdapter = {
   Core: {
     async UploadFile({ file, bucket }) {
-      if (!file) throw new Error('Arquivo não fornecido para upload.');
-
-      // ── Item 11: Validação real de tipo MIME e tamanho ──────────────────────
-      const ALLOWED_MIME_IMAGES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
-      const ALLOWED_MIME_DOCS   = ['application/pdf'];
-      const ALL_ALLOWED         = [...ALLOWED_MIME_IMAGES, ...ALLOWED_MIME_DOCS];
-      const MAX_IMAGE_BYTES     = 10 * 1024 * 1024;  // 10 MB
-      const MAX_PDF_BYTES       = 20 * 1024 * 1024;  // 20 MB
-
-      const fileMime = file.type || '';
-      if (!ALL_ALLOWED.includes(fileMime)) {
-        throw new Error(`Tipo de arquivo não permitido: "${fileMime}". Envie imagens (JPG, PNG, WebP) ou PDF.`);
-      }
-      const isImageMime = ALLOWED_MIME_IMAGES.includes(fileMime);
-      const maxBytes = isImageMime ? MAX_IMAGE_BYTES : MAX_PDF_BYTES;
-      if (file.size > maxBytes) {
-        const limitMb = maxBytes / (1024 * 1024);
-        throw new Error(`Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)} MB). Limite: ${limitMb} MB.`);
-      }
-      // ────────────────────────────────────────────────────────────────────────
-
-      const fileExt = file.name.split('.').pop() || 'bin';
-      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
-
-      // Determina bucket correto baseado no DDL:
-      // fotos de operadores -> fotos-operadores (público)
-      // notas fiscais / documentos -> notas-fiscais (privado)
+      // O bucket vinha do chamador sem nenhuma restricao. Agora so os dois que
+      // o sistema usa sao aceitos, e as regras de tipo e tamanho estao em
+      // src/lib/uploadSeguro.js, iguais as do storage.buckets.
+      //
+      // Quando a tela nao informa o bucket, o destino e deduzido do tipo REAL
+      // do arquivo (assinatura de bytes), nao da extensao, que e forjavel.
       let bucketName = bucket;
       if (!bucketName) {
-        const isDoc = fileExt.toLowerCase() === 'pdf' || (file.type && file.type.includes('pdf'));
-        bucketName = isDoc ? 'notas-fiscais' : 'fotos-operadores';
+        const real = await tipoRealDoArquivo(file).catch(() => null);
+        bucketName = real === 'application/pdf' ? 'notas-fiscais' : 'fotos-operadores';
       }
 
-      const { data, error } = await supabase.storage
+      const fileName = await validarUpload(file, bucketName);
+
+      const { error } = await supabase.storage
         .from(bucketName)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
 
       if (error) {
-        console.error(`Erro no upload para Supabase Storage [${bucketName}]:`, error);
-        throw error;
+        registrarErro('upload de arquivo', error);
+        throw new ErroDeUpload(mensagemDeErroSegura(error, 'enviar o arquivo'));
       }
 
-      // Se for bucket privado (notas-fiscais), retorna apenas o caminho do arquivo
-      if (bucketName === 'notas-fiscais') {
-        return {
-          file_url: fileName,
-          file_path: fileName,
-          bucket: bucketName
-        };
+      // Os dois buckets sao PRIVADOS desde a migration 20261006150002, logo
+      // nao existe mais URL publica. O que vai para o banco e sempre o
+      // CAMINHO; a URL assinada e so para exibir agora e expira em 24h.
+      let urlAssinada = null;
+      try {
+        const { data: assinada } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(fileName, 86400);
+        urlAssinada = assinada?.signedUrl || null;
+      } catch (e) {
+        registrarErro('assinatura de URL apos upload', e);
       }
-
-      // Se for fotos-operadores (privado), gera URL assinada para visualização imediata
-      if (bucketName === 'fotos-operadores') {
-        const { data: signedData } = await supabase.storage
-          .from('fotos-operadores')
-          .createSignedUrl(fileName, 86400); // 24 horas
-
-        return {
-          file_url: signedData?.signedUrl || fileName,
-          file_path: fileName,
-          bucket: bucketName
-        };
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(fileName);
 
       return {
-        file_url: publicUrl,
+        file_url: fileName,      // caminho: e isto que deve ser gravado
         file_path: fileName,
-        bucket: bucketName
+        preview_url: urlAssinada, // so para exibicao imediata
+        bucket: bucketName,
       };
     },
 
