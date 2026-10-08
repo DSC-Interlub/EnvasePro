@@ -137,12 +137,40 @@ async function login(page, conta) {
       (await page.locator('button').filter({ hasText: /SEED-/ }).count()) > 0);
   }
 
-  // Modal do operador fisico. O overlay intercepta o ponteiro, por isso force.
-  const opcoes = page.locator('button').filter({ hasText: /SEED-/ });
-  if (await opcoes.count()) {
-    await opcoes.first().click({ force: true });
-    await esperarPor(async () =>
-      (await page.locator('button').filter({ hasText: /SEED-/ }).count()) === 0, 10000);
+  // Modal do operador fisico ("Quem e voce hoje?").
+  //
+  // Dois cuidados: o overlay intercepta o ponteiro, por isso `force`; e a lista
+  // chega de forma assincrona (o adaptador assina a URL de cada foto antes de
+  // devolver), entao o React re-renderiza e troca o no sob o ponteiro. Clicar
+  // uma vez e seguir deixava o modal aberto, bloqueando as telas seguintes.
+  // Confirma que fechou e tenta de novo se nao fechou.
+  const tituloOperador = page.getByText(/quem é você hoje/i);
+  if (await esperarPor(async () => (await tituloOperador.count()) > 0, 6000)) {
+    for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+      const opcoes = page.locator('button').filter({ hasText: /SEED-/ });
+      if (!(await opcoes.count())) break;
+      await opcoes.first().click({ force: true });
+      const fechou = await esperarPor(async () => (await tituloOperador.count()) === 0, 6000);
+      if (fechou) break;
+    }
+  }
+
+  // Rede de seguranca: o que de fato mantem o modal fechado e a chave
+  // `envase_current_operator` no localStorage. Se o clique nao a gravou, o
+  // modal reabre em TODA navegacao seguinte e bloqueia as telas — foi o que
+  // deixava a suite instavel. Aqui o estado e conferido e, se faltar, gravado
+  // do mesmo jeito que o app grava.
+  const temOperador = await page.evaluate(() => {
+    try { return !!localStorage.getItem('envase_current_operator'); } catch { return false; }
+  });
+  if (!temOperador) {
+    const { data: umOperador } = await svc
+      .from('operators').select('*').eq('ativo', true).order('nome').limit(1).single();
+    await page.evaluate((op) => {
+      try { localStorage.setItem('envase_current_operator', JSON.stringify(op)); } catch { /* vazio */ }
+    }, umOperador);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await esperarPor(() => estaAutenticado(page), 10000);
   }
 
   await esperarPor(() => estaAutenticado(page), 10000);
