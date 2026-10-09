@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { diaLocal } from "@/lib/datas";
 
 export default function ProductionChart({ records, isLoading }) {
   const getLast7DaysData = () => {
@@ -9,8 +10,11 @@ export default function ProductionChart({ records, isLoading }) {
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      
+      // O rótulo da barra (toLocaleDateString, abaixo) é local. O dado tem de
+      // ser do MESMO dia: com toISOString(), que é UTC, depois das 21h os dois
+      // apontavam para dias diferentes e a produção caía na barra errada.
+      const dateStr = diaLocal(date);
+
       const dayRecords = records.filter(r => r.data === dateStr);
       const total = dayRecords.reduce((sum, r) => sum + (r.quantidade_produzida || 0), 0);
       

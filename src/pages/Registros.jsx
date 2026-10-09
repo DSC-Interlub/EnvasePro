@@ -6,24 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Search, 
-  Eye, 
-  Edit, 
-  Trash2,
-  Plus,
-  Factory,
-  Clock,
-  CheckCircle,
-  Package
-} from "lucide-react";
-import { format } from "date-fns";
+import { Search, Plus, Factory, Clock, CheckCircle, Package } from "lucide-react";
+import { formatarData } from "@/lib/datas";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import RecordDetails from "../components/registros/RecordDetails";
 import RecordEdit from "../components/registros/RecordEdit";
+import AcoesDaLinha from "../components/listas/AcoesDaLinha";
+import RodapeDaLista from "../components/listas/RodapeDaLista";
+import { useListaPaginada } from "../components/listas/useListaPaginada";
+import { useEhCelular } from "../components/listas/useEhCelular";
 
 export default function Registros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -98,11 +92,14 @@ export default function Registros() {
     }
   });
 
-  const handleDelete = async (id) => {
-    if (confirm("Tem certeza que deseja excluir este registro?")) {
-      deleteMutation.mutate(id);
-    }
-  };
+  // A paginacao reinicia quando muda a busca OU a aba: as duas trocam o
+  // conjunto, e manter a contagem mostraria um pedaco arbitrario do novo.
+  const ehCelular = useEhCelular();
+  const lista = useListaPaginada(filteredRecords, `${searchTerm}|${selectedFilter}`);
+
+  // A confirmacao vive no AcoesDaLinha, num dialogo que diz qual registro
+  // sera excluido - o confirm() do navegador so dizia "tem certeza?".
+  const handleDelete = (id) => deleteMutation.mutate(id);
 
   const handleMarcarRetirado = async (record) => {
     if (confirm(`Confirmar que o material do registro ${record.op} foi retirado da sala?`)) {
@@ -125,11 +122,60 @@ export default function Registros() {
     setEditingRecord(null);
   };
 
+  // Funcao, nao componente: definido dentro do corpo, um componente ganha
+  // identidade nova a cada render e remonta a subarvore inteira.
+  const status = (record) => {
+    if (record.sala === "Bio" && record.termino && !record.material_retirado) {
+      return (
+        <Badge className="bg-yellow-500 text-white">
+          <Package className="w-3 h-3 mr-1" />
+          Pronto
+        </Badge>
+      );
+    }
+    if (record.termino || record.material_retirado) {
+      return (
+        <Badge className="bg-green-600 text-white">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Concluído
+        </Badge>
+      );
+    }
+    return (
+      <Badge className="bg-blue-500 text-white">
+        <Clock className="w-3 h-3 mr-1" />
+        Em Andamento
+      </Badge>
+    );
+  };
+
+  const acoes = (record) => (
+    <AcoesDaLinha
+      nomeDoItem={record.op || "registro"}
+      descricao={`O registro da OP ${record.op} — ${record.descricao_produto} — será excluído. Esta ação não pode ser desfeita.`}
+      onVer={() => handleView(record)}
+      onEditar={() => handleEdit(record)}
+      onExcluir={() => handleDelete(record.id)}
+      excluindo={deleteMutation.isPending}
+      extras={record.sala === "Bio" && record.termino && !record.material_retirado && (
+        <Button
+          variant="outline"
+          onClick={() => handleMarcarRetirado(record)}
+          className="h-12 bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
+          disabled={marcarRetiradoMutation.isPending}
+        >
+          <CheckCircle className="w-4 h-4 mr-1" />
+          Material Retirado
+        </Button>
+      )}
+    />
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Todos os Registros</h1>
             <p className="text-slate-600 mt-1">Visualize e gerencie todos os registros de envase</p>
@@ -146,9 +192,9 @@ export default function Registros() {
         <Card className="border-slate-200 shadow-lg">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
-                  <TabsList className="bg-white border border-slate-200 w-full grid grid-cols-4">
+                  <TabsList className="bg-white border border-slate-200 w-full grid grid-cols-2 sm:grid-cols-4 h-auto">
                     <TabsTrigger value="all">Em Andamento</TabsTrigger>
                     <TabsTrigger value="bio">Sala Bio</TabsTrigger>
                     <TabsTrigger value="industrial">Sala Industrial</TabsTrigger>
@@ -157,7 +203,7 @@ export default function Registros() {
                 </Tabs>
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                   <Input
@@ -180,6 +226,41 @@ export default function Registros() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
+            {/* Celular: cartao por registro. A tabela tem 8 colunas; no
+                celular as acoes ficavam fora da tela. */}
+            {ehCelular && (
+            <div className="divide-y divide-slate-100">
+              {isLoading ? (
+                <p className="text-center py-8 text-slate-500">Carregando registros...</p>
+              ) : lista.total === 0 ? (
+                <p className="text-center py-8 text-slate-500">Nenhum registro encontrado</p>
+              ) : lista.pagina.map((record) => (
+                <div key={record.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-mono font-semibold text-slate-900">{record.op}</p>
+                      <p className="text-sm text-slate-600">{formatarData(record.data)}</p>
+                    </div>
+                    {status(record)}
+                  </div>
+                  <p className="text-slate-700">{record.descricao_produto}</p>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                    <Badge variant={record.sala === "Bio" ? "default" : "secondary"}>
+                      <Factory className="w-3 h-3 mr-1" />
+                      {record.sala}
+                    </Badge>
+                    <span>{record.operador}</span>
+                    <span className="font-semibold">
+                      {record.quantidade_produzida?.toLocaleString("pt-BR")}
+                    </span>
+                  </div>
+                  {acoes(record)}
+                </div>
+              ))}
+            </div>
+            )}
+
+            {!ehCelular && (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -201,17 +282,17 @@ export default function Registros() {
                         Carregando registros...
                       </TableCell>
                     </TableRow>
-                  ) : filteredRecords.length === 0 ? (
+                  ) : lista.total === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                         Nenhum registro encontrado
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredRecords.map((record) => (
+                    lista.pagina.map((record) => (
                       <TableRow key={record.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium">
-                          {format(new Date(record.data), "dd/MM/yyyy")}
+                          {formatarData(record.data)}
                         </TableCell>
                         <TableCell className="font-mono">{record.op}</TableCell>
                         <TableCell>
@@ -227,75 +308,17 @@ export default function Registros() {
                         <TableCell className="font-semibold">
                           {record.quantidade_produzida?.toLocaleString('pt-BR')}
                         </TableCell>
-                        <TableCell>
-                          {record.sala === "Bio" && record.termino && !record.material_retirado ? (
-                            <Badge className="bg-yellow-500 text-white">
-                              <Package className="w-3 h-3 mr-1" />
-                              Pronto
-                            </Badge>
-                          ) : record.material_retirado || (record.termino && record.sala === "Industrial") ? (
-                            <Badge className="bg-green-600 text-white">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Concluído
-                            </Badge>
-                          ) : record.termino ? (
-                            <Badge className="bg-green-600 text-white">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Concluído
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-blue-500 text-white">
-                              <Clock className="w-3 h-3 mr-1" />
-                              Em Andamento
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            {record.sala === "Bio" && record.termino && !record.material_retirado && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleMarcarRetirado(record)}
-                                className="bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
-                                disabled={marcarRetiradoMutation.isPending}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Material Retirado
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleView(record)}
-                              title="Ver detalhes"
-                            >
-                              <Eye className="w-4 h-4 text-blue-600" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(record)}
-                              title="Editar"
-                            >
-                              <Edit className="w-4 h-4 text-green-600" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(record.id)}
-                              title="Excluir"
-                            >
-                              <Trash2 className="w-4 h-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                        <TableCell>{status(record)}</TableCell>
+                        <TableCell className="text-right">{acoes(record)}</TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
               </Table>
             </div>
+            )}
+
+            <RodapeDaLista {...lista} substantivo="registros" />
           </CardContent>
         </Card>
       </div>

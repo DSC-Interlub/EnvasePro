@@ -1,38 +1,59 @@
-# Virada para o EnvasePro — passo a passo
+# Virada para o EnvasePro — começo limpo
 
 Documento de execução. Uma página, na ordem exata.
 
-Até a virada, **a Base44 é o sistema real**. O EnvasePro não entrou em uso, e é
-por isso que esta virada pode ser feita com calma: se algo der errado, ninguém
-para de trabalhar — basta voltar a usar a Base44.
+**O histórico da Base44 NÃO será importado.** Decisão do dono em 08/10/2026. O
+EnvasePro começa com os cadastros e nada de movimento: nenhum envase, check-out,
+recebimento ou nota fiscal antigos. Isso torna a virada bem mais simples — não
+há export, nem reimportação, nem janela de parada longa.
+
+Até a virada, **a Base44 é o sistema real**. Ela fica **congelada mas intacta por
+no mínimo 30 dias** depois, porque é o plano de retorno.
 
 **Quem é quem:** *Dono* = Kauan. *Claude* = assistente. Onde não estiver escrito,
 é do Dono.
 
 ---
 
-## Antes de marcar a data
+## Situação de partida (08/10/2026)
 
-| | Quem | Conferir |
-|---|---|---|
-| Fases 0 a 4 concluídas | Claude | feito |
-| Suítes verdes | Claude | injection 21, upload 22, travas 31, interface 37, CSP 0 violações |
-| Backup com restauração testada | Claude | feito: 24/24 tabelas, 1869/1869 linhas |
-| **Decisão sobre as 3 linhas negativas** | **Dono** | **ver "Decisão pendente" no fim. Bloqueia a reimportação** |
-| Janela de parada combinada com a fábrica | Dono | data, hora e duração avisadas a quem usa |
-| Critério de desistência lido e aceito | Dono | ver o fim deste documento |
+O banco de produção está **vazio**, de propósito. Foi limpo com autorização
+escrita, depois de backup verificado.
+
+| O que | Situação |
+|---|---|
+| 21 tabelas de dados | **0 linhas** |
+| Arquivos no storage | **0** (os 3 buckets vazios e privados) |
+| Sequences de protocolo | **reiniciadas**: o primeiro registro será o `000001` |
+| `auth.users` | **5 contas**, intactas |
+| `user_profiles` | **5 papéis**, intactos |
+| `empilhadeira_configs` | **1 registro**, mantido |
+
+Backup completo e com restauração conferida:
+`C:\Users\kauan.pereira\EnvasePro-backups\prod_2026-10-08T12-20-02Z_PRE-LIMPEZA-TOTAL\`
 
 ---
 
-## Janela de parada
+## Antes de marcar a data
 
-Escolher um horário de baixa operação — fim de turno ou sábado. Entre o passo 1
-e o passo 7 **ninguém deve lançar nada em sistema nenhum**: nem na Base44 (que
-estará congelada) nem no EnvasePro (que ainda não terá o histórico).
+| | Quem | Situação |
+|---|---|---|
+| Fases 0 a 4 concluídas | Claude | feito |
+| V1 (a–g) concluída | Claude | em andamento |
+| Suítes verdes | Claude | triggers 31, injection 21, upload 22, interface 37, rotas 26, checklist 41, sessão 26, CSP 0 violações |
+| Backup com restauração testada | Claude | feito: 24/24 tabelas, 1869/1869 linhas |
+| **Qualidade confirma o critério do checklist (A ou B)** | **Qualidade** | **PENDENTE — ver o fim** |
+| Janela combinada com a fábrica | Dono | — |
+| Critério de desistência lido e aceito | Dono | — |
 
-Estimativa: **2 a 3 horas**, sendo a reimportação a parte mais longa. No ensaio
-no banco local, os 15.770 registros entraram em menos de 5 segundos; o tempo real
-vai para conferência, não para a máquina.
+---
+
+## Janela
+
+Como não há importação, a janela é curta: **1 a 2 horas**, quase toda em
+conferência. O trabalho pesado é o Dono subir 6 fotos e testar as telas.
+
+Entre o passo 1 e o passo 7, ninguém deve lançar nada em sistema nenhum.
 
 ---
 
@@ -40,127 +61,48 @@ vai para conferência, não para a máquina.
 
 **Quem:** Dono.
 
-Avisar a fábrica que a Base44 entra em modo somente leitura a partir daquela
-hora. Nada de operar nos dois sistemas ao mesmo tempo: o que for lançado na
-Base44 depois do export **se perde**.
+Avisar a fábrica e deixar a Base44 em somente leitura. Anotar a hora do corte.
 
-**Conferir depois:** ninguém consegue lançar. Anotar a hora exata do corte.
+**Conferir:** ninguém consegue lançar.
 
-**Desfazer:** destravar a Base44. Reversível a qualquer momento.
+**Desfazer:** destravar. Reversível a qualquer momento.
 
 ---
 
-## 2. Export novo da Base44
+## 2. Restaurar os cadastros
 
-**Quem:** Dono.
+**Quem:** Claude gera, Dono autoriza, Claude aplica.
 
-Exportar **depois** do congelamento. O export que existe no projeto é de
-**24/09** e já está velho.
+Só catálogo, nada de movimento:
 
-Exportar estas entidades, uma a uma, em CSV, com o nome
-`<Entidade>_export.csv`, e entregar a pasta ao Claude:
+| Tabela | Linhas |
+|---|---|
+| `products` | 1.599 |
+| `embalagens` | 52 |
+| `operators` | **14** (os reais; os 13 de teste ficam de fora) |
+| `limpeza_locais` | 1 |
 
 ```
-Operator        Product        Embalagem        SapPedido
-CheckoutProgramacao            CheckoutItem
-EnvaseRecord                   ChecklistRecebimento
-Recebimento     RecebimentoItem    RecebimentoParticipante    RecebimentoOcorrencia
-RecebimentoFornecedor          NotaFiscalArquivo
-EmpilhaProgramacao             EmpilhaLinha       EmpilhaOcorrencia
-EmpilhadeiraConfig             EmpilhadeiraParada EmpilhadeiraManutencao
-LimpezaLocal                   LimpezaProgramacao
+node scripts/backup/restaurar-cadastros.mjs <pasta-backup> RESTAURAR-CADASTROS.sql
 ```
 
-No export de 24/09, **13 dessas entidades vieram vazias**. Se continuarem
-vazias, tudo bem — significa que não há dado. O que não pode é vir vazia por
-erro de exportação, então vale conferir na Base44 se a tela correspondente tem
-registro antes de aceitar um CSV de 0 byte.
+O script **não executa nada**: gera o `.sql` para revisão. Ele descarta os 13
+operadores de teste por critério duplo — nome **e** matrícula `QA-` —, porque
+são a origem dos homônimos que tornam ambígua a resolução de operador por nome.
 
-**Conferir depois:** anotar a contagem de linhas de cada arquivo. É contra esses
-números que a importação será validada.
+**Conferir depois:** `operators` = 14, `products` = 1.599, `embalagens` = 52, e
+**nenhum** operador chamado "Operador Teste Funcional QA".
 
-**Desfazer:** exportar de novo. Nada é alterado.
-
----
-
-## 3. Ensaio da reimportação no banco local
-
-**Quem:** Claude.
-
-Roda `scripts/migrar-dados.js` contra o **Supabase local** com o export novo e
-valida contagem por contagem, CSV contra banco.
-
-**Já ensaiado em 08/10/2026** com o export de 24/09: 8 de 8 tabelas conferem,
-15.770 registros. **Com uma ressalva que bloqueia** — ver "Decisão pendente".
-
-**Conferir depois:** 100% das tabelas batendo. Qualquer divergência para a
-virada aqui, antes de tocar em produção.
-
-**Desfazer:** não se aplica. É local.
+**Desfazer:** apagar as 4 tabelas e restaurar de novo. Não há movimento
+dependendo delas nesse momento.
 
 ---
 
-## 4. Publicar o código novo
+## 3. Subir as 6 fotos reais
 
-**Quem:** Claude. **Já feito** — a `main` está publicada e verificada.
+**Quem:** Dono, pelo cadastro de operador, como admin.
 
-Se houver commit novo até a virada, repetir: build, `npm audit --omit=dev`,
-busca de segredos, as 4 suítes, merge, e verificação do site publicado.
-
-**Conferir depois:** o site carrega, exige login, console sem erro.
-
-**Desfazer:** Vercel → projeto → **Deployments** → o deploy anterior → `...` →
-**Promote to Production**. Instantâneo, não depende de git.
-
----
-
-## 5. Reimportar o histórico em produção
-
-**Quem:** Dono executa, Claude acompanha. É o passo mais longo.
-
-Só começa depois do ensaio (passo 3) bater 100%.
-
-**Conferir depois:** contagem de cada tabela em produção igual à do CSV. Se
-alguma divergir, **parar** e não seguir para o passo 6.
-
-**Desfazer:** restaurar do backup. Por isso o backup do passo 0 tem de estar
-testado — e está.
-
----
-
-## 6. Limpeza dos 13 operadores de teste
-
-**Quem:** Claude executa, **mas o `COMMIT` só com o "sim" do Dono na hora.**
-
-Autorizada pelo Dono para acontecer no go-live. A sequência é sempre a mesma:
-
-1. backup novo, imediatamente antes;
-2. `ROLLBACK` mostrando as contagens antes e depois;
-3. Dono lê os números e diz "sim";
-4. só então `COMMIT`.
-
-O script **aborta sozinho** se o critério não casar exatamente 13 operadores e
-deixar 14. Critério duplo: `nome = 'Operador Teste Funcional QA'` **e**
-`matricula LIKE 'QA-%'`.
-
-**Números medidos (dry-run de 07/10):** apaga 10 `recebimento_participantes`,
-1 `envase_records`, 3 `recebimentos` (que levam 2 `recebimento_ocorrencias` por
-cascata) e os 13 operadores. Também os 13 arquivos do bucket, que são deles.
-Resultado esperado: 14 operadores, catálogo intacto.
-
-**Dois efeitos a confirmar antes do "sim":** `recebimento_ocorrencias` vai de 2
-para 0, e os 6 `checklist_recebimentos` **já são órfãos hoje** — a limpeza não
-orfana nada novo.
-
-**Desfazer:** restaurar do backup do item 1 desta lista.
-
----
-
-## 7. Subir as 6 fotos reais
-
-**Quem:** Dono (pelo cadastro de operador, como admin).
-
-As 6 fotos **já estão baixadas** e guardadas fora do repositório:
+Já baixadas e guardadas fora do repositório:
 
 ```
 C:\Users\kauan.pereira\EnvasePro-backups\prod_2026-10-07T17-21-25Z_pre-limpeza\fotos-reais-base44\
@@ -175,29 +117,61 @@ C:\Users\kauan.pereira\EnvasePro-backups\prod_2026-10-07T17-21-25Z_pre-limpeza\f
 | William | `William.jpg` | 129 KB |
 | Jorge Willian | `Jorge_Willian.jpg` | 53 KB |
 
-São as **únicas fotos reais que existem**. As 13 que estão no bucket são PNGs de
-70 bytes dos operadores de teste e somem no passo 6.
+São as **únicas fotos reais que existem**. As que estavam no bucket eram PNGs de
+70 bytes dos operadores de teste, e foram apagadas na limpeza.
 
-**Como subir:** entrar como admin → **Operadores** → editar o operador →
-**Foto do Operador** → escolher o arquivo → salvar. Repetir para os 6. O sistema
-grava o caminho e gera URL assinada na leitura; não é preciso mexer em bucket.
+**Como:** admin → **Operadores** → editar → **Foto do Operador** → escolher o
+arquivo → salvar. Repetir para os 6. O sistema grava o caminho e gera URL
+assinada na leitura; não é preciso mexer em bucket.
 
-Outros **8 operadores reais não têm foto nenhuma**: Lucas Araujo, Lucas Fontes,
-Rodrigo, Mike, Márcio, Elder, Victor e Renan. Decidir se entram sem foto.
+Os outros **8 operadores reais não têm foto nenhuma**: Lucas Araujo, Lucas
+Fontes, Rodrigo, Mike, Márcio, Elder, Victor e Renan. Decidir se entram sem.
 
-**Conferir depois:** `select nome, foto_url from operators where foto_url like
-'%base44%'` → **0 linhas**. E as fotos aparecem no modal de seleção de operador.
+**Conferir depois:** as 6 fotos aparecem no modal de seleção de operador.
 
-**Desfazer:** regravar o `foto_url` antigo. Só funciona enquanto a Base44
-estiver no ar — por isso este passo vem antes de desligá-la.
+**Desfazer:** limpar o campo `foto_url` do operador.
 
 ---
 
-## 8. Trocar a chave de serviço e as 4 senhas
+## 4. Confirmar o critério do checklist
 
-**Quem:** Dono. **O Claude não toca em chave nem em senha.**
+**Quem:** Qualidade decide, Claude aplica.
 
-É o primeiro passo **irreversível**: chave rotacionada não volta. Por isso vem
+Hoje está no critério **A — pontos**, que é o comportamento de sempre: aprovado
+a partir de 80, numa escala que vai de −90 a +90. Só duas combinações chegam
+lá: **9 "Sim"** (90) ou **8 "Sim" + 1 "N/A"** (80).
+
+A alternativa **B — percentual sobre o aplicável** ignora os "N/A" e mede
+conformidade. Resolve um efeito colateral do A: como "N/A" vale 0, um checklist
+**sem nenhum problema** mas com 4 perguntas não aplicáveis tira 50.
+
+**Trocar é uma linha:** a constante `CRITERIO_ATIVO` em `src/lib/checklist.js`.
+As faixas propostas para B (aprovado ≥ 90%, atenção 70–89%, reprovado < 70%)
+**ainda não foram confirmadas**.
+
+**Conferir depois:** abrir um checklist de cada faixa e ver o rótulo.
+
+**Desfazer:** trocar a constante de volta e publicar.
+
+---
+
+## 5. Teste do Dono, logado
+
+**Quem:** Dono. O Claude **não tem as senhas** e não pode fazer este passo.
+
+A lista exata está em **"O que o Dono precisa testar"**, no fim deste documento.
+
+**Conferir:** todos os itens da lista funcionando.
+
+**Desfazer:** nada a desfazer; é teste.
+
+---
+
+## 6. Trocar a chave de serviço e as 4 senhas
+
+**Quem:** Dono. O Claude não toca em chave nem em senha.
+
+Primeiro passo **irreversível** — chave rotacionada não volta. Por isso vem
 depois de tudo que é reversível.
 
 As senhas antigas (padrão `Interlub@...`) estão no histórico do git e estão
@@ -211,7 +185,7 @@ comprometidas, junto com os tokens que passaram por chat.
 4. trocar as senhas das 4 contas: `pcp-brasil`, `operacoes.equipe`,
    `tv-fabrica` e a de desenvolvimento.
 
-Entre os passos 1 e 3 as funções serverless (o e-mail de ocorrência) ficam fora
+Entre os passos 1 e 3, as funções serverless (o e-mail de ocorrência) ficam fora
 do ar. É esperado e dura poucos minutos.
 
 **Conferir depois:** login nas 4 contas com a senha nova, e registrar uma
@@ -222,35 +196,111 @@ está configurada.
 
 ---
 
-## 9. Reautenticar as TVs
+## 7. Reautenticar as TVs
 
 **Quem:** Dono, **presencialmente em cada TV**.
 
 As telas de TV **não são mais públicas**. Cada equipamento precisa entrar uma
-vez na conta `tv-fabrica` (com a senha nova do passo 8) e a sessão fica salva
+vez na conta `tv-fabrica` (com a senha nova do passo 6) e a sessão fica salva
 naquele navegador.
 
-**Conferir depois, olhando a tela:** `/Televisao`, `/TelevisaoEmpilha` e
-`/Painel` carregam com dado; as fotos aparecem; e a tela **não cai** por
-inatividade — só o admin cai, aos 60 minutos. Deixar rodando um turno inteiro
-sob observação.
+**Conferir, olhando a tela:** `/Televisao`, `/TelevisaoEmpilha` e `/Painel`
+carregam; as fotos aparecem; e a tela **não cai** por inatividade — só o admin
+cai, aos 60 minutos. Deixar rodando um turno inteiro sob observação.
 
 **Desfazer:** apontar as TVs de volta para a Base44.
 
 ---
 
-## 10. Smoke test na interface de produção
+## 8. Smoke test final
 
-**Quem:** Claude, com conta real.
+**Quem:** Claude, no que der sem senha; Dono, no resto.
 
-Os fluxos do operador, clicando de verdade: envase, check-out com seleção de
-operador, empilhadeira (iniciar linha com operador e ajudante), limpeza,
-recebimento/checklist/nota fiscal.
+Conferir que as telas carregam, que o console fica limpo e que os protocolos
+começam em `000001`.
 
-**Conferir depois:** todos funcionam e o console fica sem erro.
+---
 
-**Desfazer:** não se aplica — é leitura e lançamentos de teste, que são
-apagados em seguida.
+## O que o Dono precisa testar (passo 5)
+
+O Claude não tem as senhas, então estes itens **só o Dono pode fazer**. Marque
+cada um.
+
+### Como **admin** (`pcp-brasil`)
+
+- [ ] Entrar e ver o Dashboard carregar sem erro.
+- [ ] **Operadores**: a lista mostra **14**, nenhum "Operador Teste Funcional QA".
+- [ ] **Produtos**: a lista mostra 1.599 e a busca por código encontra.
+- [ ] **Embalagens**: mostra 52.
+- [ ] Editar um operador e salvar — inclusive **sem preencher matrícula**, que
+      é opcional (os 14 reais não têm).
+- [ ] Subir a foto de um operador e ver a imagem aparecer.
+- [ ] Criar uma **programação de check-out** e conferir que o código é
+      `CKO-2026-000001`.
+- [ ] Criar uma **programação de empilhadeira**: `EMP-2026-000001`.
+- [ ] Abrir **Produtos, Embalagens, Operadores, as 3 telas de Importar,
+      Gerenciar Usuários, Configuração da Empilhadeira e os 2 Indicadores** —
+      todas devem **abrir** para você.
+- [ ] Assinar como **líder** uma linha de empilhadeira concluída.
+- [ ] Tentar alterar o **código de uma programação** já criada — deve ser
+      **recusado**, inclusive para admin.
+
+### Como **operador** (`operacoes.equipe`)
+
+- [ ] Entrar e **escolher o operador do turno** no modal; a foto aparece para
+      quem tem.
+- [ ] **Envase**: criar um registro novo até o fim.
+- [ ] **Check-out**: num item pendente, **selecionar o operador** e salvar.
+      *(Era o fluxo que estava bloqueado antes.)*
+- [ ] **Empilhadeira**: iniciar uma linha com **operador e ajudante**.
+      *(Era o fluxo que falhava no código antigo.)*
+- [ ] Tentar **trocar o operador** de um item que já tem um — deve ser
+      **recusado**.
+- [ ] Tentar **assinar como líder** — deve ser **recusado**.
+- [ ] Digitar na barra de endereço `/Produtos`, `/Operadores` e
+      `/GerenciarUsuarios` — todas devem **recusar** e mandar para a
+      Empilhadeira com aviso.
+- [ ] Conferir que o menu **não mostra** catálogo nem importações.
+- [ ] **Recebimento**: preencher um checklist e ver a nota e o rótulo
+      (Aprovado / Atenção / Reprovado).
+- [ ] **Nota fiscal**: subir um PDF e abri-lo pelo sistema.
+- [ ] Tentar subir um arquivo **renomeado** (um `.txt` salvo como `.png`) —
+      deve ser **recusado** com mensagem clara.
+
+### Como **TV** (`tv-fabrica`), em cada equipamento
+
+- [ ] `/Televisao`, `/TelevisaoEmpilha` e `/Painel` carregam com dado.
+- [ ] As fotos dos operadores aparecem.
+- [ ] A tela **continua ligada** depois de 1 hora sem ninguém tocar.
+- [ ] Recarregar a página **não pede login de novo**.
+
+### Depois da V1 (e)(f)(g) — como **admin**, no **tablet**
+
+Estes três itens mudaram telas que você usa todo dia; valem uma conferida
+separada.
+
+- [ ] **Listas** (Produtos, Embalagens, Operadores, Registros): o rodapé diz
+      "Mostrando 50 de 1599" e **Carregar mais 50** soma mais 50.
+- [ ] **Busca**: procurar um código que esteja lá no fim do catálogo —
+      tem de achar **sem** você carregar as páginas anteriores.
+- [ ] **Excluir** um produto: o aviso diz **qual** produto é, e **Cancelar**
+      não apaga nada.
+- [ ] Nenhuma dessas telas **rola para o lado** no tablet nem no celular.
+- [ ] **No celular** as listas viram cartões, não tabela.
+- [ ] **Checklist**: os botões Sim / Não / N-A dão para acertar com o dedo,
+      inclusive os dois primeiros (Etapa 5 e Data de Entrega), que eram os
+      menores.
+- [ ] **Contador do menu**: o número ao lado de Empilhadeira e de Recebimento
+      bate com as pendências de verdade.
+- [ ] **Contador do menu, com a internet caindo**: desligue o wi-fi por um
+      minuto. Tem de aparecer o aviso **"Contadores desatualizados"** no menu.
+      Antes a falha era escondida e o número velho continuava na tela.
+
+### Em qualquer conta
+
+- [ ] Abrir o console do navegador (F12) e conferir que **não há erro
+      vermelho**.
+- [ ] Testar no **celular** pelo menos uma tela de lançamento.
 
 ---
 
@@ -258,17 +308,18 @@ apagados em seguida.
 
 **Volta para a Base44 se qualquer uma destas acontecer:**
 
-- a reimportação (passo 5) divergir em contagem e a causa não for entendida em
-  até 30 minutos;
-- um fluxo de operador não funcionar no smoke test (passo 10);
+- um fluxo de operador não funcionar no teste do passo 5;
 - as TVs não sustentarem a sessão por um turno;
 - qualquer perda de dado que o backup não cubra.
 
-**Como voltar:** destravar a Base44 e avisar a fábrica para usá-la. Leva
-minutos, porque a Base44 fica **congelada mas intacta por no mínimo 30 dias**.
+**Como voltar:** destravar a Base44 e avisar a fábrica. Leva minutos, porque ela
+fica **congelada mas intacta por no mínimo 30 dias**.
 
 **Não desligar a Base44 no dia da virada.** Só depois de 30 dias de operação
-estável no EnvasePro, e com as 6 fotos já no bucket.
+estável, e com as 6 fotos já no bucket.
+
+**Rollback do código, a qualquer momento:** Vercel → **Deployments** → o deploy
+anterior → `...` → **Promote to Production**. Instantâneo, não depende de git.
 
 ---
 
@@ -277,39 +328,32 @@ estável no EnvasePro, e com as 6 fotos já no bucket.
 - Acompanhar os relatórios de CSP, os erros da Vercel e as contagens diárias
   nos primeiros dias. A CSP já está **bloqueando** e continua reportando em
   `/api/csp-report`.
-- Aplicar os dois limites de requisições (ver `docs/LIMITE-DE-REQUISICOES.md`).
+- Aplicar os dois limites de requisições (`docs/LIMITE-DE-REQUISICOES.md`).
 - Conferir que `authenticated` não voltou a ter `TRUNCATE`: tabela criada pelo
-  painel nasce com ele.
+  painel nasce com ele, e `ALTER DEFAULT PRIVILEGES` não cobre o que o
+  `supabase_admin` cria.
+- Decidir o que fazer com a conta de teste `operacoes@interlub.com`, que
+  continua em `auth.users`.
 
 ---
 
-## Decisão pendente — bloqueia o passo 5
+## Lição guardada: sequências não andam sozinhas
 
-**O histórico tem 3 registros de envase com quantidade negativa, e as restrições
-que estão em produção os recusam.**
+**Só importa se um dia o histórico for importado.** Como a decisão é começar
+limpo, isto não se aplica agora — mas o erro é silencioso e caro, então fica
+registrado.
 
-Encontrado no ensaio de 08/10. São 3 linhas em 5884 (0,05%):
+Restaurar ou importar linhas **não avança as sequências de protocolo**: elas são
+contadores separados. Sem sincronizar, o primeiro registro novo tenta reusar um
+protocolo que já existe e esbarra na restrição de unicidade:
 
-| Data | Operador | Produto | Produzida | Embalagens |
-|---|---|---|---|---|
-| 2026-04-24 | Alisson | IVP072591270 | −1 | −1 |
-| 2026-03-16 | Elder | IVP073615240 | −2 | −5 |
-| 2025-12-08 | Victor | IVP070425020 | −4 | −20 |
+```
+duplicate key value violates unique constraint
+  "checkout_programacoes_codigo_programacao_key"
+```
 
-Parecem lançamentos de **estorno** — correção de um envase lançado a mais. Mas
-isso é leitura minha; quem sabe é quem opera.
+Aconteceu de verdade em 08/10, depois de restaurar o backup: a sequência estava
+em 3 enquanto os dados já iam até `CKO-2026-000016`.
 
-Mais nada no histórico viola restrição alguma: varri todos os CSVs contra todas
-as CHECKs, e `nota_final` vai de 0 a 70, dentro da faixa −90 a +90.
-
-**Três caminhos, e a escolha é do Dono:**
-
-1. **Afrouxar as duas restrições** de `envase_records` para aceitar negativo.
-   Assume que estorno é lançamento legítimo. É mudança no banco.
-2. **Importar as 3 linhas com o valor zerado ou nulo**, registrando a observação.
-   Preserva a linha, altera o número. É mudança no dado histórico.
-3. **Não importar as 3 linhas.** Preserva a restrição, perde 3 registros de
-   5884.
-
-Sem essa resposta a reimportação para na linha 3.000 e não termina. As três
-opções exigem autorização, porque são mudança no banco ou nos dados.
+O `scripts/backup/gerar-restore-local.mjs` já sincroniza as 6 sequências com o
+maior valor gravado. Qualquer rotina futura de importação precisa fazer o mesmo.

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, ClipboardList, Package, Factory, List, Warehouse, Settings, ShieldAlert, Truck, ClipboardCheck, FileText, Activity, LogOut, UserCheck, RefreshCw } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Package, Factory, List, Warehouse, Settings, ShieldAlert, Truck, ClipboardCheck, FileText, Activity, LogOut, UserCheck, RefreshCw, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import SelecionarOperadorModal from "@/components/auth/SelecionarOperadorModal";
@@ -45,44 +45,42 @@ export default function Layout({ children }) {
 
   const [badgeCount, setBadgeCount] = useState(0);
   const [recBadgeCount, setRecBadgeCount] = useState(0);
+  const [contadoresFalharam, setContadoresFalharam] = useState(false);
 
-  // Buscar pendências para badge (apenas admin)
+  // Contadores dos selos (apenas admin).
+  //
+  // Antes isto baixava SETE tabelas inteiras a cada 60 segundos e contava no
+  // navegador, com `catch {}` no fim. Duas consequências: a tela que o admin
+  // deixa aberta o dia todo puxava todos os registros de minuto em minuto, e
+  // qualquer falha era engolida — o menu continuava exibindo o último número
+  // que deu certo, sem nada dizendo que ele estava velho.
+  //
+  // Agora a contagem é uma chamada só, feita no banco, e a falha aparece.
   useEffect(() => {
     if (role !== "admin") return;
-    const fetchPendencias = async () => {
+    let cancelado = false;
+
+    const buscarContadores = async () => {
       try {
-        const hoje = new Date().toISOString().split("T")[0];
-        const [linhas, ocorrencias, paradas, empilhadeiras] = await Promise.all([
-          base44.entities.EmpilhaLinha.list(),
-          base44.entities.EmpilhaOcorrencia.list(),
-          base44.entities.EmpilhadeiraParada.list(),
-          base44.entities.EmpilhadeiraConfig.list(),
-        ]);
-        const assinaturasPendentes = linhas.filter(l => l.status === "Concluído" && !l.assinatura_lider).length;
-        const ocorrenciasAbertas = ocorrencias.filter(o => !o.resolvido).length;
-        const paradasAbertas = paradas.filter(p => !p.hora_fim).length;
-        const alertasManut = empilhadeiras.filter(e => {
-          if (!e.data_proxima_manutencao) return false;
-          const diff = Math.ceil((new Date(e.data_proxima_manutencao) - new Date()) / (1000 * 60 * 60 * 24));
-          return diff <= 7;
-        }).length;
-        const hojeStr = new Date().toISOString().split("T")[0];
-        const limpezas = await base44.entities.LimpezaProgramacao.list();
-        const limpezasAtrasadas = limpezas.filter(p => p.data_prevista < hojeStr && p.status !== "Concluído").length;
-        const limpezasAguardando = limpezas.filter(p => p.status === "Concluído" && p.assinatura_responsavel && !p.assinatura_lider).length;
-
-        setBadgeCount(assinaturasPendentes + ocorrenciasAbertas + paradasAbertas + alertasManut + limpezasAtrasadas + limpezasAguardando);
-
-        const recebimentos = await base44.entities.Recebimento.list();
-        const recOcorrencias = await base44.entities.RecebimentoOcorrencia.list();
-        const recAguardaLider = recebimentos.filter(r => r.status === "Concluído" && !r.assinatura_lider).length;
-        const recOcAbertas = recOcorrencias.filter(o => !o.resolvido).length;
-        setRecBadgeCount(recAguardaLider + recOcAbertas);
-      } catch {}
+        const c = await base44.functions.contadoresDoMenu();
+        if (cancelado) return;
+        setBadgeCount(
+          Number(c.assinaturas_pendentes) + Number(c.ocorrencias_abertas) +
+          Number(c.paradas_abertas) + Number(c.alertas_manutencao) +
+          Number(c.limpezas_atrasadas) + Number(c.limpezas_aguardando)
+        );
+        setRecBadgeCount(Number(c.receb_aguarda_lider) + Number(c.receb_ocorr_abertas));
+        setContadoresFalharam(false);
+      } catch (erro) {
+        if (cancelado) return;
+        console.error("[menu] não consegui atualizar os contadores:", erro?.message || erro);
+        setContadoresFalharam(true);
+      }
     };
-    fetchPendencias();
-    const interval = setInterval(fetchPendencias, 60000);
-    return () => clearInterval(interval);
+
+    buscarContadores();
+    const interval = setInterval(buscarContadores, 60000);
+    return () => { cancelado = true; clearInterval(interval); };
   }, [role]);
 
   const navItems = allNavItems.filter(item => item.roles.includes(role));
@@ -149,6 +147,19 @@ export default function Layout({ children }) {
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
+
+                {/* O aviso ocupa o lugar do antigo `catch {}`: se a contagem
+                    falhar, os selos acima estão velhos, e quem está olhando
+                    precisa saber disso em vez de confiar num número parado. */}
+                {role === "admin" && contadoresFalharam && (
+                  <p
+                    role="status"
+                    className="mx-3 mt-2 flex items-start gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-[11px] font-medium text-amber-800"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
+                    <span>Contadores desatualizados: não consegui consultar as pendências.</span>
+                  </p>
+                )}
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
@@ -196,7 +207,12 @@ export default function Layout({ children }) {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 flex flex-col">
+        {/* min-w-0: um item flex nao encolhe abaixo da largura do conteudo por
+            padrao (min-width:auto). Sem isto, uma tabela larga empurra o
+            <main> e a PAGINA inteira passa a rolar na horizontal, em vez de
+            so a tabela rolar dentro do proprio overflow-x-auto. Media no
+            tablet (820px): Registros estourava 375px, Produtos 211px. */}
+        <main className="flex-1 min-w-0 flex flex-col">
           <header className="bg-white border-b border-slate-200 px-6 py-4 md:hidden">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
