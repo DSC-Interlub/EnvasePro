@@ -75,3 +75,31 @@ export function tempoDe(valor) {
   const d = paraData(valor);
   return d ? d.getTime() : null;
 }
+
+/**
+ * O dia de HOJE aqui, como "AAAA-MM-DD", para comparar com colunas `date`.
+ *
+ * POR QUE NÃO `toISOString().split('T')[0]`
+ *
+ * `toISOString()` devolve **UTC**. Em fuso negativo como o do Brasil (UTC-3),
+ * das 21h à meia-noite o UTC já virou o dia: às 21h de 9/10, ele responde
+ * "2026-10-10". Quem usa isso como "hoje" passa três horas por dia olhando
+ * para amanhã.
+ *
+ * Não é teórico. No gráfico dos últimos 7 dias do painel, o RÓTULO da barra
+ * vinha de `toLocaleDateString` (local) e o DADO vinha de `toISOString`
+ * (UTC): depois das 21h os dois apontavam para dias diferentes, a produção
+ * do dia caía na barra errada e a última barra ficava zerada.
+ *
+ * Esta função usa os componentes LOCAIS da data, que é o dia que o operador
+ * tem no relógio. É o mesmo dia que a função `contadores_do_menu()` usa no
+ * banco, lá via `(now() AT TIME ZONE 'America/Sao_Paulo')::date`.
+ *
+ * @param {Date} [quando] usado nos testes para simular um instante
+ */
+export function diaLocal(quando = new Date()) {
+  const ano = quando.getFullYear();
+  const mes = String(quando.getMonth() + 1).padStart(2, '0');
+  const dia = String(quando.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}

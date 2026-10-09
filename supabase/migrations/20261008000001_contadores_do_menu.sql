@@ -30,6 +30,20 @@
 -- Cada contador abaixo reproduz a condição que estava no JavaScript. O que
 -- mudar aqui tem de mudar lá, e o teste scripts/test-contadores-menu.js
 -- compara os dois resultados com dados de verdade.
+--
+-- "HOJE" É O DIA DE BRASÍLIA, NÃO O DE UTC
+--
+-- `CURRENT_DATE` devolve o dia conforme o fuso da SESSÃO, e a sessão do
+-- Supabase é UTC. Entre 21h e meia-noite de Brasília (UTC-3), o banco já
+-- virou o dia: uma limpeza prevista para hoje apareceria como "atrasada" às
+-- 21h, e uma manutenção para daqui a 8 dias entraria no alerta de 7.
+--
+-- Por isso o dia vem de `(now() AT TIME ZONE 'America/Sao_Paulo')::date`.
+-- Não troque por `CURRENT_DATE` achando que é a mesma coisa: só é igual
+-- durante 21 das 24 horas. A zona nomeada (e não `-03`) é de propósito —
+-- ela acompanha mudanças de regra de horário.
+--
+-- O teste cobre esta janela explicitamente, simulando 22h de Brasília.
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.contadores_do_menu()
@@ -61,10 +75,12 @@ AS $$
     -- vencidas (diferença negativa). Daí o <=, sem piso.
     (SELECT count(*) FROM empilhadeira_configs
       WHERE data_proxima_manutencao IS NOT NULL
-        AND data_proxima_manutencao <= CURRENT_DATE + 7),
+        AND data_proxima_manutencao
+            <= (now() AT TIME ZONE 'America/Sao_Paulo')::date + 7),
 
     (SELECT count(*) FROM limpeza_programacoes
-      WHERE data_prevista < CURRENT_DATE AND status <> 'Concluído'),
+      WHERE data_prevista < (now() AT TIME ZONE 'America/Sao_Paulo')::date
+        AND status <> 'Concluído'),
 
     (SELECT count(*) FROM limpeza_programacoes
       WHERE status = 'Concluído'

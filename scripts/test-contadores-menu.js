@@ -19,6 +19,8 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import { enforceNonProductionGuard } from './lib/db-guard.js';
+import { diaLocal } from '../src/lib/datas.js';
+import { execFileSync } from 'node:child_process';
 
 dotenv.config({ path: '.env.local' });
 enforceNonProductionGuard('test-contadores-menu');
@@ -163,12 +165,21 @@ async function semear() {
 }
 
 /**
- * A conta ANTIGA, copiada do Layout.jsx como estava antes da troca —
- * inclusive o ceil() dos dias de manutencao. E esta que define o resultado
- * correto: a funcao SQL tem de reproduzi-la.
+ * A conta do navegador, com UMA correcao em relacao ao que estava no
+ * Layout.jsx: "hoje" e o dia LOCAL, nao o dia UTC.
+ *
+ * O codigo antigo usava `new Date().toISOString().split('T')[0]`, que e UTC.
+ * Das 21h a meia-noite de Brasilia isso ja e o dia seguinte, e uma limpeza
+ * prevista para hoje aparecia como atrasada. A funcao SQL usa
+ * `(now() AT TIME ZONE 'America/Sao_Paulo')::date`, que e o mesmo dia que
+ * `diaLocal()` devolve num navegador em horario de Brasilia.
+ *
+ * Isto importa para o teste: se aqui ficasse o calculo antigo, a paridade
+ * passaria de dia e falharia a noite — e passaria a cobrar da funcao
+ * justamente o comportamento errado.
  */
 function contarComoAntes({ linhas, ocorrencias, paradas, empilhadeiras, limpezas, recebimentos, recOcorrencias }) {
-  const hojeStr = new Date().toISOString().split('T')[0];
+  const hojeStr = diaLocal();
   return {
     assinaturas_pendentes: linhas.filter(l => l.status === 'Concluído' && !l.assinatura_lider).length,
     ocorrencias_abertas: ocorrencias.filter(o => !o.resolvido).length,
@@ -240,6 +251,63 @@ try {
   }
 
   // -------------------------------------------------------------- 4. permissoes
+  // ------------------------------------------- 3.5 a virada do dia de Brasilia
+  //
+  // `CURRENT_DATE` devolve o dia conforme o fuso da SESSAO, e quem chama pode
+  // definir esse fuso. Logo o teste nao precisa esperar as 21h: basta pedir o
+  // mesmo numero com a sessao em dois fusos diferentes.
+  //
+  // Duas linhas sao semeadas EXATAMENTE na borda, a partir do dia de Brasilia:
+  // uma limpeza prevista para HOJE (nao e atrasada) e uma manutencao para
+  // daqui a 8 dias (fora do alerta de 7). Num fuso adiantado, `CURRENT_DATE`
+  // ja e amanha e as duas mudariam de lado.
+  console.log('\n[3.5] a virada do dia: 22h de Brasilia nao pode adiantar o "hoje"');
+
+  const hojeBrt = diaLocal();
+  const maisDias = (base, n) => {
+    const d = new Date(base + 'T12:00:00');
+    d.setDate(d.getDate() + n);
+    return diaLocal(d);
+  };
+
+  await db.from('limpeza_programacoes').insert({
+    local_id: (await db.from('limpeza_locais').select('id').like('nome', `${MARCA}%`).limit(1)).data[0].id,
+    local_nome: `${MARCA} local`, data_prevista: hojeBrt, status: 'Pendente',
+    assinatura_responsavel: false, assinatura_lider: false,
+  });
+  await db.from('empilhadeira_configs').insert({
+    nome: `${MARCA} empilhadeira borda`, intervalo_manutencao_dias: 30,
+    data_proxima_manutencao: maisDias(hojeBrt, 8),
+  });
+
+  const psql = (sql) => execFileSync('docker',
+    ['exec', '-i', 'supabase_db_envase', 'psql', '-U', 'postgres', '-d', 'postgres', '-tAc', sql],
+    { encoding: 'utf8' }).trim();
+
+  // a funcao de verdade, com a sessao em dois fusos
+  const comFuso = (tz) => psql(
+    `SET TIME ZONE '${tz}'; SELECT limpezas_atrasadas || '/' || alertas_manutencao FROM public.contadores_do_menu();`);
+  const emUtc = comFuso('UTC');
+  const adiantado = comFuso('Pacific/Kiritimati');  // UTC+14
+
+  // o jeito ANTIGO, para provar que as linhas estao mesmo na borda
+  const antigoComFuso = (tz) => psql(
+    `SET TIME ZONE '${tz}'; SELECT (SELECT count(*) FROM limpeza_programacoes
+       WHERE data_prevista < CURRENT_DATE AND status <> 'Concluído')
+     || '/' || (SELECT count(*) FROM empilhadeira_configs
+       WHERE data_proxima_manutencao IS NOT NULL
+         AND data_proxima_manutencao <= CURRENT_DATE + 7);`);
+  const antigoUtc = antigoComFuso('UTC');
+  const antigoAdiantado = antigoComFuso('Pacific/Kiritimati');
+
+  checar('o jeito ANTIGO (CURRENT_DATE) muda conforme o fuso da sessao — o defeito existe',
+    antigoUtc !== antigoAdiantado, `UTC=${antigoUtc} adiantado=${antigoAdiantado}`);
+  checar('a funcao corrigida devolve o MESMO numero nos dois fusos',
+    emUtc === adiantado, `UTC=${emUtc} adiantado=${adiantado}`);
+  checar('e o numero certo e o do dia de Brasilia (o do fuso normal)',
+    emUtc === antigoUtc, `funcao=${emUtc} esperado=${antigoUtc}`);
+
+  // ------------------------------------------------------------- 4. permissoes
   console.log('\n[4] quem pode executar');
   const anonimo = createClient(URL, ANON, { auth: { persistSession: false } });
   const { error: eAnon } = await anonimo.rpc('contadores_do_menu');
