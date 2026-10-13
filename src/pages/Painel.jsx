@@ -336,7 +336,7 @@ function AlertaItem({ label, count, link, cor = "red" }) {
   return (
     <Link to={link} className={`flex items-center justify-between px-3 py-2 rounded-lg ${corMap[cor]} hover:opacity-80 transition-opacity`}>
       <span className="text-sm font-medium">{label}</span>
-      <Badge className={`ml-2 ${cor === "red" ? "bg-red-600" : cor === "orange" ? "bg-orange-500" : cor === "yellow" ? "bg-yellow-500" : "bg-blue-600"} text-white`}>{count}</Badge>
+      <Badge className={`ml-2 ${cor === "red" ? "bg-red-600" : cor === "orange" ? "bg-orange-500" : cor === "yellow" ? "bg-yellow-500" : "bg-marca"} text-white`}>{count}</Badge>
     </Link>
   );
 }

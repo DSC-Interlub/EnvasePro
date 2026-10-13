@@ -626,7 +626,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
       {/* Botão Salvar com trava anti-corrida */}
       <Button
         type="submit"
-        className="w-full bg-blue-600 hover:bg-blue-700"
+        className="w-full bg-marca hover:bg-marca-forte"
         disabled={isLoading || isSubmitting || autoSaveMutation.isPending}
       >
         <Save className="w-4 h-4 mr-2" />

@@ -68,7 +68,7 @@ export default function GerenciarUsuarios() {
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-marca rounded-xl flex items-center justify-center">
             <Settings className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -222,7 +222,7 @@ export default function GerenciarUsuarios() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setConfirmModal(null)}>Cancelar</Button>
               <Button
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-marca hover:bg-marca-forte"
                 onClick={() => updateMutation.mutate({ id: confirmModal.user.id, role: confirmModal.novoRole })}
                 disabled={updateMutation.isPending}
               >

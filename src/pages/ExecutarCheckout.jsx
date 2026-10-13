@@ -291,7 +291,7 @@ export default function ExecutarCheckout() {
                   </Button>
                   <Button
                     onClick={() => updateObservacoesMutation.mutate(observacoes)}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-marca hover:bg-marca-forte"
                     disabled={updateObservacoesMutation.isPending}
                   >
                     {updateObservacoesMutation.isPending ? "Salvando..." : "Salvar"}
@@ -406,7 +406,7 @@ PV-20.236	22/10/2025	Alvoar Lácteos S/A"
                 </Button>
                 <Button
                   onClick={handleAddPedidos}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-marca hover:bg-marca-forte"
                   disabled={!pedidosText.trim() || addPedidosMutation.isPending}
                 >
                   {addPedidosMutation.isPending ? "Adicionando..." : "Adicionar Pedidos"}

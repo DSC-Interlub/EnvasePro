@@ -174,7 +174,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
                   </div>
                   <Button
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
+                    className="bg-marca hover:bg-marca-forte flex-shrink-0"
                     onClick={() => handleAssinarLider(l)}
                     disabled={!nomeLider || updateLinhaMutation.isPending}
                   >

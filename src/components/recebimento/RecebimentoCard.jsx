@@ -101,7 +101,7 @@ export default function RecebimentoCard({ recebimento, itens, ocorrencias, parti
             <Eye className="w-3 h-3 mr-1" />Ver
           </Button>
           {(recebimento.status === "Agendado" || recebimento.status === "Pausado" || recebimento.status === "Em andamento") && (
-            <Button size="sm" className="h-7 text-xs px-2 bg-blue-600 hover:bg-blue-700"
+            <Button size="sm" className="h-7 text-xs px-2 bg-marca hover:bg-marca-forte"
               onClick={() => navigate(`/ExecutarRecebimento?id=${recebimento.id}`)}>
               <Play className="w-3 h-3 mr-1" />Executar
             </Button>

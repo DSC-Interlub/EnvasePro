@@ -127,7 +127,7 @@ export default function EmbalagemForm({ embalagem, onClose }) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="bg-marca hover:bg-marca-forte">
               <Save className="w-4 h-4 mr-2" />
               Salvar
             </Button>

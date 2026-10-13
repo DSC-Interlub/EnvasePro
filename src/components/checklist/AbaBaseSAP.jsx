@@ -76,7 +76,7 @@ export default function AbaBaseSAP() {
           <Button variant="outline" onClick={() => setEditItem({ ...EMPTY })}>
             <Plus className="w-4 h-4 mr-1" /> Novo registro
           </Button>
-          <Button onClick={() => setShowImport(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={() => setShowImport(true)} className="bg-marca hover:bg-marca-forte">
             <Upload className="w-4 h-4 mr-2" /> Importar base SAP
           </Button>
         </div>
@@ -209,7 +209,7 @@ export default function AbaBaseSAP() {
             <Button
               onClick={handleSave}
               disabled={saveMutation.isPending || !editItem?.numero_documento || !editItem?.nome_fornecedor}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-marca hover:bg-marca-forte"
             >
               {saveMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>

@@ -149,7 +149,7 @@ export default function AbaProgramacaoLimpeza({ currentUser, isAdmin }) {
         </div>
         {isAdmin && (
           <div className="ml-auto">
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => { setEditando(null); setModalProg(true); }}>
+            <Button className="bg-marca hover:bg-marca-forte" onClick={() => { setEditando(null); setModalProg(true); }}>
               <Plus className="w-4 h-4 mr-2" /> Nova Programação
             </Button>
           </div>

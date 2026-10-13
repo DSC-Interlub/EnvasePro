@@ -268,7 +268,7 @@ BIO CLEANER	BIO CLEANER	L	2	X	X	X	X"
         {produtosParsed.length > 0 && (
           <Button
             onClick={handleSubmit}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-marca hover:bg-marca-forte"
             size="lg"
             disabled={createProdutosMutation.isPending}
           >

@@ -146,7 +146,7 @@ export default function ImportarCategorias() {
             <Button
               onClick={handleProcess}
               disabled={!rawText.trim() || isLoading}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-marca hover:bg-marca-forte"
             >
               <Search className="w-4 h-4 mr-2" />
               {isLoading ? "Carregando produtos..." : `Processar Lista (${products.length} produtos no banco)`}
