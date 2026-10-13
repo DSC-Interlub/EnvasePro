@@ -60,7 +60,7 @@ export default function Checkout() {
   const getStatusColor = (status) => {
     switch (status) {
       case "Pendente": return "bg-yellow-100 text-yellow-800";
-      case "Em Andamento": return "bg-blue-100 text-blue-800";
+      case "Em Andamento": return "bg-marca-suave text-marca";
       case "Concluído": return "bg-green-100 text-green-800";
       default: return "bg-gray-100 text-gray-800";
     }
@@ -103,7 +103,7 @@ export default function Checkout() {
   const isLoading = isLoadingProgramacoes || isLoadingCheckoutItems;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -203,8 +203,8 @@ export default function Checkout() {
                     {filteredProgramacoes.length}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-marca-suave rounded-xl flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-marca" />
                 </div>
               </div>
             </CardContent>
@@ -281,7 +281,7 @@ export default function Checkout() {
                         >
                           <div>
                             <div className="flex items-center gap-3 mb-2">
-                              <Calendar className="w-5 h-5 text-blue-600" />
+                              <Calendar className="w-5 h-5 text-marca" />
                               <h3 className="text-lg font-bold text-slate-900">
                                 {formatarData(prog.data_programada, "EEEE, dd 'de' MMMM 'de' yyyy")}
                               </h3>

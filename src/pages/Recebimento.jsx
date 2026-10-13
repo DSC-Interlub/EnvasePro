@@ -238,7 +238,7 @@ export default function Recebimento() {
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Package className="w-5 h-5 text-blue-600" /> Novo Recebimento
+            <Package className="w-5 h-5 text-marca" /> Novo Recebimento
           </h1>
         </div>
 
@@ -310,7 +310,7 @@ export default function Recebimento() {
             {form.equipe.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2 mt-1">
                 {form.equipe.map(e => (
-                  <Badge key={e.operator_id} className="bg-blue-100 text-blue-800 border border-blue-200 gap-1 pr-1">
+                  <Badge key={e.operator_id} className="bg-marca-suave text-marca border border-marca-suave-2 gap-1 pr-1">
                     {e.operator_nome}
                     <button onClick={() => setForm(f => ({ ...f, equipe: f.equipe.filter(x => x.operator_id !== e.operator_id) }))} className="ml-0.5 hover:text-red-600">
                       <X className="w-3 h-3" />
@@ -345,7 +345,7 @@ export default function Recebimento() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Package className="w-6 h-6 text-blue-600" /> Recebimento
+            <Package className="w-6 h-6 text-marca" /> Recebimento
           </h1>
           <p className="text-sm text-slate-500">Controle de entrada de materiais</p>
         </div>
@@ -379,7 +379,7 @@ export default function Recebimento() {
             {[
               { label: "Total", value: kpis.total, cls: "text-slate-700" },
               { label: "Agendados", value: kpis.agendados, cls: "text-slate-600" },
-              { label: "Em andamento", value: kpis.emAndamento, cls: "text-blue-700" },
+              { label: "Em andamento", value: kpis.emAndamento, cls: "text-marca" },
               { label: "Concluídos", value: kpis.concluidos, cls: "text-green-700" },
               { label: "Com ocorrência", value: kpis.comOcorrencia, cls: "text-red-700" },
             ].map(k => (
@@ -455,13 +455,13 @@ export default function Recebimento() {
 
           {/* Volume */}
           <Card>
-            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Package className="w-4 h-4 text-blue-600" />Volume</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Package className="w-4 h-4 text-marca" />Volume</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
                   { label: "Total", value: filtradosInd.length, cls: "text-slate-700" },
                   { label: "Concluídos", value: filtradosInd.filter(r => r.status === "Concluído").length, cls: "text-green-700" },
-                  { label: "Em andamento", value: filtradosInd.filter(r => r.status === "Em andamento").length, cls: "text-blue-700" },
+                  { label: "Em andamento", value: filtradosInd.filter(r => r.status === "Em andamento").length, cls: "text-marca" },
                   { label: "Cancelados", value: filtradosInd.filter(r => r.status === "Cancelado").length, cls: "text-red-700" },
                 ].map(k => (
                   <div key={k.label} className="text-center bg-slate-50 rounded-lg p-3">

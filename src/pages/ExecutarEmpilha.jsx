@@ -101,12 +101,12 @@ export default function ExecutarEmpilha() {
   const paradaAtiva = paradas.find(p => !p.hora_fim);
 
   const statusColor = statusCalculado === "Concluído" ? "bg-green-100 text-green-800"
-    : statusCalculado === "Em Andamento" ? "bg-blue-100 text-blue-800"
+    : statusCalculado === "Em Andamento" ? "bg-marca-suave text-marca"
     : "bg-yellow-100 text-yellow-800";
 
   if (!programacaoId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8">
+      <div className="min-h-screen bg-fundo p-8">
         <Card className="border-red-200"><CardContent className="p-6"><p className="text-red-600">Programação não encontrada</p></CardContent></Card>
       </div>
     );
@@ -114,7 +114,7 @@ export default function ExecutarEmpilha() {
 
   if (loadingProg || loadingLinhas) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-fundo p-8 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
           <p className="text-slate-600">Carregando programação...</p>
@@ -124,7 +124,7 @@ export default function ExecutarEmpilha() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Banner parada ativa */}
@@ -183,8 +183,8 @@ export default function ExecutarEmpilha() {
           <Card className="border-slate-200 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div><p className="text-xs font-medium text-slate-500">Em Andamento</p><p className="text-2xl font-bold mt-1 text-blue-600">{emAndamento}</p></div>
-                <AlertCircle className="w-8 h-8 text-blue-400 opacity-50" />
+                <div><p className="text-xs font-medium text-slate-500">Em Andamento</p><p className="text-2xl font-bold mt-1 text-marca">{emAndamento}</p></div>
+                <AlertCircle className="w-8 h-8 text-marca-suave opacity-50" />
               </div>
             </CardContent>
           </Card>

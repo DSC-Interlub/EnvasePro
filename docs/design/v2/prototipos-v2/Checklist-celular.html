@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Checklist — celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Manrope',sans-serif;color:#141A2B;background:#F3F4F8;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;transition:transform .15s ease,box-shadow .25s ease,background-color .25s ease,border-color .25s ease,color .25s ease,opacity .25s ease}
+button:active{transform:scale(.97)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.in{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;background:#F3F4F8;display:flex;flex-direction:column;overflow:hidden">
+
+  <header style="background:#141A2B;color:#fff;padding:20px 20px 22px;border-radius:0 0 28px 28px;flex:none">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;font-weight:700;color:#9AA3BD">Checklist de recebimento</span>
+      <span style="font-size:13px;font-weight:700;color:#9AA3BD">NF [Nº]</span>
+    </div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:14px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#9AA3BD">Nota atual</div>
+        <div style="font-size:64px;font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;color:{{scoreColor}};transition:color .3s">{{scoreText}}</div>
+      </div>
+      <span style="display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 14px;font-size:14px;font-weight:800;background:{{pillBg}};color:{{pillFg}};transition:background-color .3s,color .3s"><span style="width:8px;height:8px;border-radius:4px;background:{{pillFg}}"></span>{{pillText}}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:5px;margin-top:18px">
+      <sc-for list="{{segs}}" as="g" hint-placeholder-count="9">
+        <div style="height:8px;border-radius:4px;background:{{g.c}};transition:background-color .35s ease"></div>
+      </sc-for>
+    </div>
+  </header>
+
+  <sc-if value="{{notDone}}" hint-placeholder-val="{{ true }}">
+    <main style="flex:1;min-height:0;padding:22px 16px 8px;display:flex;flex-direction:column;gap:16px">
+      <div class="in" style="background:#fff;border-radius:24px;padding:20px 20px 22px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 12px 30px rgba(20,26,43,.06)">
+        <div style="font-size:13px;font-weight:700;color:#3B5BFF">Pergunta {{num}} de 9</div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-top:8px">[Texto da pergunta {{num}} do checklist]</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <button onClick="{{ans.sim}}" style="height:76px;border-radius:22px;border:0;background:{{ans.simBg}};color:{{ans.simFg}};font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:{{ans.simSh}}"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>Sim<span style="font-size:15px;font-weight:700;opacity:.7">+10</span></button>
+        <button onClick="{{ans.nao}}" style="height:76px;border-radius:22px;border:0;background:{{ans.naoBg}};color:{{ans.naoFg}};font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:{{ans.naoSh}}"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Não<span style="font-size:15px;font-weight:700;opacity:.7">−10</span></button>
+        <button onClick="{{ans.na}}" style="height:60px;border-radius:20px;border:2px solid {{ans.naBd}};background:{{ans.naBg}};color:#141A2B;font-size:18px;font-weight:700">Não se aplica</button>
+      </div>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+    <main style="flex:1;min-height:0;padding:22px 16px 8px;display:flex;flex-direction:column;gap:16px">
+      <div class="in" style="background:#fff;border-radius:24px;padding:24px 22px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 12px 30px rgba(20,26,43,.06);text-align:center">
+        <div style="width:64px;height:64px;border-radius:32px;background:#DDF4EA;margin:0 auto;display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#12A66B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:14px">Checklist completo</div>
+        <div style="font-size:15px;font-weight:600;color:#7A8296;margin-top:6px">Resultado: {{pillText}}. Revise e envie.</div>
+      </div>
+      <button style="height:68px;border-radius:22px;border:0;background:#3B5BFF;color:#fff;font-size:20px;font-weight:800;box-shadow:0 12px 26px rgba(59,91,255,.38)">Enviar checklist</button>
+      <button onClick="{{restart}}" style="height:56px;border-radius:20px;border:2px solid #E1E4EE;background:#fff;color:#141A2B;font-size:17px;font-weight:700">Refazer</button>
+    </main>
+  </sc-if>
+
+  <footer style="flex:none;padding:10px 16px 22px;display:flex;gap:10px">
+    <button onClick="{{back}}" style="height:56px;flex:0 0 112px;border-radius:18px;border:0;background:#fff;box-shadow:0 1px 3px rgba(20,26,43,.12);font-size:16px;font-weight:700;color:#141A2B">Voltar</button>
+    <div style="height:56px;flex:1;border-radius:18px;background:#E9EBF3;color:#7A8296;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center">Avança sozinho ao responder</div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const answers = s.answers || [];
+    const idx = answers.length;
+    const val = { sim: 10, nao: -10, na: 0 };
+    const score = answers.reduce((a, x) => a + val[x], 0);
+    const answered = (k) => () => {
+      const cur = (this.state && this.state.answers) || [];
+      if (cur.length >= 9) return;
+      this.setState({ answers: cur.concat([k]), flash: k });
+      setTimeout(() => this.setState({ flash: null }), 420);
+    };
+    const flash = s.flash;
+    const active = (k, on, off) => (flash === k ? on : off);
+    let pillText = 'Atenção', pillBg = '#3A2F12', pillFg = '#FFC247', scoreColor = '#FFC247';
+    if (score >= 80) { pillText = 'Aprovado'; pillBg = '#12392A'; pillFg = '#3DD68C'; scoreColor = '#3DD68C'; }
+    else if (score < 0) { pillText = 'Reprovado'; pillBg = '#41181B'; pillFg = '#FF7B80'; scoreColor = '#FF7B80'; }
+    const segColor = { sim: '#3DD68C', nao: '#FF7B80', na: '#8A92B2' };
+    const segs = [];
+    for (let i = 0; i < 9; i++) segs.push({ c: i < idx ? segColor[answers[i]] : (i === idx ? '#fff' : '#2C3550') });
+    return {
+      notDone: idx < 9, done: idx >= 9, num: Math.min(idx + 1, 9),
+      scoreText: (score > 0 ? '+' : '') + score,
+      scoreColor, pillText, pillBg, pillFg, segs,
+      ans: {
+        sim: answered('sim'), nao: answered('nao'), na: answered('na'),
+        simBg: active('sim', '#0E8A58', '#12A66B'), simFg: '#fff', simSh: active('sim', '0 0 0 6px rgba(18,166,107,.25)', '0 10px 22px rgba(18,166,107,.3)'),
+        naoBg: active('nao', '#C93138', '#E5484D'), naoFg: '#fff', naoSh: active('nao', '0 0 0 6px rgba(229,72,77,.25)', '0 10px 22px rgba(229,72,77,.28)'),
+        naBd: active('na', '#3B5BFF', '#E1E4EE'), naBg: active('na', '#F0F3FF', '#fff')
+      },
+      back: () => this.setState({ answers: ((this.state && this.state.answers) || []).slice(0, -1) }),
+      restart: () => this.setState({ answers: [] })
+    };
+  }
+}
+</script>
+</body>
+</html>

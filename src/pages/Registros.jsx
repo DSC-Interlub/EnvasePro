@@ -142,7 +142,7 @@ export default function Registros() {
       );
     }
     return (
-      <Badge className="bg-blue-500 text-white">
+      <Badge className="bg-marca text-white">
         <Clock className="w-3 h-3 mr-1" />
         Em Andamento
       </Badge>
@@ -172,7 +172,7 @@ export default function Registros() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">

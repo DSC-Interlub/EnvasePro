@@ -207,7 +207,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
 
   const statusColors = {
     Pendente: "bg-slate-100 text-slate-700",
-    "Em Andamento": "bg-blue-100 text-blue-800",
+    "Em Andamento": "bg-marca-suave text-marca",
     Pausado: "bg-yellow-100 text-yellow-800",
     Concluído: "bg-green-100 text-green-800",
   };
@@ -300,7 +300,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
               )}
               {/* Botão assinar líder — visível para admin quando líder ainda não assinou */}
               {linha.status === "Concluído" && !linha.assinatura_lider && isAdmin && (
-                <Button size="sm" variant="outline" className="border-blue-400 text-blue-700 hover:bg-blue-50" onClick={() => {
+                <Button size="sm" variant="outline" className="border-marca text-marca hover:bg-marca-suave" onClick={() => {
                   setNomeLider(currentUser?.full_name || "");
                   setCheckLider(false);
                   setEtapaAssinatura(ETAPA_CONCLUIDO);
@@ -406,7 +406,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-600" /> Etapa 2 de 3 — Assinatura do Ajudante
+                  <User className="w-5 h-5 text-marca" /> Etapa 2 de 3 — Assinatura do Ajudante
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-2">
@@ -419,7 +419,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                     </SelectContent>
                   </Select>
                 </div>
-                <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-lg hover:bg-blue-50 transition-colors">
+                <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-lg hover:bg-marca-suave transition-colors">
                   <input type="checkbox" checked={checkAjudante} onChange={e => setCheckAjudante(e.target.checked)} className="w-5 h-5 mt-0.5" />
                   <span className="text-sm font-medium text-slate-700">Confirmo que participei desta movimentação</span>
                 </label>

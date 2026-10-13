@@ -133,7 +133,7 @@ export default function CheckoutItemCard({ item, operators }) {
   const getStatusColor = (status) => {
     switch (status) {
       case "Pendente": return "bg-yellow-100 text-yellow-800";
-      case "Em Andamento": return "bg-blue-100 text-blue-800";
+      case "Em Andamento": return "bg-marca-suave text-marca";
       case "Concluído": return "bg-green-100 text-green-800";
       default: return "bg-gray-100 text-gray-800";
     }
@@ -153,7 +153,7 @@ export default function CheckoutItemCard({ item, operators }) {
           <div className="flex flex-col md:flex-row justify-between items-start gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <Package className={`w-5 h-5 ${item.critico ? 'text-red-600' : 'text-blue-600'}`} />
+                <Package className={`w-5 h-5 ${item.critico ? 'text-red-600' : 'text-marca'}`} />
                 <h3 className="text-lg font-bold text-slate-900">{item.numero_pedido}</h3>
                 <Badge className={getStatusColor(formData.status)}>
                   {formData.status}
@@ -416,7 +416,7 @@ export default function CheckoutItemCard({ item, operators }) {
               </div>
               <div>
                 <p className="text-slate-500 mb-1">Tempo Total</p>
-                <p className="font-semibold text-blue-600">{item.tempo_total || "--:--"}</p>
+                <p className="font-semibold text-marca">{item.tempo_total || "--:--"}</p>
               </div>
               {item.critico && item.data_saida && (
                 <div>

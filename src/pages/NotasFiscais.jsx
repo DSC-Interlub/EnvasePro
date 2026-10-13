@@ -35,7 +35,7 @@ export default function NotasFiscais() {
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <FileText className="w-7 h-7 text-blue-600" /> Arquivo de NFs
+          <FileText className="w-7 h-7 text-marca" /> Arquivo de NFs
         </h1>
         <Button onClick={() => navigate("/NovaNotaFiscal")} className="gap-1 bg-marca hover:bg-marca-forte">
           <Plus className="w-4 h-4" /> Arquivar NF
@@ -70,7 +70,7 @@ export default function NotasFiscais() {
             >
               <CardContent className="p-4 flex items-center gap-4">
                 {nf.arquivo_url ? (
-                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-marca-suave text-marca rounded-lg flex items-center justify-center flex-shrink-0">
                     <FileText className="w-6 h-6" />
                   </div>
                 ) : (
@@ -79,7 +79,7 @@ export default function NotasFiscais() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-mono font-bold text-blue-700 text-lg">{nf.numero_nf}</p>
+                  <p className="font-mono font-bold text-marca text-lg">{nf.numero_nf}</p>
                   <p className="text-xs text-slate-400">{fmtDate(nf.created_date)} · {nf.arquivado_por_nome || "—"}</p>
                 </div>
                 {!nf.arquivo_url && (

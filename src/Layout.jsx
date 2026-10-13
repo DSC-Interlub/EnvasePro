@@ -1,45 +1,45 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, ClipboardList, Package, Factory, List, Warehouse, Settings, ShieldAlert, Truck, ClipboardCheck, FileText, Activity, LogOut, UserCheck, RefreshCw, AlertTriangle } from "lucide-react";
+import {
+  LayoutDashboard, ClipboardList, Package, List, Warehouse, Settings,
+  Truck, ClipboardCheck, FileText, Activity, Menu, X,
+} from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import SelecionarOperadorModal from "@/components/auth/SelecionarOperadorModal";
-import { Button } from "@/components/ui/button";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import MenuLateral from "@/components/casca/MenuLateral";
 
-// Itens de navegação — com flag para role restrição
+/**
+ * Itens de navegação.
+ *
+ * `grupo` é só apresentação — nasceu com a direção "Fluxo", que separa o menu
+ * em "Acompanhar", "Operação" e "Cadastros". **As rotas e os `roles` não
+ * mudaram**: quem via um item antes vê o mesmo item agora, e quem era barrado
+ * continua barrado. A guarda de permissão é `RotaProtegidaAdmin` e
+ * `PAGINAS_SOMENTE_ADMIN` em App.jsx, não esta lista.
+ */
 const allNavItems = [
-  { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, roles: ["admin", "operator"] },
-  { title: "Televisão", url: createPageUrl("Televisao"), icon: LayoutDashboard, roles: ["admin", "operator"] },
-  { title: "Novo Registro", url: createPageUrl("NovoRegistro"), icon: ClipboardList, roles: ["admin", "operator"] },
-  { title: "Todos os Registros", url: createPageUrl("Registros"), icon: List, roles: ["admin", "operator"] },
-  { title: "Check-out", url: createPageUrl("Checkout"), icon: Package, roles: ["admin", "operator"] },
-  { title: "Empilhadeira", url: createPageUrl("Empilhadeira"), icon: Warehouse, roles: ["admin", "operator"], badgeKey: "empilhadeira" },
-  { title: "Recebimento", url: "/Recebimento", icon: Truck, roles: ["admin", "operator"], badgeKey: "recebimento" },
-  { title: "Checklist Recebimento", url: "/ChecklistRecebimento", icon: ClipboardCheck, roles: ["admin", "operator"] },
-  { title: "Painel Geral", url: "/Painel", icon: Activity, roles: ["admin", "operator"] },
-  { title: "Notas Fiscais", url: "/NotasFiscais", icon: FileText, roles: ["admin", "operator"] },
-  { title: "Configurações", url: "/GerenciarUsuarios", icon: Settings, roles: ["admin"] },
+  { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, roles: ["admin", "operator"], grupo: "Acompanhar" },
+  { title: "Televisão", url: createPageUrl("Televisao"), icon: LayoutDashboard, roles: ["admin", "operator"], grupo: "Acompanhar" },
+  { title: "Painel Geral", url: "/Painel", icon: Activity, roles: ["admin", "operator"], grupo: "Acompanhar" },
+  { title: "Novo Registro", url: createPageUrl("NovoRegistro"), icon: ClipboardList, roles: ["admin", "operator"], grupo: "Operação" },
+  { title: "Todos os Registros", url: createPageUrl("Registros"), icon: List, roles: ["admin", "operator"], grupo: "Operação" },
+  { title: "Check-out", url: createPageUrl("Checkout"), icon: Package, roles: ["admin", "operator"], grupo: "Operação" },
+  { title: "Empilhadeira", url: createPageUrl("Empilhadeira"), icon: Warehouse, roles: ["admin", "operator"], badgeKey: "empilhadeira", grupo: "Operação" },
+  { title: "Recebimento", url: "/Recebimento", icon: Truck, roles: ["admin", "operator"], badgeKey: "recebimento", grupo: "Operação" },
+  { title: "Checklist Recebimento", url: "/ChecklistRecebimento", icon: ClipboardCheck, roles: ["admin", "operator"], grupo: "Operação" },
+  { title: "Notas Fiscais", url: "/NotasFiscais", icon: FileText, roles: ["admin", "operator"], grupo: "Operação" },
+  { title: "Configurações", url: "/GerenciarUsuarios", icon: Settings, roles: ["admin"], grupo: "Cadastros" },
 ];
+
+const ORDEM_GRUPOS = ["Acompanhar", "Operação", "Cadastros"];
 
 export default function Layout({ children }) {
   const location = useLocation();
   const { user, logout, currentOperator } = useAuth();
   const [modalOperadorAberto, setModalOperadorAberto] = useState(false);
+  const [gavetaAberta, setGavetaAberta] = useState(false);
   const rawRole = user?.role || "operator";
   const role = rawRole === "user" ? "operator" : rawRole;
 
@@ -83,7 +83,20 @@ export default function Layout({ children }) {
     return () => { cancelado = true; clearInterval(interval); };
   }, [role]);
 
-  const navItems = allNavItems.filter(item => item.roles.includes(role));
+  // Fecha a gaveta ao trocar de tela: senão ela fica aberta sobre a tela nova.
+  useEffect(() => { setGavetaAberta(false); }, [location.pathname]);
+
+  const navItems = allNavItems.filter((item) => item.roles.includes(role));
+  const grupos = ORDEM_GRUPOS
+    .map((nome) => ({ nome, itens: navItems.filter((i) => i.grupo === nome) }))
+    .filter((g) => g.itens.length > 0);
+
+  const contadorDe = (item) => {
+    if (role !== "admin") return 0;
+    if (item.badgeKey === "empilhadeira") return badgeCount;
+    if (item.badgeKey === "recebimento") return recBadgeCount;
+    return 0;
+  };
 
   // Telas de TV / Painel em tela cheia sem navegação (Ajuste 4)
   const pathnameLower = location.pathname.toLowerCase();
@@ -96,116 +109,29 @@ export default function Layout({ children }) {
     return <>{children}</>;
   }
 
+  const propsMenu = {
+    grupos, role, user, currentOperator, contadorDe, contadoresFalharam,
+    urlAtual: pathnameLower,
+    aoTrocarOperador: () => setModalOperadorAberto(true),
+    aoSair: logout,
+  };
+
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
-        <Sidebar className="border-r border-slate-200 bg-white">
-          <SidebarHeader className="border-b border-slate-200 p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <Factory className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="font-bold text-slate-900 text-lg">Operações Interlub</h2>
-                <p className="text-xs text-slate-500 flex items-center gap-1">
-                  {role === "admin" ? (
-                    <><ShieldAlert className="w-3 h-3 text-amber-500" /> Admin</>
-                  ) : "Operador"}
-                </p>
-              </div>
-            </div>
-          </SidebarHeader>
+    <>
+      {/* O cartão flutuante exige fundo em volta: daí o padding e o gap, e o
+          fundo da página vir de --fundo em vez de um gradiente. */}
+      <div className="min-h-screen w-full bg-fundo text-tinta flex gap-4 p-0 md:p-4">
 
-          <SidebarContent className="p-3">
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2">
-                Navegação
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {navItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        className={`hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-lg mb-1 ${location.pathname === item.url ? 'bg-blue-100 text-blue-700 shadow-sm' : ''}`}
-                      >
-                        <Link to={item.url} className="flex min-h-[48px] items-center gap-3 px-3 py-2.5">
-                          <item.icon className="w-5 h-5" />
-                          <span className="font-medium flex-1">{item.title}</span>
-                          {item.badgeKey === "empilhadeira" && role === "admin" && badgeCount > 0 && (
-                            <span className="bg-red-600 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
-                              {badgeCount > 99 ? "99+" : badgeCount}
-                            </span>
-                          )}
-                          {item.badgeKey === "recebimento" && role === "admin" && recBadgeCount > 0 && (
-                            <span className="bg-orange-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
-                              {recBadgeCount > 99 ? "99+" : recBadgeCount}
-                            </span>
-                          )}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-
-                {/* O aviso ocupa o lugar do antigo `catch {}`: se a contagem
-                    falhar, os selos acima estão velhos, e quem está olhando
-                    precisa saber disso em vez de confiar num número parado. */}
-                {role === "admin" && contadoresFalharam && (
-                  <p
-                    role="status"
-                    className="mx-3 mt-2 flex items-start gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-[11px] font-medium text-amber-800"
-                  >
-                    <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
-                    <span>Contadores desatualizados: não consegui consultar as pendências.</span>
-                  </p>
-                )}
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-
-          <SidebarFooter className="border-t border-slate-200 p-4 space-y-3 bg-slate-50/50">
-            {/* Bloco de Operador Ativo — Lição 3 */}
-            {role === "operator" && (
-              <div className="p-2.5 rounded-lg bg-white border border-blue-200 shadow-sm space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-slate-500 uppercase flex items-center gap-1">
-                    <UserCheck className="w-3 h-3 text-blue-600" /> Operador do Turno
-                  </span>
-                  <button
-                    onClick={() => setModalOperadorAberto(true)}
-                    className="min-h-[48px] px-2 text-[11px] text-blue-600 hover:text-blue-800 font-medium flex items-center gap-0.5"
-                    title="Trocar operador ativo"
-                  >
-                    <RefreshCw className="w-2.5 h-2.5" /> Trocar
-                  </button>
-                </div>
-                <p className="text-xs font-bold text-slate-800 truncate">
-                  {currentOperator?.nome || "Nenhum selecionado"}
-                </p>
-                {currentOperator?.sala && (
-                  <p className="text-[10px] text-slate-500">Sala: {currentOperator.sala}</p>
-                )}
-              </div>
-            )}
-
-            <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
-              <span className="truncate max-w-[130px]" title={user?.email}>
-                {user?.email || "Conectado"}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={logout}
-                className="h-12 px-3 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
-                title="Sair do sistema"
-              >
-                <LogOut className="w-3 h-3" />
-                Sair
-              </Button>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
+        {/* --- tablet: rail de 80px | desktop: menu completo de 248px -----
+            `sticky` e a altura limitada à janela: numa tela longa (o Dashboard
+            tem 3.485px) um menu de altura automática sai de vista na primeira
+            rolagem, e o operador perde a navegação justo quando desce a lista.
+            `overflow-y-auto` para o caso de o próprio menu não caber. */}
+        <aside className="hidden md:flex flex-shrink-0 sticky top-4 self-start
+                          max-h-[calc(100vh-2rem)]">
+          <div className="lg:hidden h-full"><MenuLateral {...propsMenu} modo="rail" /></div>
+          <div className="hidden lg:block h-full"><MenuLateral {...propsMenu} modo="completo" /></div>
+        </aside>
 
         {/* min-w-0: um item flex nao encolhe abaixo da largura do conteudo por
             padrao (min-width:auto). Sem isto, uma tabela larga empurra o
@@ -213,29 +139,73 @@ export default function Layout({ children }) {
             so a tabela rolar dentro do proprio overflow-x-auto. Media no
             tablet (820px): Registros estourava 375px, Produtos 211px. */}
         <main className="flex-1 min-w-0 flex flex-col">
-          <header className="bg-white border-b border-slate-200 px-6 py-4 md:hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors duration-200" />
-                <h1 className="text-xl font-bold text-slate-900">Operações Interlub</h1>
+
+          {/* --- celular: barra com o botão da gaveta -------------------- */}
+          <header className="md:hidden bg-cartao border-b border-borda px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setGavetaAberta(true)}
+                  aria-label="Abrir menu"
+                  aria-expanded={gavetaAberta}
+                  className="press foco-fluxo w-12 h-12 rounded-token flex items-center
+                             justify-center text-tinta hover:bg-marca-suave hover:text-marca"
+                >
+                  <Menu className="w-6 h-6" aria-hidden="true" />
+                </button>
+                <h1 className="text-lg font-extrabold tracking-[-0.02em] truncate">
+                  Operações Interlub
+                </h1>
               </div>
               {role === "operator" && currentOperator && (
-                <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-1 rounded-full">
+                <span className="text-xs bg-marca-suave text-marca font-bold px-2.5 py-1
+                                 rounded-full flex-shrink-0 truncate max-w-[40%]">
                   {currentOperator.nome}
                 </span>
               )}
             </div>
           </header>
-          <div className="flex-1 overflow-auto">
-            {children}
-          </div>
+
+          <div className="flex-1 overflow-auto">{children}</div>
         </main>
       </div>
+
+      {/* --- celular: a gaveta ------------------------------------------
+          Renderizada só quando aberta, e não escondida com CSS: um menu
+          sempre montado deixa os links no DOM e no foco do teclado mesmo
+          invisível. */}
+      {gavetaAberta && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <button
+            type="button"
+            aria-label="Fechar menu"
+            onClick={() => setGavetaAberta(false)}
+            className="absolute inset-0 bg-tinta/40"
+          />
+          <div className="relative m-3 flex entra">
+            <MenuLateral
+              {...propsMenu}
+              modo="completo"
+              aoNavegar={() => setGavetaAberta(false)}
+            />
+            <button
+              type="button"
+              onClick={() => setGavetaAberta(false)}
+              aria-label="Fechar menu"
+              className="press foco-fluxo absolute -right-14 top-0 w-12 h-12 rounded-token
+                         bg-cartao text-tinta flex items-center justify-center shadow-cartao"
+            >
+              <X className="w-6 h-6" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <SelecionarOperadorModal
         abertoManualmente={modalOperadorAberto}
         aoFechar={() => setModalOperadorAberto(false)}
       />
-    </SidebarProvider>
+    </>
   );
 }

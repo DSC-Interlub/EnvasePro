@@ -91,7 +91,7 @@ export default function ImportarProdutos() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -125,10 +125,10 @@ export default function ImportarProdutos() {
         )}
 
         {/* Instruções */}
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-marca-suave-2 bg-marca-suave">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+              <FileSpreadsheet className="w-5 h-5 text-marca" />
               Como Importar
             </CardTitle>
           </CardHeader>
@@ -230,12 +230,12 @@ BIO CLEANER	BIO CLEANER	L	2	X	X	X	X"
                         {produto.categoria && (
                           <Badge className={
                             produto.categoria === 'Graxa' ? 'bg-amber-100 text-amber-800 text-xs font-medium' :
-                            produto.categoria === 'Óleo' ? 'bg-blue-100 text-blue-800 text-xs font-medium' :
+                            produto.categoria === 'Óleo' ? 'bg-marca-suave text-marca text-xs font-medium' :
                             'bg-green-100 text-green-800 text-xs font-medium'
                           }>{produto.categoria}</Badge>
                         )}
                         {produto.nsf_3h && (
-                          <Badge className="bg-blue-100 text-blue-800 text-xs font-medium">NSF 3H</Badge>
+                          <Badge className="bg-marca-suave text-marca text-xs font-medium">NSF 3H</Badge>
                         )}
                         {produto.nsf_h1 && (
                           <Badge className="bg-green-100 text-green-800 text-xs font-medium">NSF H1</Badge>

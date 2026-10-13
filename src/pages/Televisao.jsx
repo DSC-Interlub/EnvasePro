@@ -29,12 +29,12 @@ function SlideEnvase({ envaseRecords, loadingEnvase, getProductCertifications, g
     <div className="flex flex-col gap-4 h-full">
       <div className="space-y-2">
         <div className="flex items-center gap-2 px-2">
-          <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+          <div className="w-1 h-6 bg-gradient-to-b from-marca to-marca rounded-full"></div>
           <h2 className="text-xl font-black text-white flex items-center gap-2">
-            <Factory className="w-5 h-5 text-blue-400" />
+            <Factory className="w-5 h-5 text-marca-suave" />
             ENVASE EM ANDAMENTO
           </h2>
-          <p className="text-blue-300 text-xs font-medium ml-2">
+          <p className="text-marca-suave text-xs font-medium ml-2">
             {envaseRecords.length} {envaseRecords.length === 1 ? 'operação ativa' : 'operações ativas'}
           </p>
         </div>
@@ -55,18 +55,18 @@ function SlideEnvase({ envaseRecords, loadingEnvase, getProductCertifications, g
               <p className="text-green-300 text-[9px]">{monthlyKpis.bioRegistros} reg.</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-blue-700/80 to-blue-800/80 border-blue-600/40 shadow-lg">
+          <Card className="bg-gradient-to-br from-marca-forte/80 to-marca-forte/80 border-marca/40 shadow-lg">
             <CardContent className="p-2">
-              <p className="text-blue-200 text-[9px] font-semibold uppercase tracking-wide">Produção Industrial</p>
+              <p className="text-marca-suave text-[9px] font-semibold uppercase tracking-wide">Produção Industrial</p>
               <p className="text-2xl font-black text-white tabular-nums leading-tight">{monthlyKpis.industrial.toLocaleString('pt-BR')}</p>
-              <p className="text-blue-300 text-[9px]">{monthlyKpis.industrialRegistros} reg.</p>
+              <p className="text-marca-suave text-[9px]">{monthlyKpis.industrialRegistros} reg.</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-blue-700/80 to-blue-800/80 border-blue-600/40 shadow-lg">
+          <Card className="bg-gradient-to-br from-marca-forte/80 to-marca-forte/80 border-marca/40 shadow-lg">
             <CardContent className="p-2">
-              <p className="text-blue-200 text-[9px] font-semibold uppercase tracking-wide">Óleo do Mês</p>
+              <p className="text-marca-suave text-[9px] font-semibold uppercase tracking-wide">Óleo do Mês</p>
               <p className="text-2xl font-black text-white tabular-nums leading-tight">{monthlyKpisByCategory.oleo.toLocaleString('pt-BR')}</p>
-              <Droplets className="w-5 h-5 text-blue-300/80 mt-0.5" />
+              <Droplets className="w-5 h-5 text-marca-suave/80 mt-0.5" />
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-amber-700/80 to-amber-800/80 border-amber-600/40 shadow-lg">
@@ -98,20 +98,20 @@ function SlideEnvase({ envaseRecords, loadingEnvase, getProductCertifications, g
               const certifications = getProductCertifications(record.codigo_produto);
               const operatorPhoto = getOperatorPhoto(record.operador);
               return (
-                <Card key={record.id} className="bg-gradient-to-r from-slate-900/90 to-slate-800/90 backdrop-blur-xl border-l-4 border-blue-500 shadow-xl animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+                <Card key={record.id} className="bg-gradient-to-r from-slate-900/90 to-slate-800/90 backdrop-blur-xl border-l-4 border-marca shadow-xl animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
                   <CardContent className="p-3">
                     <div className="grid grid-cols-8 gap-3 items-center">
                       <div>
                         <p className="text-slate-500 text-[10px] font-bold uppercase mb-1">Sala</p>
-                        <Badge className={`text-base px-3 py-1 font-black ${record.sala === "Bio" ? "bg-gradient-to-r from-green-600 to-green-700 text-white" : "bg-gradient-to-r from-blue-600 to-blue-700 text-white"}`}>{record.sala}</Badge>
+                        <Badge className={`text-base px-3 py-1 font-black ${record.sala === "Bio" ? "bg-gradient-to-r from-green-600 to-green-700 text-white" : "bg-gradient-to-r from-marca to-marca-forte text-white"}`}>{record.sala}</Badge>
                       </div>
                       <div>
                         <p className="text-slate-500 text-[10px] font-bold uppercase mb-1">Operador</p>
                         <div className="flex items-center gap-2">
                           {operatorPhoto ? (
-                            <img src={operatorPhoto} alt={record.operador} className="w-10 h-10 rounded-full object-cover border-2 border-blue-400" onError={(e) => { e.target.style.display = 'none'; }} />
+                            <img src={operatorPhoto} alt={record.operador} className="w-10 h-10 rounded-full object-cover border-2 border-marca" onError={(e) => { e.target.style.display = 'none'; }} />
                           ) : (
-                            <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center"><User className="w-5 h-5 text-blue-400" /></div>
+                            <div className="w-10 h-10 bg-marca/20 rounded-full flex items-center justify-center"><User className="w-5 h-5 text-marca-suave" /></div>
                           )}
                           <p className="text-2xl font-black text-white leading-tight">{record.operador}</p>
                         </div>
@@ -144,9 +144,9 @@ function SlideEnvase({ envaseRecords, loadingEnvase, getProductCertifications, g
                       <div className="col-span-2 text-right">
                         <p className="text-slate-500 text-[10px] font-bold uppercase mb-1">Tempo Decorrido</p>
                         <div className="flex items-center justify-end gap-2">
-                          <Clock className="w-7 h-7 text-blue-400 animate-pulse" />
+                          <Clock className="w-7 h-7 text-marca-suave animate-pulse" />
                           <div>
-                            <p className="text-5xl font-black text-blue-400 font-mono tabular-nums leading-tight">{calcElapsed(record.inicio)}</p>
+                            <p className="text-5xl font-black text-marca-suave font-mono tabular-nums leading-tight">{calcElapsed(record.inicio)}</p>
                             <p className="text-slate-400 text-[10px] font-semibold mt-1">desde {record.inicio}</p>
                           </div>
                         </div>
@@ -543,7 +543,7 @@ export default function Televisao() {
     const certs = [];
     if (product.halal) certs.push({ name: 'HALAL', color: 'bg-purple-500', logo: '/certificacoes/halal.png' });
     if (product.kosher) certs.push({ name: 'KOSHER', color: 'bg-slate-700', logo: '/certificacoes/kosher.png' });
-    if (product.nsf_3h) certs.push({ name: 'NSF 3H', color: 'bg-blue-500', logo: '/certificacoes/nsf.png' });
+    if (product.nsf_3h) certs.push({ name: 'NSF 3H', color: 'bg-marca', logo: '/certificacoes/nsf.png' });
     if (product.nsf_h1) certs.push({ name: 'NSF H1', color: 'bg-green-500', logo: '/certificacoes/nsf.png' });
     return certs;
   };
@@ -577,7 +577,7 @@ export default function Televisao() {
   };
 
   const SLIDES = [
-    { label: "Envase", color: "bg-blue-500" },
+    { label: "Envase", color: "bg-marca" },
     { label: "Check-out", color: "bg-purple-500" },
     { label: "Empilhadeira", color: "bg-amber-500" },
   ];
@@ -587,7 +587,7 @@ export default function Televisao() {
 
   return (
     <div
-      className="min-h-screen h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 p-3 overflow-hidden flex flex-col"
+      className="min-h-screen h-screen bg-gradient-to-br from-slate-950 via-marca-forte to-slate-950 p-3 overflow-hidden flex flex-col"
       onTouchStart={(e) => { e.currentTarget._touchX = e.touches[0].clientX; }}
       onTouchEnd={(e) => { const dx = e.changedTouches[0].clientX - (e.currentTarget._touchX || 0); if (Math.abs(dx) > 50) nextSlide(); }}
     >
@@ -599,7 +599,7 @@ export default function Televisao() {
       <div className="max-w-[1920px] mx-auto w-full flex flex-col h-full gap-2">
 
         {/* Header */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-3 shadow-xl flex-shrink-0">
+        <div className="relative overflow-hidden bg-gradient-to-r from-marca via-marca-forte to-indigo-700 rounded-2xl p-3 shadow-xl flex-shrink-0">
           <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]"></div>
           <div className="relative flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -608,7 +608,7 @@ export default function Televisao() {
               </div>
               <div>
                 <h1 className="text-3xl font-black text-white tracking-tight">Operações Interlub</h1>
-                <p className="text-blue-100 text-sm font-medium">{format(currentTime, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                <p className="text-marca-suave text-sm font-medium">{format(currentTime, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -624,8 +624,8 @@ export default function Televisao() {
         <div className="grid grid-cols-4 gap-2 flex-shrink-0">
           {slideIndex === 0 && (<>
             <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 border-0 shadow-lg"><CardContent className="p-2"><div className="flex items-center justify-between"><div><p className="text-emerald-100 text-[10px] font-semibold">Produção Hoje</p><p className="text-2xl font-black text-white tabular-nums">{todayStats.envaseTotal.toLocaleString('pt-BR')}</p></div><TrendingUp className="w-6 h-6 text-white/90" /></div></CardContent></Card>
-            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 shadow-lg"><CardContent className="p-2"><div className="flex items-center justify-between"><div><p className="text-blue-100 text-[10px] font-semibold">Envases OK</p><p className="text-2xl font-black text-white tabular-nums">{todayStats.envaseConcluidos}</p></div><CheckCircle className="w-6 h-6 text-white/90" /></div></CardContent></Card>
-            <Card className="bg-gradient-to-br from-blue-400 to-blue-500 border-0 shadow-lg"><CardContent className="p-2"><div className="flex items-center justify-between"><div><p className="text-blue-100 text-[10px] font-semibold">Em andamento</p><p className="text-2xl font-black text-white tabular-nums">{envaseRecords.length}</p></div><Factory className="w-6 h-6 text-white/90" /></div></CardContent></Card>
+            <Card className="bg-gradient-to-br from-marca to-marca border-0 shadow-lg"><CardContent className="p-2"><div className="flex items-center justify-between"><div><p className="text-marca-suave text-[10px] font-semibold">Envases OK</p><p className="text-2xl font-black text-white tabular-nums">{todayStats.envaseConcluidos}</p></div><CheckCircle className="w-6 h-6 text-white/90" /></div></CardContent></Card>
+            <Card className="bg-gradient-to-br from-marca to-marca border-0 shadow-lg"><CardContent className="p-2"><div className="flex items-center justify-between"><div><p className="text-marca-suave text-[10px] font-semibold">Em andamento</p><p className="text-2xl font-black text-white tabular-nums">{envaseRecords.length}</p></div><Factory className="w-6 h-6 text-white/90" /></div></CardContent></Card>
             <Card className="bg-gradient-to-br from-slate-600 to-slate-700 border-0 shadow-lg"><CardContent className="p-2"><div className="flex items-center justify-between"><div><p className="text-slate-300 text-[10px] font-semibold">Operações hoje</p><p className="text-2xl font-black text-white tabular-nums">{todayStats.envaseConcluidos + envaseRecords.length}</p></div><TrendingUp className="w-6 h-6 text-white/90" /></div></CardContent></Card>
           </>)}
           {slideIndex === 1 && (<>

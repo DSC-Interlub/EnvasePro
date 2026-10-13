@@ -98,7 +98,7 @@ export default function IndicadoresRecebimento() {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <BarChart2 className="w-6 h-6 text-blue-600" /> Indicadores de Recebimento
+          <BarChart2 className="w-6 h-6 text-marca" /> Indicadores de Recebimento
         </h1>
         <div className="flex flex-wrap gap-2 items-center">
           {[["hoje", "Hoje"], ["semana", "Esta semana"], ["mes", "Este mês"]].map(([k, l]) => (
@@ -128,13 +128,13 @@ export default function IndicadoresRecebimento() {
 
       {/* Bloco 1 — Volume */}
       <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Package className="w-4 h-4 text-blue-600" />Volume</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Package className="w-4 h-4 text-marca" />Volume</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { label: "Total", value: filtrados.length, cls: "text-slate-700" },
               { label: "Concluídos", value: filtrados.filter(r => r.status === "Concluído").length, cls: "text-green-700" },
-              { label: "Em andamento", value: filtrados.filter(r => r.status === "Em andamento").length, cls: "text-blue-700" },
+              { label: "Em andamento", value: filtrados.filter(r => r.status === "Em andamento").length, cls: "text-marca" },
               { label: "Cancelados", value: filtrados.filter(r => r.status === "Cancelado").length, cls: "text-red-700" },
             ].map(k => (
               <div key={k.label} className="text-center bg-slate-50 rounded-lg p-3">

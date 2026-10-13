@@ -82,7 +82,7 @@ export default function ImportarEmbalagens() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -116,10 +116,10 @@ export default function ImportarEmbalagens() {
         )}
 
         {/* Instruções */}
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-marca-suave-2 bg-marca-suave">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+              <FileSpreadsheet className="w-5 h-5 text-marca" />
               Como Importar
             </CardTitle>
           </CardHeader>

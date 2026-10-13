@@ -37,7 +37,7 @@ function calcElapsed(startTime) {
 
 function Avatar({ nome, foto, color = "blue", size = "md" }) {
   const sz = size === "sm" ? "w-7 h-7" : "w-9 h-9";
-  const colors = { blue: "bg-blue-200 text-blue-600 border-blue-300", amber: "bg-amber-200 text-amber-600 border-amber-300", purple: "bg-purple-200 text-purple-600 border-purple-300", teal: "bg-teal-200 text-teal-600 border-teal-300", red: "bg-red-200 text-red-600 border-red-300" };
+  const colors = { blue: "bg-marca-suave-2 text-marca border-marca", amber: "bg-amber-200 text-amber-600 border-amber-300", purple: "bg-purple-200 text-purple-600 border-purple-300", teal: "bg-teal-200 text-teal-600 border-teal-300", red: "bg-red-200 text-red-600 border-red-300" };
   if (foto) return <img src={foto} alt={nome} className={`${sz} rounded-full object-cover border-2 ${colors[color]} flex-shrink-0`} onError={e => { e.target.style.display = "none"; }} />;
   return <div className={`${sz} rounded-full flex items-center justify-center flex-shrink-0 border-2 ${colors[color]}`}><User className="w-3.5 h-3.5" /></div>;
 }
@@ -47,7 +47,7 @@ function SkeletonCard({ h = "h-24" }) {
 }
 
 function KpiCard({ label, value, sub, color = "blue", icon: Icon, link }) {
-  const colors = { blue: "text-blue-600", green: "text-green-600", red: "text-red-600", yellow: "text-yellow-600", slate: "text-slate-600", orange: "text-orange-600", teal: "text-teal-600", purple: "text-purple-600" };
+  const colors = { blue: "text-marca", green: "text-green-600", red: "text-red-600", yellow: "text-yellow-600", slate: "text-slate-600", orange: "text-orange-600", teal: "text-teal-600", purple: "text-purple-600" };
   const content = (
     <Card className="hover:shadow-md transition-shadow h-full">
       <CardContent className="p-4">
@@ -75,26 +75,26 @@ function EnvaseAoVivo({ envases, hoje, getPhoto }) {
 
   return (
     <Link to="/NovoRegistro" className="block h-full">
-      <Card className="border-l-4 border-blue-500 hover:shadow-lg transition-shadow h-full">
+      <Card className="border-l-4 border-marca hover:shadow-lg transition-shadow h-full">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Factory className="w-4 h-4 text-blue-500" />
+            <Factory className="w-4 h-4 text-marca" />
             <span className="font-bold text-slate-800 text-sm">ENVASE EM ANDAMENTO</span>
-            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full ml-auto">{ativos.length} ativo(s)</span>
+            <span className="text-xs text-marca bg-marca-suave px-2 py-0.5 rounded-full ml-auto">{ativos.length} ativo(s)</span>
           </div>
           {ativos.length === 0 ? (
             <p className="text-slate-400 text-sm italic">Nenhuma operação em andamento</p>
           ) : (
             <div className="space-y-2">
               {ativos.map(r => (
-                <div key={r.id} className="flex items-center gap-3 bg-blue-50 rounded-lg px-3 py-2">
+                <div key={r.id} className="flex items-center gap-3 bg-marca-suave rounded-lg px-3 py-2">
                   <Avatar nome={r.operador} foto={getPhoto(r.operador)} color="blue" />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-800 text-sm truncate">{r.descricao_produto || "Produto não especificado"}</p>
                     <p className="text-xs text-slate-500">{r.operador} · Sala {r.sala}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-mono font-bold text-blue-600 text-sm">{calcElapsed(r.inicio)}</p>
+                    <p className="font-mono font-bold text-marca text-sm">{calcElapsed(r.inicio)}</p>
                     {r.quantidade_produzida > 0 && <p className="text-xs text-green-600">{r.quantidade_produzida} un.</p>}
                   </div>
                 </div>
@@ -332,7 +332,7 @@ function OcorrenciasCard({ empilhaOcorrencias, recOcorrencias, getPhoto }) {
 
 function AlertaItem({ label, count, link, cor = "red" }) {
   if (!count) return null;
-  const corMap = { red: "text-red-600 bg-red-50", orange: "text-orange-600 bg-orange-50", yellow: "text-yellow-700 bg-yellow-50", blue: "text-blue-600 bg-blue-50" };
+  const corMap = { red: "text-red-600 bg-red-50", orange: "text-orange-600 bg-orange-50", yellow: "text-yellow-700 bg-yellow-50", blue: "text-marca bg-marca-suave" };
   return (
     <Link to={link} className={`flex items-center justify-between px-3 py-2 rounded-lg ${corMap[cor]} hover:opacity-80 transition-opacity`}>
       <span className="text-sm font-medium">{label}</span>
@@ -422,13 +422,13 @@ export default function Painel() {
   const diaSemanaCapit = (() => { const s = format(now, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }); return s.charAt(0).toUpperCase() + s.slice(1); })();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-fundo p-4 md:p-6 space-y-6">
 
       {/* CABEÇALHO */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow">
+            <div className="w-10 h-10 bg-gradient-to-br from-marca to-marca-forte rounded-xl flex items-center justify-center shadow">
               <Activity className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -439,7 +439,7 @@ export default function Painel() {
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
-              <p className="text-3xl font-mono font-bold text-blue-700">{format(now, "HH:mm:ss")}</p>
+              <p className="text-3xl font-mono font-bold text-marca">{format(now, "HH:mm:ss")}</p>
             </div>
             <p className="text-xs text-slate-500 font-medium">{user?.full_name} · {isAdmin ? "Admin" : "Operador"}</p>
           </div>

@@ -59,11 +59,11 @@ export default function GerenciarUsuarios() {
   const roleLabel = (role) => role === "admin" ? "Admin" : "Operador";
   const roleBadge = (role) =>
     role === "admin"
-      ? "bg-blue-100 text-blue-800 border-blue-200"
+      ? "bg-marca-suave text-marca border-marca-suave-2"
       : "bg-slate-100 text-slate-700 border-slate-200";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Header */}
@@ -102,9 +102,9 @@ export default function GerenciarUsuarios() {
 
           {/* ABA USUÁRIOS */}
           <TabsContent value="usuarios" className="space-y-4 mt-4">
-            <Alert className="border-blue-200 bg-blue-50">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800 text-sm">
+            <Alert className="border-marca-suave-2 bg-marca-suave">
+              <Info className="h-4 w-4 text-marca" />
+              <AlertDescription className="text-marca text-sm">
                 <strong>Admin:</strong> Acesso total — criar programações, ver indicadores, assinar como líder, gerenciar configurações.<br />
                 <strong>Operador:</strong> Executar linhas, registrar ocorrências, assinar como operador/ajudante.
               </AlertDescription>
@@ -112,14 +112,14 @@ export default function GerenciarUsuarios() {
             <Card className="border-slate-200 shadow-md">
               <CardHeader className="border-b border-slate-100">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="w-5 h-5 text-blue-600" />
+                  <Users className="w-5 h-5 text-marca" />
                   Usuários ({users.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {isLoading ? (
                   <div className="flex justify-center py-10">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-marca"></div>
                   </div>
                 ) : users.length === 0 ? (
                   <div className="text-center py-10 text-slate-400">Nenhum usuário encontrado</div>
@@ -128,7 +128,7 @@ export default function GerenciarUsuarios() {
                     {users.map((u) => (
                       <div key={u.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-marca to-marca-forte flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             {(u.full_name || u.email || "?")[0].toUpperCase()}
                           </div>
                           <div>
@@ -204,8 +204,8 @@ export default function GerenciarUsuarios() {
                   <Badge className={`border ${roleBadge(confirmModal.novoRole)}`}>{roleLabel(confirmModal.novoRole)}</Badge>?
                 </p>
                 {confirmModal.novoRole === "admin" && (
-                  <Alert className="border-blue-200 bg-blue-50">
-                    <AlertDescription className="text-blue-700 text-sm">
+                  <Alert className="border-marca-suave-2 bg-marca-suave">
+                    <AlertDescription className="text-marca text-sm">
                       Este usuário terá acesso total ao sistema.
                     </AlertDescription>
                   </Alert>

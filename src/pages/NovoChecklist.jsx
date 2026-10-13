@@ -347,7 +347,7 @@ export default function NovoChecklist() {
                 const sel = (formValues.inspecionado_por || []).includes(op.nome);
                 return (
                   <button type="button" key={op.id} onClick={() => toggleInspetor(op.nome)}
-                    className={`flex min-h-[48px] items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${sel ? "bg-marca text-white border-blue-600" : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}>
+                    className={`flex min-h-[48px] items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${sel ? "bg-marca text-white border-marca" : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}>
                     <User className="w-3 h-3" />{op.nome}
                   </button>
                 );
@@ -442,10 +442,10 @@ export default function NovoChecklist() {
             return (
               <div key={campo.key} className="space-y-1">
                 <div
-                  className={`flex items-start justify-between gap-3 p-3 rounded-lg border transition-colors ${isSprayField && isSpray ? "bg-blue-50 border-blue-200" : "bg-slate-50 border-slate-200"}`}>
-                  <span className={`text-sm flex-1 ${isSprayField && isSpray ? "text-blue-800 font-medium" : "text-slate-700"}`}>
+                  className={`flex items-start justify-between gap-3 p-3 rounded-lg border transition-colors ${isSprayField && isSpray ? "bg-marca-suave border-marca-suave-2" : "bg-slate-50 border-slate-200"}`}>
+                  <span className={`text-sm flex-1 ${isSprayField && isSpray ? "text-marca font-medium" : "text-slate-700"}`}>
                     {campo.label}
-                    {isSprayField && isSpray && <Badge className="ml-2 bg-blue-200 text-blue-800 text-[10px]">Spray</Badge>}
+                    {isSprayField && isSpray && <Badge className="ml-2 bg-marca-suave-2 text-marca text-[10px]">Spray</Badge>}
                   </span>
                   <div className="flex gap-2 flex-shrink-0" role="radiogroup" aria-label={campo.label}>
                     {campo.opcoes.map(op => {

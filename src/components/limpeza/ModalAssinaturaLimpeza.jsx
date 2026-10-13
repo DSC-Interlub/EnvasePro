@@ -107,7 +107,7 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PenLine className="w-5 h-5 text-blue-600" />
+            <PenLine className="w-5 h-5 text-marca" />
             Assinatura — {programacao.local_nome}
           </DialogTitle>
         </DialogHeader>
@@ -141,9 +141,9 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
                 </div>
                 {assinandoId === a.id && (
                   <div className="p-3 space-y-3 border-t border-slate-200">
-                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-3 p-3 bg-marca-suave rounded-lg border border-marca-suave-2">
                       <Checkbox id={`confirma-${a.id}`} checked={confirmado} onCheckedChange={setConfirmado} />
-                      <label htmlFor={`confirma-${a.id}`} className="text-sm text-blue-800 cursor-pointer">
+                      <label htmlFor={`confirma-${a.id}`} className="text-sm text-marca cursor-pointer">
                         Confirmo que realizei a limpeza conforme programado.
                       </label>
                     </div>

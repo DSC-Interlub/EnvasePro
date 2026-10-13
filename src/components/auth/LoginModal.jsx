@@ -38,8 +38,8 @@ export default function LoginModal() {
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-white shadow-2xl border-slate-200">
         <CardHeader className="text-center pb-4">
-          <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
-            <Lock className="w-6 h-6 text-blue-600" />
+          <div className="mx-auto w-12 h-12 bg-marca-suave rounded-full flex items-center justify-center mb-3">
+            <Lock className="w-6 h-6 text-marca" />
           </div>
           <CardTitle className="text-2xl font-bold text-slate-800">Acesso ao EnvasePro</CardTitle>
           <CardDescription>
@@ -98,10 +98,10 @@ export default function LoginModal() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="text-xs flex items-center gap-1.5 border-blue-200 hover:bg-blue-50"
+                  className="text-xs flex items-center gap-1.5 border-marca-suave-2 hover:bg-marca-suave"
                   onClick={() => preencherEmail('operacoes.equipe@interlub.com')}
                 >
-                  <Factory className="w-3.5 h-3.5 text-blue-600" />
+                  <Factory className="w-3.5 h-3.5 text-marca" />
                   Operações (Fábrica)
                 </Button>
                 <Button

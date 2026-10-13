@@ -209,7 +209,7 @@ export default function ModalImportarSAP({ open, onClose }) {
                     return (
                       <tr key={i} className={`border-t hover:bg-slate-50 cursor-pointer ${selected.includes(i) ? "" : "opacity-40"}`} onClick={() => toggleRow(i)}>
                         <td className="px-2 py-1.5">
-                          {selected.includes(i) ? <CheckSquare className="w-3.5 h-3.5 text-blue-600" /> : <Square className="w-3.5 h-3.5 text-slate-400" />}
+                          {selected.includes(i) ? <CheckSquare className="w-3.5 h-3.5 text-marca" /> : <Square className="w-3.5 h-3.5 text-slate-400" />}
                         </td>
                         <td className="px-2 py-1.5 font-mono">{row.numero_documento}</td>
                         <td className="px-2 py-1.5 max-w-[150px] truncate">{row.nome_fornecedor}</td>

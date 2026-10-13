@@ -189,7 +189,7 @@ export default function ExecutarCheckout() {
 
   if (!programacaoId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+      <div className="min-h-screen bg-fundo p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <Card className="border-red-200">
             <CardContent className="p-6">
@@ -203,11 +203,11 @@ export default function ExecutarCheckout() {
 
   if (loadingProgramacao || loadingItems) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+      <div className="min-h-screen bg-fundo p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <Card className="border-slate-200">
             <CardContent className="p-12 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-marca mx-auto mb-4"></div>
               <p className="text-slate-600">Carregando programação...</p>
             </CardContent>
           </Card>
@@ -221,7 +221,7 @@ export default function ExecutarCheckout() {
   const concluidos = items.filter(item => item.status === "Concluído");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -243,7 +243,7 @@ export default function ExecutarCheckout() {
           {programacao && (
             <Badge className={
               statusCalculado === "Pendente" ? "bg-yellow-100 text-yellow-800" :
-              statusCalculado === "Em Andamento" ? "bg-blue-100 text-blue-800" :
+              statusCalculado === "Em Andamento" ? "bg-marca-suave text-marca" :
               "bg-green-100 text-green-800"
             }>
               {statusCalculado}

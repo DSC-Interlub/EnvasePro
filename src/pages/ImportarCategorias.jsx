@@ -87,13 +87,13 @@ export default function ImportarCategorias() {
   const invalidCat = matches?.filter(m => !['Graxa', 'Óleo', 'Pasta'].includes(m.categoria)) ?? [];
   const catColor = {
     Graxa: "bg-amber-100 text-amber-800",
-    Óleo: "bg-blue-100 text-blue-800",
+    Óleo: "bg-marca-suave text-marca",
     Pasta: "bg-green-100 text-green-800"
   };
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-fundo p-4 md:p-8 flex items-center justify-center">
         <Card className="border-green-300 bg-green-50 max-w-md w-full">
           <CardContent className="p-8 text-center">
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
@@ -114,7 +114,7 @@ export default function ImportarCategorias() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
           <Link to={createPageUrl("Produtos")}>

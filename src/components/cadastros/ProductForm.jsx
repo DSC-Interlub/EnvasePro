@@ -117,7 +117,7 @@ export default function ProductForm({ product, onClose }) {
             <Label className="text-base font-semibold">Certificações</Label>
             
             <div className="space-y-3">
-              <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center space-x-3 p-3 bg-marca-suave rounded-lg border border-marca-suave-2">
                 <Checkbox
                   id="nsf_3h"
                   checked={formData.nsf_3h}
@@ -127,7 +127,7 @@ export default function ProductForm({ product, onClose }) {
                   htmlFor="nsf_3h"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
                 >
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <CheckCircle className="w-4 h-4 text-marca" />
                   NSF 3H
                 </label>
               </div>

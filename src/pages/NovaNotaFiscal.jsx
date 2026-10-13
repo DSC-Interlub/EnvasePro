@@ -173,7 +173,7 @@ export default function NovaNotaFiscal() {
                 {/* Status / remover */}
                 <div className="flex-shrink-0 flex items-center">
                   {item.status === "ok" && <CheckCircle2 className="w-5 h-5 text-green-500" />}
-                  {item.status === "enviando" && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
+                  {item.status === "enviando" && <Loader2 className="w-5 h-5 text-marca animate-spin" />}
                   {item.status === "erro" && <span className="text-xs text-red-500">Erro</span>}
                   {(item.status === "pendente" || item.status === "erro") && (
                     <Button variant="ghost" size="icon" className="w-7 h-12 ml-1" onClick={() => remover(item.id)}>

@@ -102,7 +102,7 @@ export default function AbaProdutos() {
                     <TableCell><Badge variant="secondary">{p.consistencia}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
-                        {p.nsf_3h && <Badge className="bg-blue-100 text-blue-800 text-xs">NSF 3H</Badge>}
+                        {p.nsf_3h && <Badge className="bg-marca-suave text-marca text-xs">NSF 3H</Badge>}
                         {p.nsf_h1 && <Badge className="bg-green-100 text-green-800 text-xs">NSF H1</Badge>}
                         {p.halal && <Badge className="bg-purple-100 text-purple-800 text-xs">HALAL</Badge>}
                         {p.kosher && <Badge className="bg-slate-100 text-slate-800 text-xs">KOSHER</Badge>}

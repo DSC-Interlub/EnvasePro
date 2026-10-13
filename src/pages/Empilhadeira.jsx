@@ -160,7 +160,7 @@ export default function Empilhadeira() {
 
   const getStatusColor = (status) => {
     if (status === "Concluído") return "bg-green-100 text-green-800";
-    if (status === "Em Andamento") return "bg-blue-100 text-blue-800";
+    if (status === "Em Andamento") return "bg-marca-suave text-marca";
     return "bg-yellow-100 text-yellow-800";
   };
 
@@ -250,7 +250,7 @@ export default function Empilhadeira() {
   const diasParaManutConfig = empilhadeira?.data_proxima_manutencao ? differenceInDays(parseISO(empilhadeira.data_proxima_manutencao), new Date()) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {acessoRestrito && (
@@ -326,7 +326,7 @@ export default function Empilhadeira() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="border-slate-200 shadow-sm"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-slate-500">Total Linhas</p><p className="text-3xl font-bold text-slate-900 mt-1">{totalLinhas}</p></div><ListTodo className="w-8 h-8 text-slate-400" /></div></CardContent></Card>
               <Card className="border-green-200 shadow-sm"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-slate-500">Concluídas</p><p className="text-3xl font-bold text-green-700 mt-1">{concluidas}</p></div><CheckCircle className="w-8 h-8 text-green-500" /></div></CardContent></Card>
-              <Card className="border-blue-200 shadow-sm"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-slate-500">Em Andamento</p><p className="text-3xl font-bold text-blue-700 mt-1">{emAndamento}</p></div><Clock className="w-8 h-8 text-blue-500" /></div></CardContent></Card>
+              <Card className="border-marca-suave-2 shadow-sm"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-slate-500">Em Andamento</p><p className="text-3xl font-bold text-marca mt-1">{emAndamento}</p></div><Clock className="w-8 h-8 text-marca" /></div></CardContent></Card>
               <Card className="border-red-200 shadow-sm"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-slate-500">Críticos Pend.</p><p className="text-3xl font-bold text-red-700 mt-1">{criticos}</p></div><AlertCircle className="w-8 h-8 text-red-500" /></div></CardContent></Card>
             </div>
 
@@ -424,7 +424,7 @@ export default function Empilhadeira() {
                                   <div className="flex flex-wrap items-center gap-2">
                                     <Badge className={o.resolvido ? "bg-green-100 text-green-700 text-xs" : "bg-orange-100 text-orange-700 text-xs"}>{o.tipo}</Badge>
                                     <span className="text-xs text-slate-500">{o.data} {o.hora} — {o.registrado_por}</span>
-                                    {o.notificado_lider && <Badge className="bg-blue-100 text-blue-700 text-xs">Líder notificado</Badge>}
+                                    {o.notificado_lider && <Badge className="bg-marca-suave text-marca text-xs">Líder notificado</Badge>}
                                   </div>
                                   <p className="text-sm text-slate-700 mt-1">{o.descricao}</p>
                                   {o.resolvido && o.resolucao && <p className="text-xs text-green-700 mt-1 italic">↳ {o.resolucao}</p>}
@@ -497,7 +497,7 @@ export default function Empilhadeira() {
             {/* Operadores */}
             <Card className="border-slate-200 shadow-md">
               <CardHeader className="border-b border-slate-100">
-                <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-blue-600" /> Operadores</CardTitle>
+                <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-marca" /> Operadores</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 {linhasFiltradas.length === 0 ? <EmptyState /> : (
@@ -623,16 +623,16 @@ export default function Empilhadeira() {
             <Card className="border-slate-200 shadow-md">
               <CardHeader className="border-b border-slate-100">
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-600" /> OEE Simplificado
-                  <Badge className="ml-2 bg-blue-100 text-blue-800">Turno: {empilhadeiraAtiva?.duracao_turno_horas || 8}h</Badge>
+                  <Clock className="w-5 h-5 text-marca" /> OEE Simplificado
+                  <Badge className="ml-2 bg-marca-suave text-marca">Turno: {empilhadeiraAtiva?.duracao_turno_horas || 8}h</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 {oeeDias.every(d => d.aproveitamento === 0) ? <EmptyState label="Sem dados de tempo concluído no período" /> : (
                   <>
-                    <div className="bg-blue-50 rounded-lg p-4 text-center inline-block">
+                    <div className="bg-marca-suave rounded-lg p-4 text-center inline-block">
                       <p className="text-xs text-slate-500 mb-1">Aproveitamento médio do período</p>
-                      <p className="text-4xl font-black text-blue-700">{oeeMedio}%</p>
+                      <p className="text-4xl font-black text-marca">{oeeMedio}%</p>
                     </div>
                     {oeeDias.length > 1 && (
                       <ResponsiveContainer width="100%" height={180}>

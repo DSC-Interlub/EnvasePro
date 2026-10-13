@@ -9,7 +9,7 @@ import { corSelo, classificar } from "@/lib/checklist";
 
 const TIPO_COLOR = {
   "Importação": "bg-purple-100 text-purple-700",
-  "Nacional": "bg-blue-100 text-blue-700",
+  "Nacional": "bg-marca-suave text-marca",
   "Devolução": "bg-orange-100 text-orange-700",
   "Material auxiliar": "bg-teal-100 text-teal-700",
   "Outro": "bg-slate-100 text-slate-700",
@@ -17,7 +17,7 @@ const TIPO_COLOR = {
 
 const STATUS_COLOR = {
   "Agendado": "bg-slate-100 text-slate-700",
-  "Em andamento": "bg-blue-100 text-blue-700",
+  "Em andamento": "bg-marca-suave text-marca",
   "Pausado": "bg-yellow-100 text-yellow-700",
   "Concluído": "bg-green-100 text-green-700",
   "Cancelado": "bg-red-100 text-red-700",
@@ -90,7 +90,7 @@ export default function RecebimentoCard({ recebimento, itens, ocorrencias, parti
                 <span>{progresso}%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-1.5">
-                <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${progresso}%` }} />
+                <div className="bg-marca h-1.5 rounded-full transition-all" style={{ width: `${progresso}%` }} />
               </div>
             </div>
           )}

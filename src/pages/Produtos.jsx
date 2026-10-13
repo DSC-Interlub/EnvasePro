@@ -75,7 +75,7 @@ export default function Produtos() {
   // identidade nova a cada render e remonta a subarvore inteira.
   const certificacoes = (p) => (
     <div className="flex gap-1 flex-wrap">
-      {p.nsf_3h && <Badge className="bg-blue-100 text-blue-800 text-xs">NSF 3H</Badge>}
+      {p.nsf_3h && <Badge className="bg-marca-suave text-marca text-xs">NSF 3H</Badge>}
       {p.nsf_h1 && <Badge className="bg-green-100 text-green-800 text-xs">NSF H1</Badge>}
       {p.halal && <Badge className="bg-purple-100 text-purple-800 text-xs">HALAL</Badge>}
       {p.kosher && <Badge className="bg-slate-100 text-slate-800 text-xs">KOSHER</Badge>}
@@ -93,7 +93,7 @@ export default function Produtos() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">
           <div>
