@@ -409,11 +409,11 @@ function createEntityAdapter(entityName) {
      */
     async get(id) {
       await this.aguardarSessao();
-      const { data, error } = await supabase
+      const { data, error } = await executarComRenovacao(() => supabase
         .from(table)
         .select('*')
         .eq('id', id)
-        .maybeSingle();
+        .maybeSingle());
 
       if (error) throw error;
       const res = normalizarRetorno(data);
@@ -426,11 +426,11 @@ function createEntityAdapter(entityName) {
     async create(data) {
       await this.aguardarSessao();
       const payload = await sanitizarPayload(table, data, true);
-      const { data: created, error } = await supabase
+      const { data: created, error } = await executarComRenovacao(() => supabase
         .from(table)
         .insert(payload)
         .select()
-        .single();
+        .single());
 
       if (error) throw error;
       const res = normalizarRetorno(created);
@@ -443,12 +443,12 @@ function createEntityAdapter(entityName) {
     async update(id, data) {
       await this.aguardarSessao();
       const payload = await sanitizarPayload(table, data, false);
-      const { data: updated, error } = await supabase
+      const { data: updated, error } = await executarComRenovacao(() => supabase
         .from(table)
         .update(payload)
         .eq('id', id)
         .select()
-        .single();
+        .single());
 
       if (error) throw error;
       const res = normalizarRetorno(updated);
@@ -460,10 +460,10 @@ function createEntityAdapter(entityName) {
      */
     async delete(id) {
       await this.aguardarSessao();
-      const { error } = await supabase
+      const { error } = await executarComRenovacao(() => supabase
         .from(table)
         .delete()
-        .eq('id', id);
+        .eq('id', id));
 
       if (error) throw error;
       return { success: true };
@@ -483,10 +483,10 @@ function createEntityAdapter(entityName) {
       const results = [];
       for (let i = 0; i < sanitized.length; i += chunkSize) {
         const chunk = sanitized.slice(i, i + chunkSize);
-        const { data, error } = await supabase
+        const { data, error } = await executarComRenovacao(() => supabase
           .from(table)
           .insert(chunk)
-          .select();
+          .select());
         if (error) throw error;
         if (data) results.push(...data);
       }

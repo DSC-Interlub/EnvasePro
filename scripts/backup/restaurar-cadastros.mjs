@@ -54,6 +54,33 @@ const DESCARTAR = {
     o.nome === 'Operador Teste Funcional QA' && String(o.matricula || '').startsWith('QA-'),
 };
 
+/**
+ * Trava de coerência do critério duplo.
+ *
+ * NÃO é "tem de dar 13": o número de operadores reais muda quando alguém é
+ * contratado, e travar num número faria o script falhar por um motivo errado.
+ *
+ * O que precisa ser verdade é que os **dois** critérios concordem. Se existir
+ * linha que casa o nome mas não a matrícula (ou o contrário), a regra ficou
+ * ambígua — pode ser um operador de verdade com esse nome, ou um de teste com
+ * a matrícula trocada. Nos dois casos quem decide é uma pessoa, não o script.
+ */
+const COERENCIA = {
+  operators: (todas) => {
+    const ehNome = (o) => o.nome === 'Operador Teste Funcional QA';
+    const ehMatricula = (o) => String(o.matricula || '').startsWith('QA-');
+    const soNome = todas.filter(ehNome).length;
+    const soMatricula = todas.filter(ehMatricula).length;
+    const ambos = todas.filter((o) => ehNome(o) && ehMatricula(o)).length;
+    if (soNome !== ambos || soMatricula !== ambos) {
+      return `os dois critérios discordam: ${soNome} casam o nome, ` +
+        `${soMatricula} casam a matrícula QA-, ${ambos} casam os dois. ` +
+        `Confira à mão antes de restaurar.`;
+    }
+    return null;
+  },
+};
+
 // Coluna GENERATED ALWAYS nao aceita INSERT (hoje nenhuma destas tem, mas a
 // lista fica para o caso de o schema mudar).
 const GERADAS = new Set(['data_expiracao_legal']);
@@ -87,9 +114,21 @@ for (const tabela of CADASTROS) {
     continue;
   }
   const todas = JSON.parse(await readFile(arquivo, 'utf8'));
+  const coerencia = COERENCIA[tabela];
+  if (coerencia) {
+    const problema = coerencia(todas);
+    if (problema) {
+      console.error(`ABORTADO em "${tabela}": ${problema}`);
+      process.exit(1);
+    }
+  }
   const descartar = DESCARTAR[tabela];
   const linhas = descartar ? todas.filter((l) => !descartar(l)) : todas;
   const descartadas = todas.length - linhas.length;
+  if (descartadas) {
+    console.log(`  ${tabela}: ${todas.length} no backup, ${descartadas} de teste ` +
+      `descartada(s), ${linhas.length} vao voltar`);
+  }
   resumo[tabela] = descartadas ? `${linhas.length} (${descartadas} de teste descartadas)` : linhas.length;
   if (descartadas) {
     sql += `
