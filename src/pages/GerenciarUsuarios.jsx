@@ -147,7 +147,7 @@ export default function GerenciarUsuarios() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-xs h-8"
+                            className="text-xs h-12"
                             disabled={u.id === currentUser?.id && u.role === "admin"}
                             onClick={() => handleAlterarRole(u)}
                           >

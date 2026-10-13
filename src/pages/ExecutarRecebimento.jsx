@@ -199,7 +199,7 @@ export default function ExecutarRecebimento() {
                       {o.resolucao && <p className="text-xs text-green-700 mt-1">✓ {o.resolucao}</p>}
                     </div>
                     {!o.resolvido && isAdmin && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs border-green-300 text-green-700 shrink-0"
+                      <Button size="sm" variant="outline" className="h-12 text-xs border-green-300 text-green-700 shrink-0"
                         onClick={() => {
                           const resolucao = prompt("Descreva a resolução:");
                           if (resolucao) mutOcorrencia.mutate({ id: o.id, data: { resolvido: true, resolucao } });

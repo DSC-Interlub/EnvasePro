@@ -122,7 +122,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                     placeholder="Ex: Coordenador de Logística"
                     value={novoNome}
                     onChange={(e) => setNovoNome(e.target.value)}
-                    className="h-9 text-sm"
+                    className="h-12 text-sm"
                   />
                 </div>
                 <div className="space-y-1">
@@ -136,7 +136,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                     value={novoEmail}
                     onChange={(e) => setNovoEmail(e.target.value)}
                     required
-                    className="h-9 text-sm"
+                    className="h-12 text-sm"
                   />
                 </div>
               </div>
@@ -147,7 +147,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
               <Button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="bg-marca hover:bg-marca-forte text-white h-9 px-4 text-xs font-semibold"
+                className="bg-marca hover:bg-marca-forte text-white h-12 px-4 text-xs font-semibold"
               >
                 {createMutation.isPending ? "Cadastrando..." : "Cadastrar Destinatário"}
               </Button>
@@ -212,7 +212,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                         size="sm"
                         onClick={() => toggleAtivoMutation.mutate({ id: d.id, ativo: !d.ativo })}
                         disabled={toggleAtivoMutation.isPending}
-                        className="h-8 px-2 text-xs flex items-center gap-1"
+                        className="h-12 px-3 text-xs flex items-center gap-1"
                         title={d.ativo ? "Desativar notificações para este e-mail" : "Ativar notificações"}
                       >
                         <Power className={`w-3.5 h-3.5 ${d.ativo ? "text-amber-600" : "text-emerald-600"}`} />

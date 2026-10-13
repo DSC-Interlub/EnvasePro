@@ -96,18 +96,18 @@ export default function RecebimentoCard({ recebimento, itens, ocorrencias, parti
           )}
         </div>
         <div className="flex gap-1.5 flex-shrink-0">
-          <Button size="sm" variant="outline" className="h-7 text-xs px-2"
+          <Button size="sm" variant="outline" className="h-12 text-xs px-2"
             onClick={() => navigate(`/ExecutarRecebimento?id=${recebimento.id}`)}>
             <Eye className="w-3 h-3 mr-1" />Ver
           </Button>
           {(recebimento.status === "Agendado" || recebimento.status === "Pausado" || recebimento.status === "Em andamento") && (
-            <Button size="sm" className="h-7 text-xs px-2 bg-marca hover:bg-marca-forte"
+            <Button size="sm" className="h-12 text-xs px-2 bg-marca hover:bg-marca-forte"
               onClick={() => navigate(`/ExecutarRecebimento?id=${recebimento.id}`)}>
               <Play className="w-3 h-3 mr-1" />Executar
             </Button>
           )}
           {aguardaLider && isAdmin && (
-            <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-orange-300 text-orange-700"
+            <Button size="sm" variant="outline" className="h-12 text-xs px-2 border-orange-300 text-orange-700"
               onClick={() => navigate(`/ExecutarRecebimento?id=${recebimento.id}`)}>
               <PenLine className="w-3 h-3" />
             </Button>

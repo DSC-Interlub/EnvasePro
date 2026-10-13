@@ -76,10 +76,10 @@ export default function AbaFornecedoresRecebimento() {
                   {f.observacoes && <p className="text-xs text-slate-400 mt-0.5">{f.observacoes}</p>}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => handleAbrirModal(f)}>
+                  <Button size="sm" variant="outline" className="h-12 text-xs px-2" onClick={() => handleAbrirModal(f)}>
                     <Pencil className="w-3 h-3" />
                   </Button>
-                  <Button size="sm" variant="outline" className={`h-7 text-xs px-2 ${f.ativo !== false ? "border-red-200 text-red-600" : "border-green-200 text-green-600"}`}
+                  <Button size="sm" variant="outline" className={`h-12 text-xs px-3 ${f.ativo !== false ? "border-red-200 text-red-600" : "border-green-200 text-green-600"}`}
                     onClick={() => toggleAtivo.mutate({ id: f.id, ativo: !(f.ativo !== false) })}>
                     <Power className="w-3 h-3" />
                   </Button>

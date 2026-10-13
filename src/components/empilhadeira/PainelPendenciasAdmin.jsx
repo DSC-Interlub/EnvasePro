@@ -145,7 +145,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
               <button
                 key={aba.key}
                 onClick={() => setAbaAtiva(aba.key)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${abaAtiva === aba.key ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                className={`min-h-[48px] px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${abaAtiva === aba.key ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
               >
                 {aba.label}
                 {aba.count > 0 && <Badge className={`ml-2 text-xs ${aba.cor}`}>{aba.count}</Badge>}
@@ -236,7 +236,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-slate-600">Hora de fim:</label>
-                    <input type="time" value={horaFimParada} onChange={e => setHoraFimParada(e.target.value)} className="text-sm border rounded px-2 py-1" />
+                    <input type="time" value={horaFimParada} onChange={e => setHoraFimParada(e.target.value)} className="h-12 text-sm border rounded px-2" />
                     <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => handleFecharParada(p)} disabled={updateParadaMutation.isPending}>
                       Registrar fim
                     </Button>
@@ -298,7 +298,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
                           <p className="font-medium text-orange-800 text-sm">{p.local_nome}</p>
                           <p className="text-xs text-slate-500">{p.data_realizada || p.data_prevista} · {p.responsavel_nome}</p>
                         </div>
-                        <Button size="sm" className="bg-orange-500 hover:bg-orange-600 flex-shrink-0 h-7 text-xs"
+                        <Button size="sm" className="bg-orange-500 hover:bg-orange-600 flex-shrink-0 h-12 text-xs"
                           onClick={() => setModalAssinaturaLimpeza(p.id)}>
                           <PenLine className="w-3 h-3 mr-1" /> Assinar
                         </Button>

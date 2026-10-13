@@ -176,7 +176,7 @@ export default function NovaNotaFiscal() {
                   {item.status === "enviando" && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
                   {item.status === "erro" && <span className="text-xs text-red-500">Erro</span>}
                   {(item.status === "pendente" || item.status === "erro") && (
-                    <Button variant="ghost" size="icon" className="w-7 h-7 ml-1" onClick={() => remover(item.id)}>
+                    <Button variant="ghost" size="icon" className="w-7 h-12 ml-1" onClick={() => remover(item.id)}>
                       <X className="w-4 h-4 text-slate-400" />
                     </Button>
                   )}

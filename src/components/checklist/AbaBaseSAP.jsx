@@ -126,11 +126,11 @@ export default function AbaBaseSAP() {
                   </td>
                   <td className="px-3 py-2 text-center">
                     <div className="flex gap-1 justify-center">
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0"
+                      <Button size="sm" variant="ghost" className="h-12 w-12 p-0"
                         onClick={() => setEditItem({ ...p })}>
                         <Pencil className="w-3 h-3 text-blue-600" />
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0"
+                      <Button size="sm" variant="ghost" className="h-12 w-12 p-0"
                         onClick={() => setConfirmDelete(p)}>
                         <Trash2 className="w-3 h-3 text-red-500" />
                       </Button>
