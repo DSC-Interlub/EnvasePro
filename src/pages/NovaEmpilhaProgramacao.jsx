@@ -168,7 +168,7 @@ export default function NovaEmpilhaProgramacao() {
               rows={8}
               className="font-mono text-sm"
             />
-            <Button onClick={handleProcessar} disabled={!rawText.trim()} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleProcessar} disabled={!rawText.trim()} className="bg-marca hover:bg-marca-forte">
               <Search className="w-4 h-4 mr-2" /> Processar Lista
             </Button>
           </CardContent>

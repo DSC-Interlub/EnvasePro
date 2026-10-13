@@ -76,6 +76,26 @@ button:focus-visible {
 
 @layer base {
   :root {
+    /* ---------------------------------------------------------------------
+     * COR DA MARCA
+     *
+     * O azul do sistema estava escrito à mão em 110 lugares, como
+     * "bg-blue-600" e "bg-blue-700". Trocar a cor da marca era um
+     * localizar-e-substituir em 110 arquivos — e a camada de token que já
+     * existia (`--primary`) está em cinza quase preto, sem efeito nenhum.
+     *
+     * Agora a cor mora aqui. Trocar a marca é trocar estas duas linhas.
+     *
+     * Os valores são os canais RGB EXATOS de `blue-600` e `blue-700` do
+     * Tailwind 3.4.17 (#2563eb e #1d4ed8), de propósito: esta mudança é de
+     * estrutura, não de aparência, e a diferença visual tem de ser zero.
+     *
+     * Em canais separados, e não `#2563eb`, para que `rgb(... / <alpha-value>)`
+     * continue aceitando os modificadores de opacidade do Tailwind.
+     * --------------------------------------------------------------------- */
+    --marca: 37 99 235;
+    --marca-forte: 29 78 216;
+
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;

@@ -52,7 +52,7 @@ export default function AbaFornecedoresRecebimento() {
           <CardTitle className="flex items-center gap-2 text-lg">
             <Truck className="w-5 h-5 text-blue-600" /> Fornecedores ({fornecedores.length})
           </CardTitle>
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1" onClick={() => handleAbrirModal()}>
+          <Button size="sm" className="bg-marca hover:bg-marca-forte gap-1" onClick={() => handleAbrirModal()}>
             <Plus className="w-4 h-4" /> Novo
           </Button>
         </div>
@@ -122,7 +122,7 @@ export default function AbaFornecedoresRecebimento() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModal(false)}>Cancelar</Button>
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => mutation.mutate(form)}
+            <Button className="bg-marca hover:bg-marca-forte" onClick={() => mutation.mutate(form)}
               disabled={!form.nome || mutation.isPending}>
               {mutation.isPending ? "Salvando..." : "Salvar"}
             </Button>

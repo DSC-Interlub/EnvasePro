@@ -196,7 +196,7 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSalvar}
+          <Button className="bg-marca hover:bg-marca-forte" onClick={handleSalvar}
             disabled={!form.local_id || form.responsaveis.length === 0 || !form.data_prevista || mutation.isPending}>
             {mutation.isPending ? "Salvando..." : aviso ? "Confirmar mesmo assim" : "Salvar"}
           </Button>

@@ -385,7 +385,7 @@ export default function CheckoutItemCard({ item, operators }) {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-marca hover:bg-marca-forte"
                   disabled={updateMutation.isPending}
                 >
                   <Save className="w-4 h-4 mr-2" />

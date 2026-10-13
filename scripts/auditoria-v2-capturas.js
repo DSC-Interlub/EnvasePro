@@ -19,7 +19,9 @@ dotenv.config({ path: '.env.local' });
 enforceNonProductionGuard('auditoria-v2-capturas');
 
 const APP = process.env.APP_BASE_URL || 'http://127.0.0.1:5173';
-const SAIDA = path.join('scratch', 'auditoria');
+// A pasta de saida pode vir por argumento, para capturar o mesmo conjunto
+// antes e depois de uma mudanca e comparar pixel a pixel.
+const SAIDA = process.argv[2] || path.join('scratch', 'auditoria');
 
 const LARGURAS = [
   { nome: 'celular', w: 390, h: 844 },

@@ -56,7 +56,7 @@ export default function ModalLimpezaLocal({ open, onClose, local }) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => mutation.mutate(form)} disabled={!form.nome || mutation.isPending}>
+          <Button className="bg-marca hover:bg-marca-forte" onClick={() => mutation.mutate(form)} disabled={!form.nome || mutation.isPending}>
             {mutation.isPending ? "Salvando..." : "Salvar"}
           </Button>
         </DialogFooter>

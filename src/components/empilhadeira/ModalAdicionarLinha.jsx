@@ -180,7 +180,7 @@ export default function ModalAdicionarLinha({ open, onClose, programacaoId }) {
             <DialogFooter>
               <Button variant="outline" onClick={onClose}>Cancelar</Button>
               <Button
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-marca hover:bg-marca-forte"
                 onClick={handleImportar}
                 disabled={importPreview.length === 0 || addMutation.isPending}
               >

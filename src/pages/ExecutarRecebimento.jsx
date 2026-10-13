@@ -111,7 +111,7 @@ export default function ExecutarRecebimento() {
               <h1 className="text-lg font-bold text-slate-900">{recebimento.numero_documento}</h1>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 <Badge className="text-xs bg-blue-100 text-blue-700">{recebimento.tipo}</Badge>
-                <Badge className={`text-xs ${recebimento.status === "Em andamento" ? "bg-blue-600 text-white" : recebimento.status === "Concluído" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
+                <Badge className={`text-xs ${recebimento.status === "Em andamento" ? "bg-marca text-white" : recebimento.status === "Concluído" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
                   {recebimento.status}
                 </Badge>
                 {recebimento.prioridade !== "Normal" && (
@@ -145,7 +145,7 @@ export default function ExecutarRecebimento() {
                 </>
               )}
               {recebimento.status === "Pausado" && (
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1" onClick={handleRetomar} disabled={mutRec.isPending}>
+                <Button size="sm" className="bg-marca hover:bg-marca-forte gap-1" onClick={handleRetomar} disabled={mutRec.isPending}>
                   <RotateCcw className="w-3 h-3" /> Retomar
                 </Button>
               )}

@@ -283,7 +283,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                   <Button size="sm" variant="outline" className="border-orange-400 text-orange-700 hover:bg-orange-50" onClick={() => setShowOcorrenciaModal(true)}>
                     <AlertTriangle className="w-3 h-3 mr-1" /> Ocorrência
                   </Button>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={handleFinalizar} disabled={updateMutation.isPending}>
+                  <Button size="sm" className="bg-marca hover:bg-marca-forte" onClick={handleFinalizar} disabled={updateMutation.isPending}>
                     <CheckCircle className="w-3 h-3 mr-1" /> Finalizar
                   </Button>
                 </>
@@ -428,7 +428,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                 <Button variant="outline" onClick={() => { setEtapaAssinatura(ETAPA_CONCLUIDO); updateMutation.mutate({ status_assinatura: "Parcial" }); }}>
                   Pular ajudante
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleConfirmarEtapa2} disabled={!checkAjudante || !nomeAjudante || updateMutation.isPending}>
+                <Button className="bg-marca hover:bg-marca-forte" onClick={handleConfirmarEtapa2} disabled={!checkAjudante || !nomeAjudante || updateMutation.isPending}>
                   Confirmar e continuar →
                 </Button>
               </DialogFooter>

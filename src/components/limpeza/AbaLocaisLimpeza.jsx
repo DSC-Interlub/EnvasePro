@@ -65,7 +65,7 @@ export default function AbaLocaisLimpeza() {
             {mostrarInativos ? "Ocultar inativos" : "Mostrar inativos"}
           </button>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleNovo}>
+        <Button className="bg-marca hover:bg-marca-forte" onClick={handleNovo}>
           <Plus className="w-4 h-4 mr-2" /> Novo Local
         </Button>
       </div>

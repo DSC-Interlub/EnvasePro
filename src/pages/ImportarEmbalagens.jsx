@@ -245,7 +245,7 @@ EMB003	Bisnaga 0,5L	0,5	Bisnaga	Pequena"
         {embalagensParsed.length > 0 && (
           <Button
             onClick={handleSubmit}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-marca hover:bg-marca-forte"
             size="lg"
             disabled={createEmbalagensMutation.isPending}
           >
