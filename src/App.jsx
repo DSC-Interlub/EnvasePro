@@ -113,7 +113,7 @@ const AuthenticatedApp = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex items-center justify-center p-4">
         <LoginModal />
         <div className="text-center space-y-4 max-w-sm">
-          <div className="w-16 h-16 bg-blue-600 text-white rounded-2xl mx-auto flex items-center justify-center shadow-lg font-bold text-2xl">
+          <div className="w-16 h-16 bg-marca text-white rounded-2xl mx-auto flex items-center justify-center shadow-lg font-bold text-2xl">
             EP
           </div>
           <h1 className="text-2xl font-bold text-slate-800">EnvasePro Interlub</h1>
@@ -122,7 +122,7 @@ const AuthenticatedApp = () => {
           </p>
           <button
             onClick={() => setLoginModalAberto(true)}
-            className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition"
+            className="w-full py-2.5 px-4 bg-marca hover:bg-marca-forte text-white font-semibold rounded-lg shadow transition"
           >
             Fazer Login no Sistema
           </button>

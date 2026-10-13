@@ -37,7 +37,7 @@ export default function AbaEmbalagens() {
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
         <Link to={createPageUrl("ImportarEmbalagens")}><Button variant="outline"><Upload className="w-4 h-4 mr-2" /> Importar Excel</Button></Link>
-        <Button onClick={() => { setEditingEmbalagem(null); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => { setEditingEmbalagem(null); setShowForm(true); }} className="bg-marca hover:bg-marca-forte">
           <Plus className="w-4 h-4 mr-2" /> Nova Embalagem
         </Button>
       </div>

@@ -73,7 +73,7 @@ export default function Operadores() {
               setEditingOperator(null);
               setShowForm(true);
             }}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-marca hover:bg-marca-forte"
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Operador

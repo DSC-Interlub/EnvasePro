@@ -116,7 +116,7 @@ export default function Checkout() {
             </p>
           </div>
           <Link to={createPageUrl("NovaProgramacaoCheckout")}>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-marca hover:bg-marca-forte">
               <Plus className="w-4 h-4 mr-2" />
               Nova Programação
             </Button>
@@ -263,7 +263,7 @@ export default function Checkout() {
                 <Calendar className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                 <p className="text-slate-500 mb-4">Nenhuma programação encontrada</p>
                 <Link to={createPageUrl("NovaProgramacaoCheckout")}>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button className="bg-marca hover:bg-marca-forte">
                     <Plus className="w-4 h-4 mr-2" />
                     Criar Primeira Programação
                   </Button>

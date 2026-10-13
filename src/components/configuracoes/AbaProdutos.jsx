@@ -52,7 +52,7 @@ export default function AbaProdutos() {
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={handleExport}><Download className="w-4 h-4 mr-2" /> Exportar Excel</Button>
         <Link to={createPageUrl("ImportarProdutos")}><Button variant="outline"><Upload className="w-4 h-4 mr-2" /> Importar Excel</Button></Link>
-        <Button onClick={() => { setEditingProduct(null); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => { setEditingProduct(null); setShowForm(true); }} className="bg-marca hover:bg-marca-forte">
           <Plus className="w-4 h-4 mr-2" /> Novo Produto
         </Button>
       </div>

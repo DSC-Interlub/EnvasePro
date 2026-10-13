@@ -193,7 +193,7 @@ export default function NovaNotaFiscal() {
               </Button>
             ) : (
               <Button
-                className="flex-1 bg-blue-600 hover:bg-blue-700 gap-2"
+                className="flex-1 bg-marca hover:bg-marca-forte gap-2"
                 disabled={salvando || !temPendente}
                 onClick={salvarTodos}
               >
@@ -244,7 +244,7 @@ function SemFotoForm({ user, onSalvo }) {
         onKeyDown={e => e.key === "Enter" && salvar()}
         disabled={salvando || ok}
       />
-      <Button onClick={salvar} disabled={salvando || ok || !numero.trim()} className="gap-1 bg-blue-600 hover:bg-blue-700">
+      <Button onClick={salvar} disabled={salvando || ok || !numero.trim()} className="gap-1 bg-marca hover:bg-marca-forte">
         {ok ? <CheckCircle2 className="w-4 h-4" /> : salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
       </Button>
     </div>

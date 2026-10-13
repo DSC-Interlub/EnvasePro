@@ -390,7 +390,7 @@ export default function Dashboard() {
               Exportar
             </Button>
             <Link to={createPageUrl("NovoRegistro")} className="flex-1 md:flex-none">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button className="w-full bg-marca hover:bg-marca-forte">
                 <Plus className="w-4 h-4 mr-2" />
                 Novo Registro
               </Button>
@@ -656,7 +656,7 @@ export default function Dashboard() {
             }}>
               Cancelar
             </Button>
-            <Button onClick={exportToExcel} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={exportToExcel} className="bg-marca hover:bg-marca-forte">
               <Download className="w-4 h-4 mr-2" />
               Exportar
             </Button>

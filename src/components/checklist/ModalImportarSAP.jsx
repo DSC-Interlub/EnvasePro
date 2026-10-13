@@ -244,7 +244,7 @@ export default function ModalImportarSAP({ open, onClose }) {
           <Button variant="outline" onClick={handleClose}>Fechar</Button>
           {!parsed && <Button onClick={handleProcessar} disabled={!raw.trim()}>Processar</Button>}
           {parsed && !resultado && (
-            <Button onClick={handleConfirmar} disabled={loading || selected.length === 0} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleConfirmar} disabled={loading || selected.length === 0} className="bg-marca hover:bg-marca-forte">
               {loading ? (
             <span className="flex items-center gap-2">
               <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />

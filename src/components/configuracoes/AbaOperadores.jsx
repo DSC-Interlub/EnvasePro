@@ -34,7 +34,7 @@ export default function AbaOperadores() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => { setEditingOperator(null); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => { setEditingOperator(null); setShowForm(true); }} className="bg-marca hover:bg-marca-forte">
           <Plus className="w-4 h-4 mr-2" /> Novo Operador
         </Button>
       </div>

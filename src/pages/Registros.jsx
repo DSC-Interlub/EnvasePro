@@ -181,7 +181,7 @@ export default function Registros() {
             <p className="text-slate-600 mt-1">Visualize e gerencie todos os registros de envase</p>
           </div>
           <Link to={createPageUrl("NovoRegistro")}>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-marca hover:bg-marca-forte">
               <Plus className="w-4 h-4 mr-2" />
               Novo Registro
             </Button>

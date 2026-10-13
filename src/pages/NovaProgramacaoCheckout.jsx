@@ -253,7 +253,7 @@ PV-20.237	22/10/2025	Tec Tor Indústria e Comércio de"
           {/* Botão Salvar */}
           <Button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-marca hover:bg-marca-forte"
             disabled={createProgramacaoMutation.isPending || pedidosParsed.length === 0}
           >
             <Save className="w-4 h-4 mr-2" />

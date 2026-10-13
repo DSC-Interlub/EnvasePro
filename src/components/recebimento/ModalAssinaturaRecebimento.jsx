@@ -126,7 +126,7 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => setAssinandoId(null)}>Cancelar</Button>
-                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      <Button size="sm" className="flex-1 bg-marca hover:bg-marca-forte"
                         disabled={!confirmado || mutParticipante.isPending}
                         onClick={() => handleAssinarParticipante(p)}>
                         Confirmar

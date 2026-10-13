@@ -10,6 +10,13 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			// Cor da marca. Definida em src/index.css; ver o comentário lá.
+  			// `<alpha-value>` preserva os modificadores de opacidade
+  			// (bg-marca/50 continua funcionando).
+  			marca: {
+  				DEFAULT: 'rgb(var(--marca) / <alpha-value>)',
+  				forte: 'rgb(var(--marca-forte) / <alpha-value>)',
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

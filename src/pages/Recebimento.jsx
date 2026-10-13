@@ -331,7 +331,7 @@ export default function Recebimento() {
           </div>
 
           <div className="flex justify-end pt-2">
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSalvar} disabled={!valido || mutation.isPending}>
+            <Button className="bg-marca hover:bg-marca-forte" onClick={handleSalvar} disabled={!valido || mutation.isPending}>
               {mutation.isPending ? "Salvando..." : "Criar Recebimento"}
             </Button>
           </div>
@@ -350,7 +350,7 @@ export default function Recebimento() {
           <p className="text-sm text-slate-500">Controle de entrada de materiais</p>
         </div>
         {abaAtiva === "lista" && (
-          <Button className="bg-blue-600 hover:bg-blue-700 gap-1" onClick={() => setShowForm(true)}>
+          <Button className="bg-marca hover:bg-marca-forte gap-1" onClick={() => setShowForm(true)}>
             <Plus className="w-4 h-4" /> Novo Recebimento
           </Button>
         )}
@@ -416,7 +416,7 @@ export default function Recebimento() {
             <div className="text-center py-12 text-slate-400">
               <Package className="w-12 h-12 mx-auto mb-3 text-slate-300" />
               <p>Nenhum recebimento no período</p>
-              <Button className="mt-4 bg-blue-600 hover:bg-blue-700" onClick={() => setShowForm(true)}>
+              <Button className="mt-4 bg-marca hover:bg-marca-forte" onClick={() => setShowForm(true)}>
                 <Plus className="w-4 h-4 mr-1" /> Criar primeiro recebimento
               </Button>
             </div>

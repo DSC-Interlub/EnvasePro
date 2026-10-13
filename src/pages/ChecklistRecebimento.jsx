@@ -73,7 +73,7 @@ export default function ChecklistRecebimento() {
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-marca rounded-xl flex items-center justify-center">
             <ClipboardCheck className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -81,7 +81,7 @@ export default function ChecklistRecebimento() {
             <p className="text-sm text-slate-500">Controle de qualidade no recebimento de materiais</p>
           </div>
         </div>
-        <Button onClick={() => navigate("/NovoChecklist")} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => navigate("/NovoChecklist")} className="bg-marca hover:bg-marca-forte">
           <Plus className="w-4 h-4 mr-2" />Novo Checklist
         </Button>
       </div>

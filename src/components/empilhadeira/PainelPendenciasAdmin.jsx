@@ -174,7 +174,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
                   </div>
                   <Button
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
+                    className="bg-marca hover:bg-marca-forte flex-shrink-0"
                     onClick={() => handleAssinarLider(l)}
                     disabled={!nomeLider || updateLinhaMutation.isPending}
                   >
@@ -236,7 +236,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-slate-600">Hora de fim:</label>
-                    <input type="time" value={horaFimParada} onChange={e => setHoraFimParada(e.target.value)} className="text-sm border rounded px-2 py-1" />
+                    <input type="time" value={horaFimParada} onChange={e => setHoraFimParada(e.target.value)} className="h-12 text-sm border rounded px-2" />
                     <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => handleFecharParada(p)} disabled={updateParadaMutation.isPending}>
                       Registrar fim
                     </Button>

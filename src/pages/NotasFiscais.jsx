@@ -37,7 +37,7 @@ export default function NotasFiscais() {
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <FileText className="w-7 h-7 text-blue-600" /> Arquivo de NFs
         </h1>
-        <Button onClick={() => navigate("/NovaNotaFiscal")} className="gap-1 bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => navigate("/NovaNotaFiscal")} className="gap-1 bg-marca hover:bg-marca-forte">
           <Plus className="w-4 h-4" /> Arquivar NF
         </Button>
       </div>

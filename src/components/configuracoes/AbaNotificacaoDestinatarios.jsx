@@ -147,7 +147,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
               <Button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 text-xs font-semibold"
+                className="bg-marca hover:bg-marca-forte text-white h-9 px-4 text-xs font-semibold"
               >
                 {createMutation.isPending ? "Cadastrando..." : "Cadastrar Destinatário"}
               </Button>

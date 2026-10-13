@@ -87,7 +87,7 @@ export default function LoginModal() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 font-semibold" disabled={loading}>
+            <Button type="submit" className="w-full bg-marca hover:bg-marca-forte font-semibold" disabled={loading}>
               {loading ? 'Entrando...' : 'Entrar no Sistema'}
             </Button>
 
