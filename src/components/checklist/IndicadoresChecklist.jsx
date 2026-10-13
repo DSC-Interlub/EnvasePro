@@ -108,7 +108,7 @@ export default function IndicadoresChecklist({ checklists }) {
     <div className="space-y-6">
       {/* Bloco 1 — Visão geral */}
       <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><ClipboardCheck className="w-4 h-4 text-blue-600" />Visão Geral</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><ClipboardCheck className="w-4 h-4 text-marca" />Visão Geral</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[

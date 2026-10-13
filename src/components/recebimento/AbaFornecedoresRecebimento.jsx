@@ -50,7 +50,7 @@ export default function AbaFornecedoresRecebimento() {
       <CardHeader className="border-b border-slate-100">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Truck className="w-5 h-5 text-blue-600" /> Fornecedores ({fornecedores.length})
+            <Truck className="w-5 h-5 text-marca" /> Fornecedores ({fornecedores.length})
           </CardTitle>
           <Button size="sm" className="bg-marca hover:bg-marca-forte gap-1" onClick={() => handleAbrirModal()}>
             <Plus className="w-4 h-4" /> Novo
@@ -70,7 +70,7 @@ export default function AbaFornecedoresRecebimento() {
                     <Badge className={`text-xs ${f.ativo !== false ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
                       {f.ativo !== false ? "Ativo" : "Inativo"}
                     </Badge>
-                    <Badge className="text-xs bg-blue-100 text-blue-700">{f.tipo}</Badge>
+                    <Badge className="text-xs bg-marca-suave text-marca">{f.tipo}</Badge>
                     {f.pais_origem && <span className="text-xs text-slate-400">{f.pais_origem}</span>}
                   </div>
                   {f.observacoes && <p className="text-xs text-slate-400 mt-0.5">{f.observacoes}</p>}

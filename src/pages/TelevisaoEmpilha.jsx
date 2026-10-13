@@ -121,7 +121,7 @@ export default function TelevisaoEmpilha() {
           {[
             { label: "Total Linhas", value: totalLinhas, color: "from-slate-600 to-slate-700" },
             { label: "Concluídas", value: concluidas, color: "from-emerald-500 to-emerald-600" },
-            { label: "Em Andamento", value: emAndamento, color: "from-blue-500 to-blue-600" },
+            { label: "Em Andamento", value: emAndamento, color: "from-marca to-marca" },
             { label: "Críticos Pend.", value: criticosPendentes, color: "from-red-500 to-red-600" },
             { label: "Tempo Médio", value: tempoMedio, color: "from-purple-500 to-purple-600" },
           ].map(({ label, value, color }) => (

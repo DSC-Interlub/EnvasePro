@@ -22,7 +22,7 @@ function calcStatus(p) {
 
 const STATUS_COLOR = {
   "Pendente": "bg-yellow-100 text-yellow-700",
-  "Em Andamento": "bg-blue-100 text-blue-700",
+  "Em Andamento": "bg-marca-suave text-marca",
   "Concluído": "bg-green-100 text-green-700",
   "Atrasado": "bg-red-100 text-red-700",
 };
@@ -52,7 +52,7 @@ function ListaLimpeza({ itens, isAdmin, handleIniciar, handleConcluir, setModalA
           <p className="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {format(new Date(data + "T00:00:00"), "EEEE, dd/MM", { locale: ptBR })}
-            {data === hoje() && <Badge className="bg-blue-100 text-blue-700 text-xs ml-1">Hoje</Badge>}
+            {data === hoje() && <Badge className="bg-marca-suave text-marca text-xs ml-1">Hoje</Badge>}
           </p>
           <div className="space-y-1.5">
             {porData[data].map(p => {
@@ -62,7 +62,7 @@ function ListaLimpeza({ itens, isAdmin, handleIniciar, handleConcluir, setModalA
               const aguardaLider = p.status === "Concluído" && p.assinatura_responsavel && !p.assinatura_lider;
               return (
                 <div key={p.id} className={`flex items-center gap-3 p-2.5 rounded-lg border text-sm
-                  ${atrasado ? "bg-red-50 border-red-200" : ehHoje ? "bg-blue-50 border-blue-200" : "bg-white border-slate-200"}`}>
+                  ${atrasado ? "bg-red-50 border-red-200" : ehHoje ? "bg-marca-suave border-marca-suave-2" : "bg-white border-slate-200"}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="font-medium text-slate-900">{p.local_nome}</span>

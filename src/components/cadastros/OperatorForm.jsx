@@ -185,7 +185,7 @@ export default function OperatorForm({ operator, onClose }) {
                   disabled={uploading}
                   className="cursor-pointer"
                 />
-                {uploading && <p className="text-xs text-blue-600 mt-1">Fazendo upload...</p>}
+                {uploading && <p className="text-xs text-marca mt-1">Fazendo upload...</p>}
               </div>
             </div>
           </div>

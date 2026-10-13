@@ -137,7 +137,7 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
             {form.responsaveis.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2 mt-1">
                 {form.responsaveis.map(r => (
-                  <Badge key={r.id} className="bg-blue-100 text-blue-800 border border-blue-200 gap-1 pr-1">
+                  <Badge key={r.id} className="bg-marca-suave text-marca border border-marca-suave-2 gap-1 pr-1">
                     {r.nome}
                     <button onClick={() => handleRemoveResponsavel(r.id)} className="ml-0.5 hover:text-red-600">
                       <X className="w-3 h-3" />

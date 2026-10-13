@@ -96,7 +96,7 @@ export default function NotaFiscalDetalhe() {
         <CardContent className="p-5 space-y-1 text-sm">
           <div className="flex justify-between">
             <span className="text-slate-500">Número</span>
-            <span className="font-mono font-bold text-blue-700">{nf.numero_nf}</span>
+            <span className="font-mono font-bold text-marca">{nf.numero_nf}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">Arquivado em</span>
@@ -124,7 +124,7 @@ export default function NotaFiscalDetalhe() {
               {nf.arquivo_nome?.toLowerCase().endsWith('.pdf') ? (
                 <div className="p-6 bg-slate-50 border rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-8 h-8 text-blue-600" />
+                    <FileText className="w-8 h-8 text-marca" />
                     <div>
                       <p className="font-medium text-slate-800">{nf.arquivo_nome || "Documento PDF"}</p>
                       <p className="text-xs text-slate-400">PDF Arquivado (retenção legal)</p>

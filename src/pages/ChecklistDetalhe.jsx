@@ -49,7 +49,7 @@ export default function ChecklistDetalhe() {
   const criadoHoje = checklist?.created_date?.startsWith(hoje);
   const podeEditar = isAdmin && criadoHoje;
 
-  if (isLoading) return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
+  if (isLoading) return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-marca" /></div>;
   if (!checklist) return <div className="p-8 text-center text-slate-400">Checklist não encontrado.</div>;
 
   const nota = checklist.nota_final ?? 0;

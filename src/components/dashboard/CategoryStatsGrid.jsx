@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Droplets, Layers, Circle } from "lucide-react";
 
 const CATEGORIAS = [
-  { key: "Óleo", label: "Óleo", icon: Droplets, colorBg: "bg-blue-100", colorText: "text-blue-700", colorBar: "bg-blue-500" },
+  { key: "Óleo", label: "Óleo", icon: Droplets, colorBg: "bg-marca-suave", colorText: "text-marca", colorBar: "bg-marca" },
   { key: "Graxa", label: "Graxa", icon: Layers, colorBg: "bg-amber-100", colorText: "text-amber-700", colorBar: "bg-amber-500" },
   { key: "Pasta", label: "Pasta", icon: Circle, colorBg: "bg-green-100", colorText: "text-green-700", colorBar: "bg-green-500" },
 ];
@@ -79,7 +79,7 @@ export default function CategoryStatsGrid({ records, products }) {
                     <span className="font-bold text-slate-700">{bio.toLocaleString('pt-BR')}</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-blue-700 font-semibold">🏭 Industrial</span>
+                    <span className="text-marca font-semibold">🏭 Industrial</span>
                     <span className="font-bold text-slate-700">{industrial.toLocaleString('pt-BR')}</span>
                   </div>
                 </div>

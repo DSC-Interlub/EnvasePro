@@ -33,7 +33,7 @@ export default function BlocoRecebimento({ isAdmin }) {
       <CardHeader className="border-b border-slate-100">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-900">
-            <Truck className="w-5 h-5 text-blue-600" />
+            <Truck className="w-5 h-5 text-marca" />
             Recebimentos
           </CardTitle>
           <Link to="/Recebimento">
@@ -47,7 +47,7 @@ export default function BlocoRecebimento({ isAdmin }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Hoje", value: hoje_rec.length, cls: "text-slate-700" },
-            { label: "Em andamento", value: emAndamento.length, cls: "text-blue-700" },
+            { label: "Em andamento", value: emAndamento.length, cls: "text-marca" },
             { label: "Concluídos hoje", value: concluidosHoje.length, cls: "text-green-700" },
             { label: "Com ocorrência", value: comOcorrencia.length, cls: "text-red-700" },
           ].map(k => (
@@ -62,13 +62,13 @@ export default function BlocoRecebimento({ isAdmin }) {
           <div className="mt-3 space-y-1.5">
             {emAndamento.map(r => (
               <Link key={r.id} to={`/ExecutarRecebimento?id=${r.id}`}>
-                <div className="flex items-center justify-between p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-sm hover:bg-blue-100 transition-colors">
+                <div className="flex items-center justify-between p-2.5 bg-marca-suave border border-marca-suave-2 rounded-lg text-sm hover:bg-marca-suave transition-colors">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                    <span className="font-medium text-blue-900">{r.numero_documento}</span>
-                    <Badge className="text-xs bg-blue-100 text-blue-700">{r.tipo}</Badge>
+                    <div className="w-2 h-2 bg-marca rounded-full animate-pulse" />
+                    <span className="font-medium text-tinta">{r.numero_documento}</span>
+                    <Badge className="text-xs bg-marca-suave text-marca">{r.tipo}</Badge>
                   </div>
-                  <span className="text-xs text-blue-600">{r.fornecedor_nome || "—"}</span>
+                  <span className="text-xs text-marca">{r.fornecedor_nome || "—"}</span>
                 </div>
               </Link>
             ))}

@@ -367,7 +367,7 @@ export default function Dashboard() {
   const todayProduction = todayRecords.reduce((sum, r) => sum + (r.quantidade_produzida || 0), 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -552,8 +552,8 @@ export default function Dashboard() {
                         {filteredProgramacoes.length}
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-marca-suave rounded-xl flex items-center justify-center">
+                      <Calendar className="w-6 h-6 text-marca" />
                     </div>
                   </div>
                 </CardContent>

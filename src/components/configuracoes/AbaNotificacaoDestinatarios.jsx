@@ -104,7 +104,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <Plus className="w-4 h-4 text-blue-600" /> Novo Destinatário de Ocorrências
+              <Plus className="w-4 h-4 text-marca" /> Novo Destinatário de Ocorrências
             </CardTitle>
             <CardDescription className="text-xs text-slate-500">
               Adicione e-mails da liderança ou equipe técnica que devem receber o resumo sempre que uma ocorrência for aberta.

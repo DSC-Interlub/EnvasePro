@@ -113,7 +113,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
   };
 
   const ABAS = [
-    { key: "assinaturas", label: "Assinaturas", count: linhasPendentesAssinatura.length, cor: "bg-blue-100 text-blue-700" },
+    { key: "assinaturas", label: "Assinaturas", count: linhasPendentesAssinatura.length, cor: "bg-marca-suave text-marca" },
     { key: "ocorrencias", label: "Ocorrências", count: ocorrenciasAbertas.length, cor: "bg-orange-100 text-orange-700" },
     { key: "paradas", label: "Paradas", count: paradasEmAberto.length, cor: "bg-red-100 text-red-700" },
     { key: "manutencao", label: "Manutenção", count: alertasManutencao.length, cor: "bg-amber-100 text-amber-700" },
@@ -163,8 +163,8 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
               {linhasPendentesAssinatura.length === 0 ? (
                 <p className="text-slate-400 text-sm">Nenhuma assinatura pendente.</p>
               ) : linhasPendentesAssinatura.map(l => (
-                <div key={l.id} className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <PenLine className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <div key={l.id} className="flex items-center gap-3 p-3 bg-marca-suave rounded-lg border border-marca-suave-2">
+                  <PenLine className="w-4 h-4 text-marca flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-slate-800 text-sm truncate">{l.descricao_produto || "Sem descrição"}</p>
                     <p className="text-xs text-slate-500">

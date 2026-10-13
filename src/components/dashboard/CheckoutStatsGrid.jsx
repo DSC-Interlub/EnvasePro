@@ -14,7 +14,7 @@ export default function CheckoutStatsGrid({ items, programacoes, isLoading }) {
       title: "Total de Pedidos",
       value: items.length,
       icon: Package,
-      color: "bg-blue-500",
+      color: "bg-marca",
       trend: `${programacoes.length} programações`
     },
     {

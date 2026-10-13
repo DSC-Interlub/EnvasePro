@@ -98,7 +98,7 @@ export default function ImportacoesCard({ importacoes }) {
           return (
             <Card
               key={doc.numero_documento}
-              className="bg-gradient-to-r from-indigo-900/80 to-blue-900/80 backdrop-blur-xl border-l-4 border-indigo-400 shadow-xl cursor-pointer hover:from-indigo-800/90 hover:to-blue-800/90 transition-all"
+              className="bg-gradient-to-r from-indigo-900/80 to-marca-forte/80 backdrop-blur-xl border-l-4 border-indigo-400 shadow-xl cursor-pointer hover:from-indigo-800/90 hover:to-marca-forte/90 transition-all"
               onClick={() => setSelectedDoc(doc)}
             >
               <CardContent className="p-3">
@@ -152,7 +152,7 @@ export default function ImportacoesCard({ importacoes }) {
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-700 to-blue-700 p-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-indigo-700 to-marca-forte p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                   <Ship className="w-6 h-6 text-white" />

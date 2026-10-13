@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Painel geral — desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Manrope',sans-serif;color:#141A2B;background:#F3F4F8;-webkit-font-smoothing:antialiased}
+button,a{font-family:inherit;cursor:pointer;transition:transform .15s ease,box-shadow .25s ease,background-color .2s ease,color .2s ease,border-color .2s ease}
+button:active{transform:scale(.97)}
+.nv:hover{background:#EEF1FF;color:#3B5BFF}
+.card{transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s ease}
+.card:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(20,26,43,.12)}
+.bar{transition:height .7s cubic-bezier(.2,.8,.2,1),background-color .25s}
+.col:hover .bar{background:#3B5BFF}
+.todo:hover{background:#F3F5FF}
+.todo:hover .go{transform:translateX(4px);color:#3B5BFF}
+.go{transition:transform .2s,color .2s}
+tr.row{transition:background-color .15s}
+tr.row:hover{background:#F6F7FB}
+.ring{transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1),stroke .3s}
+.num{transition:opacity .25s}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.in{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(18,166,107,.5)}100%{box-shadow:0 0 0 10px rgba(18,166,107,0)}}
+.live{animation:pulse 1.8s ease-out infinite}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;min-height:900px;padding:16px;gap:16px;box-sizing:border-box;background:#F3F4F8">
+
+  <aside style="flex:1 1 248px;max-width:100%;background:#fff;border-radius:24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);padding:20px 14px;display:flex;flex-direction:column;gap:2px;box-sizing:border-box">
+    <div style="display:flex;align-items:center;gap:12px;padding:4px 10px 20px">
+      <div style="width:44px;height:44px;border-radius:14px;background:#141A2B;color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center">EP</div>
+      <div><div style="font-weight:800;font-size:18px;letter-spacing:-.02em;line-height:1.1">EnvasePro</div><div style="font-size:12px;font-weight:600;color:#7A8296">Operações Interlub</div></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#9AA1B5;padding:6px 12px">Acompanhar</div>
+    <a href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;background:#EEF1FF;color:#3B5BFF;text-decoration:none;font-weight:700;font-size:15px">Painel geral</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Televisão</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Indicadores</a>
+    <div style="font-size:12px;font-weight:700;color:#9AA1B5;padding:14px 12px 6px">Operação</div>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Envase</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Check-out <span style="background:#3B5BFF;color:#fff;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px">7</span></a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Empilhadeira</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Recebimento <span style="background:#3B5BFF;color:#fff;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px">3</span></a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Limpeza</a>
+    <div style="font-size:12px;font-weight:700;color:#9AA1B5;padding:14px 12px 6px">Cadastros</div>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Produtos e embalagens</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Operadores</a>
+    <div style="flex:1;min-height:20px"></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:16px;background:#F3F4F8"><span style="width:36px;height:36px;border-radius:18px;background:#E3E8FF;color:#3B5BFF;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center">AD</span><div style="font-size:13px;font-weight:700;line-height:1.2">[usuário]<div style="font-weight:600;color:#7A8296">Administrador</div></div></div>
+  </aside>
+
+  <main style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+    <header class="in" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;padding:6px 4px 0">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#7A8296"><span class="live" style="width:9px;height:9px;border-radius:5px;background:#12A66B"></span>Ao vivo · atualizado agora</div>
+        <h1 style="margin:4px 0 0;font-size:38px;line-height:1.1;font-weight:800;letter-spacing:-.03em">Painel geral</h1>
+      </div>
+      <div style="display:flex;gap:4px;background:#fff;padding:5px;border-radius:16px;box-shadow:0 1px 2px rgba(20,26,43,.06)">
+        <button onClick="{{t.hoje}}" style="height:44px;padding:0 22px;border:0;border-radius:12px;font-size:15px;font-weight:700;background:{{tb.hoje.bg}};color:{{tb.hoje.fg}};box-shadow:{{tb.hoje.sh}}">Hoje</button>
+        <button onClick="{{t.semana}}" style="height:44px;padding:0 22px;border:0;border-radius:12px;font-size:15px;font-weight:700;background:{{tb.semana.bg}};color:{{tb.semana.fg}};box-shadow:{{tb.semana.sh}}">Semana</button>
+        <button onClick="{{t.mes}}" style="height:44px;padding:0 22px;border:0;border-radius:12px;font-size:15px;font-weight:700;background:{{tb.mes.bg}};color:{{tb.mes.fg}};box-shadow:{{tb.mes.sh}}">Mês</button>
+      </div>
+    </header>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px">
+      <div class="card in" style="animation-delay:.05s;background:#3B5BFF;color:#fff;border-radius:24px;padding:22px;box-shadow:0 14px 34px rgba(59,91,255,.35)">
+        <div style="font-size:14px;font-weight:700;opacity:.8">Envases</div>
+        <div style="font-size:60px;font-weight:800;letter-spacing:-.04em;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums">{{k.env}}</div>
+        <div style="margin-top:6px;font-size:14px;font-weight:700;background:rgba(255,255,255,.18);display:inline-block;padding:4px 10px;border-radius:999px">{{k.envD}}</div>
+      </div>
+      <div class="card in" style="animation-delay:.1s;background:#fff;border-radius:24px;padding:22px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05)">
+        <div style="font-size:14px;font-weight:700;color:#7A8296">Esperando assinatura</div>
+        <div style="font-size:60px;font-weight:800;letter-spacing:-.04em;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums">{{k.ass}}</div>
+        <div style="margin-top:6px;font-size:14px;font-weight:600;color:#7A8296">check-outs concluídos</div>
+      </div>
+      <div class="card in" style="animation-delay:.15s;background:#fff;border-radius:24px;padding:22px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05)">
+        <div style="font-size:14px;font-weight:700;color:#7A8296">Ocorrências abertas</div>
+        <div style="font-size:60px;font-weight:800;letter-spacing:-.04em;line-height:1.05;margin-top:6px;color:#E5484D;font-variant-numeric:tabular-nums">{{k.oco}}</div>
+        <div style="margin-top:6px;font-size:14px;font-weight:600;color:#7A8296">{{k.ocoD}}</div>
+      </div>
+      <div class="card in" style="animation-delay:.2s;background:#fff;border-radius:24px;padding:22px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);display:flex;align-items:center;gap:16px">
+        <svg role="img" aria-label="Nota média {{k.nota}}" width="104" height="104" viewBox="0 0 104 104" style="flex:none">
+          <circle cx="52" cy="52" r="44" fill="none" stroke="#EDEFF5" stroke-width="10"/>
+          <circle class="ring" cx="52" cy="52" r="44" fill="none" stroke="{{k.ringC}}" stroke-width="10" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="{{k.ringO}}" transform="rotate(-90 52 52)"/>
+          <text x="52" y="60" text-anchor="middle" font-family="Manrope" font-weight="800" font-size="28" fill="#141A2B">{{k.nota}}</text>
+        </svg>
+        <div><div style="font-size:14px;font-weight:700;color:#7A8296">Nota do checklist</div><div style="margin-top:6px;font-size:15px;font-weight:800;color:{{k.ringC}}">{{k.notaT}}</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <section class="in" style="animation-delay:.25s;flex:2 1 460px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);box-sizing:border-box">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em">Envases {{chart.sub}}</h2>
+          <span style="font-size:13px;font-weight:600;color:#7A8296">passe o mouse nas barras</span>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:12px;height:230px;margin-top:18px;border-bottom:1px solid #E6E8EF">
+          <sc-for list="{{chart.bars}}" as="b" hint-placeholder-count="7">
+            <div class="col" title="{{b.l}}: {{b.v}}" style="flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px">
+              <span style="font-size:13px;font-weight:700;color:#4A5268;font-variant-numeric:tabular-nums">{{b.v}}</span>
+              <div class="bar" style="width:100%;max-width:56px;border-radius:12px 12px 4px 4px;height:{{b.h}}%;background:{{b.c}}"></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <sc-for list="{{chart.bars}}" as="b" hint-placeholder-count="7">
+            <div style="flex:1;min-width:0;text-align:center;font-size:13px;font-weight:700;color:#7A8296">{{b.l}}</div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section class="in" style="animation-delay:.3s;flex:1 1 320px;min-width:0;background:#fff;border-radius:24px;padding:22px 16px 16px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);box-sizing:border-box">
+        <h2 style="margin:0 8px 10px;font-size:20px;font-weight:800;letter-spacing:-.02em">Precisa de você</h2>
+        <button class="todo" style="width:100%;min-height:64px;border:0;background:transparent;border-radius:16px;display:flex;align-items:center;gap:14px;padding:8px 10px;text-align:left"><span style="width:42px;height:42px;border-radius:14px;background:#FFF1D6;color:#B87500;display:flex;align-items:center;justify-content:center;flex:none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span><span style="flex:1;font-size:15px;font-weight:700">7 check-outs para assinar</span><span class="go" style="font-weight:800;color:#9AA1B5">→</span></button>
+        <button class="todo" style="width:100%;min-height:64px;border:0;background:transparent;border-radius:16px;display:flex;align-items:center;gap:14px;padding:8px 10px;text-align:left"><span style="width:42px;height:42px;border-radius:14px;background:#FDE3E4;color:#C93138;display:flex;align-items:center;justify-content:center;flex:none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span><span style="flex:1;font-size:15px;font-weight:700">1 ocorrência há mais de 24 h</span><span class="go" style="font-weight:800;color:#9AA1B5">→</span></button>
+        <button class="todo" style="width:100%;min-height:64px;border:0;background:transparent;border-radius:16px;display:flex;align-items:center;gap:14px;padding:8px 10px;text-align:left"><span style="width:42px;height:42px;border-radius:14px;background:#E3E8FF;color:#3B5BFF;display:flex;align-items:center;justify-content:center;flex:none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span style="flex:1;font-size:15px;font-weight:700">Limpeza atrasada: 1 sala</span><span class="go" style="font-weight:800;color:#9AA1B5">→</span></button>
+        <button class="todo" style="width:100%;min-height:64px;border:0;background:transparent;border-radius:16px;display:flex;align-items:center;gap:14px;padding:8px 10px;text-align:left"><span style="width:42px;height:42px;border-radius:14px;background:#DDF4EA;color:#0E8A58;display:flex;align-items:center;justify-content:center;flex:none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 015 5L9 22l-5-5z"/></svg></span><span style="flex:1;font-size:15px;font-weight:700">Manutenção da empilhadeira em 5 dias</span><span class="go" style="font-weight:800;color:#9AA1B5">→</span></button>
+      </section>
+    </div>
+
+    <section class="in" style="animation-delay:.35s;background:#fff;border-radius:24px;padding:20px 8px 8px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05)">
+      <h2 style="margin:0 16px 8px;font-size:20px;font-weight:800;letter-spacing:-.02em">Últimos registros</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;min-width:600px;border-collapse:collapse;font-size:15px">
+          <thead><tr style="text-align:left;font-size:12px;font-weight:700;color:#7A8296"><th style="padding:10px 16px;font-weight:700">Código</th><th style="padding:10px 8px;font-weight:700">Produto</th><th style="padding:10px 8px;font-weight:700">Quantidade</th><th style="padding:10px 16px;font-weight:700">Situação</th></tr></thead>
+          <tbody>
+            <tr class="row" style="height:58px;border-top:1px solid #EDEFF5"><td style="padding:0 16px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#5A6280">IVP050211010</td><td style="padding:0 8px;font-weight:700">Intergrease LC N 2</td><td style="padding:0 8px;font-weight:600">24 KG</td><td style="padding:0 16px"><span style="display:inline-flex;align-items:center;gap:7px;background:#FFF1D6;color:#8A5A00;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:800"><span style="width:7px;height:7px;border-radius:4px;background:#E69A00"></span>Aguarda assinatura</span></td></tr>
+            <tr class="row" style="height:58px;border-top:1px solid #EDEFF5"><td style="padding:0 16px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#5A6280">GVP010471270</td><td style="padding:0 8px;font-weight:700">Black Chain Plus</td><td style="padding:0 8px;font-weight:600">40 KG</td><td style="padding:0 16px"><span style="display:inline-flex;align-items:center;gap:7px;background:#DDF4EA;color:#0A6B45;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:800"><span style="width:7px;height:7px;border-radius:4px;background:#12A66B"></span>Concluído</span></td></tr>
+            <tr class="row" style="height:58px;border-top:1px solid #EDEFF5"><td style="padding:0 16px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#5A6280">GVP010651270</td><td style="padding:0 8px;font-weight:700">Black Chain Light</td><td style="padding:0 8px;font-weight:600">16 KG</td><td style="padding:0 16px"><span style="display:inline-flex;align-items:center;gap:7px;background:#E3E8FF;color:#2A43C7;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:800"><span style="width:7px;height:7px;border-radius:4px;background:#3B5BFF"></span>Em andamento</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const p = s.p || 'hoje';
+    const D = {
+      hoje:   { sub: 'por hora',        env: '128',   envD: '+12% sobre ontem',  ass: '7',  oco: '2', ocoD: '1 há mais de 24 h', nota: 82, labels: ['06h','08h','10h','12h','14h','16h','18h'], vals: [8,14,22,26,24,20,14] },
+      semana: { sub: 'nos últimos 7 dias', env: '800',   envD: '+4% sobre a semana anterior', ass: '12', oco: '5', ocoD: '2 há mais de 24 h', nota: 79, labels: ['Qui','Sex','Sáb','Seg','Ter','Qua','Hoje'], vals: [102,128,82,114,140,106,128] },
+      mes:    { sub: 'por semana',      env: '2.710', envD: '+9% sobre o mês anterior', ass: '31', oco: '11', ocoD: '3 há mais de 24 h', nota: 84, labels: ['Sem 1','Sem 2','Sem 3','Sem 4'], vals: [640,712,598,760] }
+    }[p];
+    const max = Math.max.apply(null, D.vals);
+    const bars = D.vals.map((v, i) => ({ l: D.labels[i], v: String(v), h: Math.round(v / max * 78), c: i === D.vals.length - 1 ? '#3B5BFF' : '#C9D3FF' }));
+    const ok = D.nota >= 80;
+    const ringC = ok ? '#12A66B' : (D.nota >= 0 ? '#E69A00' : '#E5484D');
+    const tb = {};
+    ['hoje','semana','mes'].forEach((k) => {
+      const on = p === k;
+      tb[k] = { bg: on ? '#141A2B' : 'transparent', fg: on ? '#fff' : '#4A5268', sh: on ? '0 6px 14px rgba(20,26,43,.25)' : 'none' };
+    });
+    return {
+      tb,
+      t: { hoje: () => this.setState({ p: 'hoje' }), semana: () => this.setState({ p: 'semana' }), mes: () => this.setState({ p: 'mes' }) },
+      k: { env: D.env, envD: D.envD, ass: D.ass, oco: D.oco, ocoD: D.ocoD, nota: String(D.nota), notaT: ok ? 'Aprovado' : 'Atenção', ringC, ringO: (276.46 * (1 - D.nota / 90)).toFixed(1) },
+      chart: { sub: D.sub, bars }
+    };
+  }
+}
+</script>
+</body>
+</html>

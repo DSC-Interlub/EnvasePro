@@ -182,7 +182,7 @@ export default function IndicadoresEmpilha() {
   const oeeMedio = oeeDias.length > 0 ? Math.round(oeeDias.reduce((a, d) => a + d.aproveitamento, 0) / oeeDias.length) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Header */}
@@ -265,7 +265,7 @@ export default function IndicadoresEmpilha() {
         {/* Bloco 2 — Operadores */}
         <Card className="border-slate-200 shadow-md">
           <CardHeader className="border-b border-slate-100">
-            <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-blue-600" /> Operadores</CardTitle>
+            <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-marca" /> Operadores</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             {linhasFiltradas.length === 0 ? <EmptyState /> : (
@@ -406,16 +406,16 @@ export default function IndicadoresEmpilha() {
         <Card className="border-slate-200 shadow-md">
           <CardHeader className="border-b border-slate-100">
             <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-600" /> OEE Simplificado
-              <Badge className="ml-2 bg-blue-100 text-blue-800">Turno: {empilhadeiraAtiva?.duracao_turno_horas || 8}h</Badge>
+              <Clock className="w-5 h-5 text-marca" /> OEE Simplificado
+              <Badge className="ml-2 bg-marca-suave text-marca">Turno: {empilhadeiraAtiva?.duracao_turno_horas || 8}h</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             {oeeDias.every(d => d.aproveitamento === 0) ? <EmptyState label="Sem dados de tempo concluído no período" /> : (
               <>
-                <div className="bg-blue-50 rounded-lg p-4 text-center inline-block">
+                <div className="bg-marca-suave rounded-lg p-4 text-center inline-block">
                   <p className="text-xs text-slate-500 mb-1">Aproveitamento médio do período</p>
-                  <p className="text-4xl font-black text-blue-700">{oeeMedio}%</p>
+                  <p className="text-4xl font-black text-marca">{oeeMedio}%</p>
                 </div>
                 {oeeDias.length > 1 && (
                   <ResponsiveContainer width="100%" height={180}>

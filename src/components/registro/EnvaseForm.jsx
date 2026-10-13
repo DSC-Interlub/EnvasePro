@@ -462,8 +462,8 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
         />
         {formErrors.codigo_produto && <p className="text-xs text-red-500">{formErrors.codigo_produto}</p>}
         {selectedProduct && (
-          <div className="text-sm text-slate-600 mt-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="font-semibold text-blue-900 mb-2">{selectedProduct.nome}</p>
+          <div className="text-sm text-slate-600 mt-2 p-4 bg-marca-suave rounded-lg border border-marca-suave-2">
+            <p className="font-semibold text-tinta mb-2">{selectedProduct.nome}</p>
             <div className="grid grid-cols-2 gap-2">
               <p><strong>Código:</strong> {selectedProduct.codigo}</p>
               <p><strong>Consistência:</strong> {selectedProduct.consistencia}</p>
@@ -634,7 +634,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
       </Button>
       
       {autoSaveMutation.isPending && (
-        <p className="text-sm text-blue-600 text-center animate-pulse">Salvando automaticamente em segundo plano...</p>
+        <p className="text-sm text-marca text-center animate-pulse">Salvando automaticamente em segundo plano...</p>
       )}
     </form>
   );

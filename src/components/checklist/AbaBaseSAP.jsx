@@ -128,7 +128,7 @@ export default function AbaBaseSAP() {
                     <div className="flex gap-1 justify-center">
                       <Button size="sm" variant="ghost" className="h-12 w-12 p-0"
                         onClick={() => setEditItem({ ...p })}>
-                        <Pencil className="w-3 h-3 text-blue-600" />
+                        <Pencil className="w-3 h-3 text-marca" />
                       </Button>
                       <Button size="sm" variant="ghost" className="h-12 w-12 p-0"
                         onClick={() => setConfirmDelete(p)}>

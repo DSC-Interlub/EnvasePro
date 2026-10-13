@@ -45,7 +45,7 @@ export default function SelecionarOperadorModal({ abertoManualmente = false, aoF
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl bg-white shadow-2xl border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-        <CardHeader className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-6">
+        <CardHeader className="bg-gradient-to-r from-marca-forte to-indigo-800 text-white p-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
               <Users className="w-7 h-7 text-white" />
@@ -55,7 +55,7 @@ export default function SelecionarOperadorModal({ abertoManualmente = false, aoF
                 Quem é você hoje?
                 <Sparkles className="w-5 h-5 text-amber-300" />
               </CardTitle>
-              <CardDescription className="text-blue-100 text-sm mt-0.5">
+              <CardDescription className="text-marca-suave text-sm mt-0.5">
                 Conta de Turno: <span className="font-semibold">{user?.email}</span>. Selecione seu nome para registrar suas atividades de produção com precisão.
               </CardDescription>
             </div>
@@ -65,7 +65,7 @@ export default function SelecionarOperadorModal({ abertoManualmente = false, aoF
         <CardContent className="p-6 overflow-y-auto flex-1 space-y-4">
           {loading ? (
             <div className="py-12 flex flex-col items-center justify-center text-slate-500 gap-3">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-8 h-8 border-4 border-marca border-t-transparent rounded-full animate-spin"></div>
               <p className="text-sm">Carregando operadores ativos...</p>
             </div>
           ) : operadores.length === 0 ? (
@@ -83,11 +83,11 @@ export default function SelecionarOperadorModal({ abertoManualmente = false, aoF
                     onClick={() => handleSelecionar(op)}
                     className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 group hover:shadow-md ${
                       selecionado
-                        ? 'border-blue-600 bg-blue-50/80 ring-2 ring-blue-500'
-                        : 'border-slate-200 hover:border-blue-400 bg-slate-50/50 hover:bg-white'
+                        ? 'border-marca bg-marca-suave/80 ring-2 ring-marca'
+                        : 'border-slate-200 hover:border-marca bg-slate-50/50 hover:bg-white'
                     }`}
                   >
-                    <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-base shrink-0 overflow-hidden border border-blue-200 group-hover:scale-105 transition-transform">
+                    <div className="w-11 h-11 rounded-full bg-marca-suave text-marca font-bold flex items-center justify-center text-base shrink-0 overflow-hidden border border-marca-suave-2 group-hover:scale-105 transition-transform">
                       {op.foto_url ? (
                         <img src={op.foto_url} alt={op.nome} className="w-full h-full object-cover" />
                       ) : (
@@ -95,14 +95,14 @@ export default function SelecionarOperadorModal({ abertoManualmente = false, aoF
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-800 text-sm truncate group-hover:text-blue-700">
+                      <p className="font-semibold text-slate-800 text-sm truncate group-hover:text-marca">
                         {op.nome}
                       </p>
                       <p className="text-xs text-slate-500">
                         {op.sala ? `Sala: ${op.sala}` : 'Operação Geral'}
                       </p>
                     </div>
-                    {selecionado && <UserCheck className="w-5 h-5 text-blue-600 shrink-0" />}
+                    {selecionado && <UserCheck className="w-5 h-5 text-marca shrink-0" />}
                   </button>
                 );
               })}

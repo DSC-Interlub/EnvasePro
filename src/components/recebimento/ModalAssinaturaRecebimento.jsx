@@ -80,7 +80,7 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PenLine className="w-5 h-5 text-blue-600" />
+            <PenLine className="w-5 h-5 text-marca" />
             Assinaturas — {recebimento.numero_documento}
           </DialogTitle>
         </DialogHeader>
@@ -118,9 +118,9 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
                 </div>
                 {assinandoId === p.id && (
                   <div className="p-3 space-y-3 border-t border-slate-200">
-                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-3 p-3 bg-marca-suave rounded-lg border border-marca-suave-2">
                       <Checkbox id={`cf-${p.id}`} checked={confirmado} onCheckedChange={setConfirmado} />
-                      <label htmlFor={`cf-${p.id}`} className="text-sm text-blue-800 cursor-pointer">
+                      <label htmlFor={`cf-${p.id}`} className="text-sm text-marca cursor-pointer">
                         Confirmo minha participação neste recebimento.
                       </label>
                     </div>

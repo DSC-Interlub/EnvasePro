@@ -32,7 +32,7 @@ export default function AbaLocaisLimpeza() {
   });
 
   const tipoColor = {
-    "Sala": "bg-blue-100 text-blue-700",
+    "Sala": "bg-marca-suave text-marca",
     "Galpão": "bg-amber-100 text-amber-700",
     "Banheiro": "bg-purple-100 text-purple-700",
     "Área externa": "bg-green-100 text-green-700",
@@ -73,7 +73,7 @@ export default function AbaLocaisLimpeza() {
       <Card className="border-slate-200">
         <CardHeader className="border-b border-slate-100 py-3 px-4">
           <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-blue-500" />
+            <MapPin className="w-4 h-4 text-marca" />
             Locais cadastrados ({listaFiltrada.length})
           </CardTitle>
         </CardHeader>

@@ -94,7 +94,7 @@ export default function ExecutarRecebimento() {
 
   if (!recebimento) return (
     <div className="p-6 flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-slate-200 border-t-marca rounded-full animate-spin" />
     </div>
   );
 
@@ -110,7 +110,7 @@ export default function ExecutarRecebimento() {
             <div>
               <h1 className="text-lg font-bold text-slate-900">{recebimento.numero_documento}</h1>
               <div className="flex flex-wrap gap-1.5 mt-1">
-                <Badge className="text-xs bg-blue-100 text-blue-700">{recebimento.tipo}</Badge>
+                <Badge className="text-xs bg-marca-suave text-marca">{recebimento.tipo}</Badge>
                 <Badge className={`text-xs ${recebimento.status === "Em andamento" ? "bg-marca text-white" : recebimento.status === "Concluído" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
                   {recebimento.status}
                 </Badge>
@@ -131,7 +131,7 @@ export default function ExecutarRecebimento() {
           </div>
           <div className="flex flex-col items-end gap-2">
             {recebimento.status === "Em andamento" && (
-              <div className="text-2xl font-mono font-bold text-blue-600">{timer}</div>
+              <div className="text-2xl font-mono font-bold text-marca">{timer}</div>
             )}
             <div className="flex gap-2 flex-wrap">
               {recebimento.status === "Em andamento" && (

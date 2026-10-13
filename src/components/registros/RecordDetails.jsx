@@ -58,11 +58,11 @@ export default function RecordDetails({ record, onClose, onEdit }) {
         <div className="space-y-6 py-4">
           {/* Status do Material (Bio) */}
           {record.sala === "Bio" && (
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="p-4 bg-marca-suave rounded-lg border border-marca-suave-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-blue-900 mb-1">Status do Material</h3>
-                  <p className="text-sm text-blue-700">
+                  <h3 className="font-semibold text-tinta mb-1">Status do Material</h3>
+                  <p className="text-sm text-marca">
                     {record.material_retirado ? (
                       <span className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4" />

@@ -20,7 +20,7 @@ const agora = () => format(new Date(), "HH:mm");
 
 const STATUS_COLOR = {
   "Pendente": "bg-yellow-100 text-yellow-700 border-yellow-200",
-  "Em Andamento": "bg-blue-100 text-blue-700 border-blue-200",
+  "Em Andamento": "bg-marca-suave text-marca border-marca-suave-2",
   "Concluído": "bg-green-100 text-green-700 border-green-200",
   "Atrasado": "bg-red-100 text-red-700 border-red-200",
 };
@@ -167,15 +167,15 @@ export default function AbaProgramacaoLimpeza({ currentUser, isAdmin }) {
           {datas.map(data => (
             <div key={data}>
               <h3 className="text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-blue-500" />
+                <Calendar className="w-4 h-4 text-marca" />
                 {format(new Date(data + "T00:00:00"), "EEEE, dd/MM/yyyy", { locale: ptBR })}
-                {data === hoje() && <Badge className="bg-blue-100 text-blue-700 text-xs">Hoje</Badge>}
+                {data === hoje() && <Badge className="bg-marca-suave text-marca text-xs">Hoje</Badge>}
               </h3>
               <div className="space-y-2">
                 {porData[data].map(p => {
                   const status = calcStatus(p);
                   const aguardandoLider = p.status === "Concluído" && p.assinatura_responsavel && !p.assinatura_lider;
-                  const bgClass = status === "Atrasado" ? "bg-red-50 border-red-200" : data === hoje() ? "bg-blue-50 border-blue-200" : "bg-white border-slate-200";
+                  const bgClass = status === "Atrasado" ? "bg-red-50 border-red-200" : data === hoje() ? "bg-marca-suave border-marca-suave-2" : "bg-white border-slate-200";
 
                   return (
                     <div key={p.id} className={`p-3 rounded-lg border flex items-start gap-3 ${bgClass}`}>

@@ -34,7 +34,7 @@ export default function StatsGrid({
       title: "Produção Industrial",
       value: totalIndustrial.toLocaleString('pt-BR'),
       icon: Factory,
-      color: "bg-blue-500",
+      color: "bg-marca",
       trend: `${records.filter(r => r.sala === "Industrial").length} registros`
     },
     {

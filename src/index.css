@@ -1,3 +1,28 @@
+/* =============================================================================
+ * FONTES — pacote local, não Google Fonts
+ *
+ * @fontsource serve os arquivos pelo PRÓPRIO domínio. Via Google Fonts seriam
+ * duas origens externas na CSP (fonts.googleapis.com em style-src e
+ * fonts.gstatic.com em font-src) e uma dependência de rede para a tela
+ * desenhar — num tablet de fábrica com wi-fi ruim, é texto invisível até o
+ * download terminar.
+ *
+ * Pesos: 500 a 800 em Manrope, que é o que a direção "Fluxo" usa (600 para
+ * rótulo, 700 para item de menu, 800 para título e número). 400 fica de fora
+ * de propósito: não é usado e cada peso é um arquivo a baixar.
+ *
+ * JetBrains Mono 500 só para código — protocolo, OP, matrícula, lote.
+ *
+ * Só o subconjunto LATINO. O pacote completo trazia cirílico, grego e
+ * vietnamita: 24 arquivos para uma interface em português. O latino cobre
+ * todos os acentos do português (ã, ç, õ, ê estão em Latin-1).
+ * ============================================================================= */
+@import '@fontsource/manrope/latin-500.css';
+@import '@fontsource/manrope/latin-600.css';
+@import '@fontsource/manrope/latin-700.css';
+@import '@fontsource/manrope/latin-800.css';
+@import '@fontsource/jetbrains-mono/latin-500.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -76,25 +101,72 @@ button:focus-visible {
 
 @layer base {
   :root {
-    /* ---------------------------------------------------------------------
-     * COR DA MARCA
+    /* =====================================================================
+     * DIREÇÃO "FLUXO" — os tokens visuais do EnvasePro 2.0
      *
-     * O azul do sistema estava escrito à mão em 110 lugares, como
-     * "bg-blue-600" e "bg-blue-700". Trocar a cor da marca era um
-     * localizar-e-substituir em 110 arquivos — e a camada de token que já
-     * existia (`--primary`) está em cinza quase preto, sem efeito nenhum.
+     * Aprovada pelo dono em 13/10/2026. Os valores vêm de
+     * docs/design/v2/prototipos-v2/LEIAME.md e dos protótipos.
      *
-     * Agora a cor mora aqui. Trocar a marca é trocar estas duas linhas.
+     * REGRA: nenhuma tela escreve cor. Ela escreve PAPEL. Trocar a marca,
+     * ou pintar a TV de outro jeito, é mexer só aqui.
      *
-     * Os valores são os canais RGB EXATOS de `blue-600` e `blue-700` do
-     * Tailwind 3.4.17 (#2563eb e #1d4ed8), de propósito: esta mudança é de
-     * estrutura, não de aparência, e a diferença visual tem de ser zero.
-     *
-     * Em canais separados, e não `#2563eb`, para que `rgb(... / <alpha-value>)`
-     * continue aceitando os modificadores de opacidade do Tailwind.
-     * --------------------------------------------------------------------- */
-    --marca: 37 99 235;
-    --marca-forte: 29 78 216;
+     * Em canais RGB separados, e não hex, para os modificadores de opacidade
+     * do Tailwind (bg-marca/50) continuarem valendo via <alpha-value>.
+     * ===================================================================== */
+
+    /* --- marca ---------------------------------------------------------- */
+    --marca: 59 91 255;              /* #3B5BFF */
+    --marca-suave: 238 241 255;      /* #EEF1FF  item ativo do menu, hover   */
+    --marca-suave-2: 227 232 255;    /* #E3E8FF  avatar, realce mais firme   */
+    /* --marca-forte NÃO vem do LEIAME: é o tom de pressionado/hover dos 52
+       `hover:bg-marca-forte` que já existem no código. Derivado de --marca,
+       ~15% mais escuro, para o hover continuar sendo a mesma cor da marca e
+       não um azul de outra família. */
+    --marca-forte: 50 77 217;        /* #324DD9 */
+
+    /* --- superfícies ---------------------------------------------------- */
+    --fundo: 243 244 248;            /* #F3F4F8  fundo da página            */
+    --cartao: 255 255 255;           /* #fff     cartão, menu, diálogo      */
+    --cartao-fraco: 246 247 251;     /* #F6F7FB  linha de tabela sob o mouse */
+
+    /* --- tinta ---------------------------------------------------------- */
+    --tinta: 20 26 43;               /* #141A2B  texto principal            */
+    --tinta-media: 74 82 104;        /* #4A5268  item de menu inativo       */
+    --texto-fraco: 122 130 150;      /* #7A8296  rótulo, legenda            */
+    --texto-apagado: 154 161 181;    /* #9AA1B5  título de seção do menu    */
+    --borda: 230 232 239;            /* #E6E8EF  borda, eixo de gráfico     */
+    --trilha: 237 239 245;           /* #EDEFF5  trilho do anel             */
+
+    /* --- estados -------------------------------------------------------- */
+    --ok: 18 166 107;                /* #12A66B */
+    --atencao: 230 154 0;            /* #E69A00 */
+    --erro: 229 72 77;               /* #E5484D */
+    --ok-suave: 219 247 234;
+    --atencao-suave: 255 241 214;    /* #FFF1D6 */
+    --atencao-tinta: 184 117 0;      /* #B87500 */
+    --erro-suave: 255 231 232;
+
+    /* --- raio ----------------------------------------------------------- */
+    --raio-pequeno: 12px;
+    --raio: 16px;
+    --raio-cartao: 24px;             /* cartão e menu do protótipo: 22–24   */
+    --raio-painel: 22px;
+
+    /* --- sombra --------------------------------------------------------- */
+    --sombra-cartao: 0 1px 2px rgb(var(--tinta) / 0.05),
+                     0 10px 30px rgb(var(--tinta) / 0.05);
+    --sombra-cartao-alta: 0 18px 40px rgb(var(--tinta) / 0.12);
+    --sombra-marca: 0 14px 34px rgb(var(--marca) / 0.35);
+    --sombra-marca-alta: 0 14px 30px rgb(var(--marca) / 0.4);
+    --sombra-leve: 0 1px 2px rgb(var(--tinta) / 0.06);
+    --sombra-foco: 0 0 0 4px rgb(var(--marca) / 0.14);
+
+    /* --- movimento ------------------------------------------------------ */
+    --curva: cubic-bezier(.2, .7, .2, 1);
+    --curva-forte: cubic-bezier(.2, .8, .2, 1);
+    --tempo-rapido: .15s;
+    --tempo: .25s;
+    --tempo-lento: .6s;
 
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
@@ -131,6 +203,41 @@ button:focus-visible {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
+    /* ---------------------------------------------------------------------
+     * TEMA ESCURO — é o que a TV usa sempre
+     *
+     * Valores do protótipo TV-fabrica.html. Não é o tema claro com as cores
+     * invertidas: o azul e os estados sobem de luminosidade, porque sobre
+     * fundo quase preto o tom do tema claro fica escuro demais para ler a
+     * 4 metros.
+     * --------------------------------------------------------------------- */
+    --marca: 91 123 255;             /* #5B7BFF  mais claro que o do claro  */
+    --marca-suave: 30 41 82;
+    --marca-suave-2: 40 54 105;
+    --marca-forte: 120 148 255;
+
+    --fundo: 10 15 31;               /* #0A0F1F */
+    --cartao: 18 25 46;
+    --cartao-fraco: 24 32 56;
+
+    --tinta: 255 255 255;
+    --tinta-media: 199 207 234;      /* #C7CFEA */
+    --texto-fraco: 154 167 208;      /* #9AA7D0 */
+    --texto-apagado: 122 136 178;
+    --borda: 34 44 74;
+    --trilha: 28 37 64;
+
+    --ok: 61 214 140;                /* #3DD68C */
+    --atencao: 255 194 71;           /* #FFC247 */
+    --erro: 255 107 112;             /* #FF6B70 */
+    --ok-suave: 16 48 36;
+    --atencao-suave: 58 44 14;
+    --atencao-tinta: 255 194 71;
+    --erro-suave: 58 22 24;
+
+    --sombra-cartao: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px rgb(0 0 0 / 0.3);
+    --sombra-cartao-alta: 0 18px 40px rgb(0 0 0 / 0.45);
+
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;
@@ -174,5 +281,125 @@ button:focus-visible {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+
+/* =============================================================================
+ * MOVIMENTO E TIPOGRAFIA — utilitários reutilizáveis
+ *
+ * Classes, não estilo repetido tela a tela. Toda transição aqui é desligada
+ * por `prefers-reduced-motion`: movimento não é enfeite neutro, e quem pediu
+ * para reduzir tem motivo.
+ * ============================================================================= */
+/* NAO dentro de @layer components: o Tailwind purga o que esta na camada e
+ * nao aparece no conteudo varrido, e estas classes sao a API visual — elas
+ * precisam existir ANTES de a primeira tela usar. Medido: com @layer, 4 das
+ * 7 nao chegavam ao CSS gerado. */
+/* --- número: alinha em coluna ------------------------------------------
+   * Sem tabular-nums, "1.234" e "999" têm larguras diferentes por dígito e o
+   * número do painel "dança" a cada atualização. Na TV, que atualiza sozinha,
+   * isso aparece de longe. */
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+/* --- código: protocolo, OP, lote, matrícula --------------------------- */
+.codigo {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* --- cartão: a superfície padrão -------------------------------------- */
+.cartao-fluxo {
+  background-color: rgb(var(--cartao));
+  border-radius: var(--raio-cartao);
+  box-shadow: var(--sombra-cartao);
+}
+
+/* --- cartão que reage: sobe 4px, como no protótipo -------------------- */
+.cartao-toca {
+  transition: transform var(--tempo) var(--curva), box-shadow var(--tempo) ease;
+}
+.cartao-toca:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-cartao-alta);
+}
+
+/* --- botão: afunda ao ser pressionado --------------------------------- */
+.press {
+  transition: transform var(--tempo-rapido) ease, box-shadow var(--tempo) ease,
+              background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.press:active { transform: scale(0.96); }
+
+/* --- ação principal: sobe no hover ------------------------------------ */
+.cta-fluxo {
+  transition: transform var(--tempo-rapido) ease, box-shadow var(--tempo) ease;
+}
+.cta-fluxo:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-marca-alta);
+}
+
+/* --- foco visível -----------------------------------------------------
+   * O anel de foco NUNCA é removido junto com o movimento: ele não é
+   * decoração, é o que diz onde o teclado está. */
+.foco-fluxo:focus-visible,
+.foco-fluxo:focus-within {
+  outline: none;
+  border-color: rgb(var(--marca));
+  box-shadow: var(--sombra-foco);
+}
+
+/* --- entrada de página ------------------------------------------------- */
+.entra {
+  animation: fluxo-sobe var(--tempo-lento) var(--curva) both;
+}
+.entra-1 { animation-delay: 0.05s; }
+.entra-2 { animation-delay: 0.10s; }
+.entra-3 { animation-delay: 0.15s; }
+.entra-4 { animation-delay: 0.20s; }
+.entra-5 { animation-delay: 0.25s; }
+.entra-6 { animation-delay: 0.30s; }
+
+/* --- ponto "ao vivo" --------------------------------------------------- */
+.ao-vivo { animation: fluxo-pulso 1.8s ease-out infinite; }
+
+/* --- anel que se desenha ------------------------------------------------ */
+.anel {
+transition: stroke-dashoffset 0.9s var(--curva-forte), stroke var(--tempo);
+}
+
+@keyframes fluxo-sobe {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes fluxo-pulso {
+  0%   { box-shadow: 0 0 0 0 rgb(var(--ok) / 0.5); }
+  100% { box-shadow: 0 0 0 10px rgb(var(--ok) / 0); }
+}
+
+/* =============================================================================
+ * prefers-reduced-motion: desliga TODO movimento desta folha
+ *
+ * Vale para o que eu escrevi aqui e para o que as telas escrevem com as
+ * classes do Tailwind (transition-*, animate-*). O anel de foco fica — ele
+ * diz onde o teclado está, e isso não é movimento.
+ * ============================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .cartao-toca:hover,
+  .cta-fluxo:hover,
+  .press:active {
+    transform: none;
   }
 }
