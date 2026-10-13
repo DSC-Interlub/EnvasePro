@@ -134,7 +134,7 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
                 <div className="flex items-center justify-between p-3 bg-slate-50">
                   <span className="text-sm font-medium text-slate-700">{a.nome}</span>
                   {assinandoId !== a.id && (
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setAssinandoId(a.id); setConfirmado(false); }}>
+                    <Button size="sm" variant="outline" className="h-12 text-xs" onClick={() => { setAssinandoId(a.id); setConfirmado(false); }}>
                       Assinar
                     </Button>
                   )}

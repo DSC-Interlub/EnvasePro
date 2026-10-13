@@ -37,7 +37,7 @@ export default function BlocoRecebimento({ isAdmin }) {
             Recebimentos
           </CardTitle>
           <Link to="/Recebimento">
-            <Button size="sm" variant="outline" className="text-xs h-7 px-2 gap-1">
+            <Button size="sm" variant="outline" className="text-xs h-12 px-2 gap-1">
               Ver todos <ArrowRight className="w-3 h-3" />
             </Button>
           </Link>

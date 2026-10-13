@@ -212,7 +212,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                         size="sm"
                         onClick={() => toggleAtivoMutation.mutate({ id: d.id, ativo: !d.ativo })}
                         disabled={toggleAtivoMutation.isPending}
-                        className="h-8 px-2 text-xs flex items-center gap-1"
+                        className="h-12 px-3 text-xs flex items-center gap-1"
                         title={d.ativo ? "Desativar notificações para este e-mail" : "Ativar notificações"}
                       >
                         <Power className={`w-3.5 h-3.5 ${d.ativo ? "text-amber-600" : "text-emerald-600"}`} />

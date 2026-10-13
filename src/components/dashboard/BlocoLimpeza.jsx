@@ -75,17 +75,17 @@ function ListaLimpeza({ itens, isAdmin, handleIniciar, handleConcluir, setModalA
                   {isAdmin && (
                     <div className="flex gap-1 flex-shrink-0">
                       {status !== "Concluído" && status !== "Em Andamento" && (
-                        <Button size="sm" variant="outline" className="h-6 text-xs px-1.5" onClick={() => handleIniciar(p)}>
+                        <Button size="sm" variant="outline" className="h-12 text-xs px-1.5" onClick={() => handleIniciar(p)}>
                           <Play className="w-3 h-3" />
                         </Button>
                       )}
                       {status !== "Concluído" && (
-                        <Button size="sm" className="h-6 text-xs px-1.5 bg-green-600 hover:bg-green-700" onClick={() => handleConcluir(p)}>
+                        <Button size="sm" className="h-12 text-xs px-1.5 bg-green-600 hover:bg-green-700" onClick={() => handleConcluir(p)}>
                           <CheckCircle className="w-3 h-3" />
                         </Button>
                       )}
                       {aguardaLider && (
-                        <Button size="sm" variant="outline" className="h-6 text-xs px-1.5 border-orange-300 text-orange-700" onClick={() => setModalAssinatura(p.id)}>
+                        <Button size="sm" variant="outline" className="h-12 text-xs px-1.5 border-orange-300 text-orange-700" onClick={() => setModalAssinatura(p.id)}>
                           <PenLine className="w-3 h-3" />
                         </Button>
                       )}
@@ -165,7 +165,7 @@ export default function BlocoLimpeza({ currentUser, isAdmin }) {
                 ["semana", "Esta semana"],
                 ["mes", "Este mês"],
               ].map(([k, l]) => (
-                <Button key={k} size="sm" variant="outline" className="text-xs h-7 px-2" onClick={() => {
+                <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => {
                   const d = new Date();
                   if (k === "hoje") { setDataInicio(hoje()); setDataFim(hoje()); }
                   else if (k === "semana") { setDataInicio(semIni); setDataFim(semFim); }
@@ -175,7 +175,7 @@ export default function BlocoLimpeza({ currentUser, isAdmin }) {
             </div>
             {isAdmin && (
               <Link to="/GerenciarUsuarios?aba=limpeza">
-                <Button size="sm" variant="outline" className="text-xs h-7 px-2 border-teal-300 text-teal-700">
+                <Button size="sm" variant="outline" className="text-xs h-12 px-2 border-teal-300 text-teal-700">
                   <Settings className="w-3 h-3 mr-1" /> Gerenciar
                 </Button>
               </Link>
@@ -202,7 +202,7 @@ export default function BlocoLimpeza({ currentUser, isAdmin }) {
 
         {/* Abas por categoria */}
         <Tabs defaultValue="todas">
-          <TabsList className="w-full grid grid-cols-5 h-8">
+          <TabsList className="w-full grid grid-cols-5 h-auto">
             <TabsTrigger value="todas" className="text-xs">Todas ({filtradas.length})</TabsTrigger>
             <TabsTrigger value="pendentes" className="text-xs">Pendentes ({pendentes.length})</TabsTrigger>
             <TabsTrigger value="andamento" className="text-xs">Andamento ({emAndamento.length})</TabsTrigger>

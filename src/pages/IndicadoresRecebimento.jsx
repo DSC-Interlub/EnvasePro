@@ -102,7 +102,7 @@ export default function IndicadoresRecebimento() {
         </h1>
         <div className="flex flex-wrap gap-2 items-center">
           {[["hoje", "Hoje"], ["semana", "Esta semana"], ["mes", "Este mês"]].map(([k, l]) => (
-            <Button key={k} size="sm" variant="outline" className="text-xs h-7 px-2" onClick={() => setFiltro(k)}>{l}</Button>
+            <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => setFiltro(k)}>{l}</Button>
           ))}
           <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-7 text-xs w-36" />
           <span className="text-slate-400 text-xs">até</span>

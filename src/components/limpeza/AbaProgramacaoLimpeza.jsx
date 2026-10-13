@@ -197,25 +197,25 @@ export default function AbaProgramacaoLimpeza({ currentUser, isAdmin }) {
                           {status !== "Concluído" && (
                             <>
                               {status !== "Em Andamento" && (
-                                <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => handleIniciar(p)}>
+                                <Button size="sm" variant="outline" className="h-12 text-xs px-2" onClick={() => handleIniciar(p)}>
                                   <Play className="w-3 h-3 mr-1" /> Iniciar
                                 </Button>
                               )}
-                              <Button size="sm" className="h-7 text-xs px-2 bg-green-600 hover:bg-green-700" onClick={() => handleConcluir(p)}>
+                              <Button size="sm" className="h-12 text-xs px-2 bg-green-600 hover:bg-green-700" onClick={() => handleConcluir(p)}>
                                 <CheckCircle className="w-3 h-3 mr-1" /> Concluir
                               </Button>
                             </>
                           )}
                           {(status === "Concluído" && !p.assinatura_lider) && (
-                            <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-orange-300 text-orange-700" onClick={() => setModalAssinatura(p.id)}>
+                            <Button size="sm" variant="outline" className="h-12 text-xs px-2 border-orange-300 text-orange-700" onClick={() => setModalAssinatura(p.id)}>
                               <PenLine className="w-3 h-3 mr-1" /> Assinar
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditando(p); setModalProg(true); }}>
+                          <Button size="sm" variant="ghost" className="h-12 w-12 p-0" onClick={() => { setEditando(p); setModalProg(true); }}>
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           {p.status === "Pendente" && (
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-700" onClick={() => deleteMutation.mutate(p.id)}>
+                            <Button size="sm" variant="ghost" className="h-12 w-12 p-0 text-red-500 hover:text-red-700" onClick={() => deleteMutation.mutate(p.id)}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                           )}

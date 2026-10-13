@@ -347,7 +347,7 @@ export default function NovoChecklist() {
                 const sel = (formValues.inspecionado_por || []).includes(op.nome);
                 return (
                   <button type="button" key={op.id} onClick={() => toggleInspetor(op.nome)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${sel ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}>
+                    className={`flex min-h-[48px] items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${sel ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}>
                     <User className="w-3 h-3" />{op.nome}
                   </button>
                 );

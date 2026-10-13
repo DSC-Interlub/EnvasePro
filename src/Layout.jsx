@@ -129,7 +129,7 @@ export default function Layout({ children }) {
                         asChild
                         className={`hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-lg mb-1 ${location.pathname === item.url ? 'bg-blue-100 text-blue-700 shadow-sm' : ''}`}
                       >
-                        <Link to={item.url} className="flex items-center gap-3 px-3 py-2.5">
+                        <Link to={item.url} className="flex min-h-[48px] items-center gap-3 px-3 py-2.5">
                           <item.icon className="w-5 h-5" />
                           <span className="font-medium flex-1">{item.title}</span>
                           {item.badgeKey === "empilhadeira" && role === "admin" && badgeCount > 0 && (
@@ -174,7 +174,7 @@ export default function Layout({ children }) {
                   </span>
                   <button
                     onClick={() => setModalOperadorAberto(true)}
-                    className="text-[11px] text-blue-600 hover:text-blue-800 font-medium flex items-center gap-0.5"
+                    className="min-h-[48px] px-2 text-[11px] text-blue-600 hover:text-blue-800 font-medium flex items-center gap-0.5"
                     title="Trocar operador ativo"
                   >
                     <RefreshCw className="w-2.5 h-2.5" /> Trocar
@@ -197,7 +197,7 @@ export default function Layout({ children }) {
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
+                className="h-12 px-3 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
                 title="Sair do sistema"
               >
                 <LogOut className="w-3 h-3" />

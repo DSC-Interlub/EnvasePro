@@ -184,8 +184,8 @@ export default function ModalImportarSAP({ open, onClose }) {
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-slate-700">{parsed.length} registros encontrados</p>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setSelected(parsed.map((_, i) => i))}>Selecionar todos</Button>
-                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setSelected([])}>Desmarcar todos</Button>
+                <Button size="sm" variant="outline" className="text-xs h-12" onClick={() => setSelected(parsed.map((_, i) => i))}>Selecionar todos</Button>
+                <Button size="sm" variant="outline" className="text-xs h-12" onClick={() => setSelected([])}>Desmarcar todos</Button>
               </div>
             </div>
             <div className="overflow-x-auto border rounded-lg">

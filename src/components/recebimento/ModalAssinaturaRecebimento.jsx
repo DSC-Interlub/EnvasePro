@@ -110,7 +110,7 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
                     <span className="text-xs text-slate-400 ml-2">({p.funcao})</span>
                   </div>
                   {assinandoId !== p.id && (
-                    <Button size="sm" variant="outline" className="h-7 text-xs"
+                    <Button size="sm" variant="outline" className="h-12 text-xs"
                       onClick={() => { setAssinandoId(p.id); setConfirmado(false); }}>
                       Assinar
                     </Button>

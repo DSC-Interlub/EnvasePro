@@ -108,7 +108,7 @@ export default function ChecklistRecebimento() {
           {/* Filtros de período */}
           <div className="flex flex-wrap gap-2 items-center">
             {[["semana", "Esta semana"], ["mes", "Este mês"], ["ano", "Este ano"]].map(([k, l]) => (
-              <Button key={k} size="sm" variant="outline" className="text-xs h-7 px-2" onClick={() => setFiltro(k)}>{l}</Button>
+              <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => setFiltro(k)}>{l}</Button>
             ))}
             <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-7 text-xs w-36" />
             <span className="text-slate-400 text-xs">até</span>
@@ -140,7 +140,7 @@ export default function ChecklistRecebimento() {
             <Input placeholder="Filtrar por fornecedor..." value={filterFornecedor}
               onChange={e => setFilterFornecedor(e.target.value)} className="h-8 text-xs w-48" />
             <Select value={filterMaterial} onValueChange={setFilterMaterial}>
-              <SelectTrigger className="h-8 text-xs w-44"><SelectValue placeholder="Material" /></SelectTrigger>
+              <SelectTrigger className="h-12 text-xs w-44"><SelectValue placeholder="Material" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="_all">Todos os materiais</SelectItem>
                 {["Spray", "Rótulo", "Embalagem", "Produto Interlub", "Matéria Prima (Terceiros)"].map(m => (
@@ -149,7 +149,7 @@ export default function ChecklistRecebimento() {
               </SelectContent>
             </Select>
             <Select value={filterInspetor} onValueChange={setFilterInspetor}>
-              <SelectTrigger className="h-8 text-xs w-44"><SelectValue placeholder="Inspetor" /></SelectTrigger>
+              <SelectTrigger className="h-12 text-xs w-44"><SelectValue placeholder="Inspetor" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="_all">Todos os inspetores</SelectItem>
                 {inspetores.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
