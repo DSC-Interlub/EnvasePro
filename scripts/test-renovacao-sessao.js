@@ -86,6 +86,60 @@ const r = await executarComRenovacao(() => {
 checar('devolve o dado da segunda tentativa', r.data?.[0]?.id === 'segunda', JSON.stringify(r).slice(0, 70));
 checar('e sem erro', !r.error);
 
+// ------------------------------------------------------------------------
+// [6] ESCRITA recusada por sessao nao grava nada
+//
+// Desde 13/10/2026 a repeticao tambem envolve create/update/delete. A duvida
+// legitima e se repetir um INSERT pode duplicar linha. Nao pode, porque
+// 401/PGRST301/PGRST303 sao recusados na validacao do TOKEN, antes de o
+// PostgREST montar SQL. Este bloco mede isso no banco, em vez de supor.
+// ------------------------------------------------------------------------
+console.log('\n[6] escrita recusada por sessao NAO grava nada (medido no banco)');
+{
+  const { createClient } = await import('@supabase/supabase-js');
+  const URL = process.env.VITE_SUPABASE_URL;
+  const servico = createClient(URL, process.env.SUPABASE_SERVICE_ROLE_KEY,
+    { auth: { persistSession: false } });
+
+  const contar = async () => {
+    const { count } = await servico
+      .from('limpeza_locais').select('*', { count: 'exact', head: true });
+    return count ?? 0;
+  };
+
+  const antes = await contar();
+
+  // token sintaticamente valido mas com assinatura errada: o PostgREST recusa
+  // na validacao, sem chegar ao banco
+  const tokenInvalido = [
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+    'eyJyb2xlIjoiYXV0aGVudGljYWRvIiwiZXhwIjo5OTk5OTk5OTk5fQ',
+    'assinatura-que-nao-confere',
+  ].join('.');
+
+  const comTokenRuim = createClient(URL, process.env.VITE_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: `Bearer ${tokenInvalido}` } },
+  });
+
+  const { error: erroEscrita } = await comTokenRuim
+    .from('limpeza_locais')
+    .insert({ nome: 'ZZTESTE-SESSAO-nao-deve-existir' });
+
+  checar('a escrita com token invalido falha', !!erroEscrita, 'nao falhou');
+  checar('e a falha e classificada como DE SESSAO (logo seria repetida)',
+    ehErroDeSessao(erroEscrita), JSON.stringify(erroEscrita).slice(0, 90));
+
+  const depois = await contar();
+  checar(`nenhuma linha foi gravada (${antes} -> ${depois})`, antes === depois);
+
+  const { count: sobras } = await servico
+    .from('limpeza_locais')
+    .select('*', { count: 'exact', head: true })
+    .like('nome', 'ZZTESTE-SESSAO-%');
+  checar('e nao sobrou a linha do teste', (sobras ?? 0) === 0, `sobraram ${sobras}`);
+}
+
 console.log('\n' + '='.repeat(72));
 console.log(`RESULTADO: ${ok} OK, ${falhou} FALHA`);
 if (falhou) console.log('Falhas:\n  - ' + falhas.join('\n  - '));

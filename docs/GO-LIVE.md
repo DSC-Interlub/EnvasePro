@@ -42,7 +42,7 @@ Backup completo e com restauração conferida:
 | V1 (a–g) concluída | Claude | em andamento |
 | Suítes verdes | Claude | triggers 31, injection 21, upload 22, interface 37, rotas 26, checklist 41, sessão 26, CSP 0 violações |
 | Backup com restauração testada | Claude | feito: 24/24 tabelas, 1869/1869 linhas |
-| **Qualidade confirma o critério do checklist (A ou B)** | **Qualidade** | **PENDENTE — ver o fim** |
+| **Qualidade confirma o critério A ou B do checklist** | **Qualidade** | **PENDENTE — ver o passo 4** |
 | Janela combinada com a fábrica | Dono | — |
 | Critério de desistência lido e aceito | Dono | — |
 
