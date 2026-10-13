@@ -5,7 +5,11 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  // min-w-[48px]: um alvo de toque precisa de 48px nos DOIS lados. Havia
+  // botoes com 48px de altura e 25px de largura — so o icone, sem variante
+  // `icon` e com padding apertado. A largura minima na base resolve todos de
+  // uma vez e nao afeta botao com texto, que ja passa de 48.
+  "inline-flex min-w-[48px] items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {

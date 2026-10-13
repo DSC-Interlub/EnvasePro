@@ -525,7 +525,7 @@ export default function NovoChecklist() {
             </div>
           )}
 
-          <Button type="submit" disabled={mutation.isPending} className="w-full bg-marca hover:bg-marca-forte h-11 text-base font-semibold">
+          <Button type="submit" disabled={mutation.isPending} className="w-full bg-marca hover:bg-marca-forte h-12 text-base font-semibold">
             {mutation.isPending ? "Enviando..." : "Enviar Checklist"}
           </Button>
         </CardContent>

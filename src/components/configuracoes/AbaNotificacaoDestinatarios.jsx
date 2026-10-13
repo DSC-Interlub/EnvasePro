@@ -122,7 +122,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                     placeholder="Ex: Coordenador de Logística"
                     value={novoNome}
                     onChange={(e) => setNovoNome(e.target.value)}
-                    className="h-9 text-sm"
+                    className="h-12 text-sm"
                   />
                 </div>
                 <div className="space-y-1">
@@ -136,7 +136,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                     value={novoEmail}
                     onChange={(e) => setNovoEmail(e.target.value)}
                     required
-                    className="h-9 text-sm"
+                    className="h-12 text-sm"
                   />
                 </div>
               </div>
@@ -147,7 +147,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
               <Button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="bg-marca hover:bg-marca-forte text-white h-9 px-4 text-xs font-semibold"
+                className="bg-marca hover:bg-marca-forte text-white h-12 px-4 text-xs font-semibold"
               >
                 {createMutation.isPending ? "Cadastrando..." : "Cadastrar Destinatário"}
               </Button>

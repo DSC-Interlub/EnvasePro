@@ -396,9 +396,9 @@ export default function Recebimento() {
               {[["hoje", "Hoje"], ["semana", "Esta semana"], ["mes", "Este mês"]].map(([k, l]) => (
                 <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => setFiltroRapido(k)}>{l}</Button>
               ))}
-              <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-7 text-xs w-36" />
+              <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-12 text-xs w-36" />
               <span className="text-slate-400 text-sm">até</span>
-              <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="h-7 text-xs w-36" />
+              <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="h-12 text-xs w-36" />
             </div>
             <div className="flex flex-wrap gap-2">
               <Select value={filtroTipo} onValueChange={setFiltroTipo}>
@@ -448,9 +448,9 @@ export default function Recebimento() {
             {[["hoje", "Hoje"], ["semana", "Esta semana"], ["mes", "Este mês"]].map(([k, l]) => (
               <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => setFiltroInd(k)}>{l}</Button>
             ))}
-            <Input type="date" value={indInicio} onChange={e => setIndInicio(e.target.value)} className="h-7 text-xs w-36" />
+            <Input type="date" value={indInicio} onChange={e => setIndInicio(e.target.value)} className="h-12 text-xs w-36" />
             <span className="text-slate-400 text-xs">até</span>
-            <Input type="date" value={indFim} onChange={e => setIndFim(e.target.value)} className="h-7 text-xs w-36" />
+            <Input type="date" value={indFim} onChange={e => setIndFim(e.target.value)} className="h-12 text-xs w-36" />
           </div>
 
           {/* Volume */}

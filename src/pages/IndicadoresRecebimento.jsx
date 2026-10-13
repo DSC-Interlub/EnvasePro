@@ -104,9 +104,9 @@ export default function IndicadoresRecebimento() {
           {[["hoje", "Hoje"], ["semana", "Esta semana"], ["mes", "Este mês"]].map(([k, l]) => (
             <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => setFiltro(k)}>{l}</Button>
           ))}
-          <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-7 text-xs w-36" />
+          <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-12 text-xs w-36" />
           <span className="text-slate-400 text-xs">até</span>
-          <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="h-7 text-xs w-36" />
+          <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="h-12 text-xs w-36" />
         </div>
       </div>
 

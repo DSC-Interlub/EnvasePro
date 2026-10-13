@@ -110,9 +110,9 @@ export default function ChecklistRecebimento() {
             {[["semana", "Esta semana"], ["mes", "Este mês"], ["ano", "Este ano"]].map(([k, l]) => (
               <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => setFiltro(k)}>{l}</Button>
             ))}
-            <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-7 text-xs w-36" />
+            <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-12 text-xs w-36" />
             <span className="text-slate-400 text-xs">até</span>
-            <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="h-7 text-xs w-36" />
+            <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="h-12 text-xs w-36" />
           </div>
 
           {/* KPIs */}
@@ -138,7 +138,7 @@ export default function ChecklistRecebimento() {
           {/* Filtros adicionais */}
           <div className="flex flex-wrap gap-2">
             <Input placeholder="Filtrar por fornecedor..." value={filterFornecedor}
-              onChange={e => setFilterFornecedor(e.target.value)} className="h-8 text-xs w-48" />
+              onChange={e => setFilterFornecedor(e.target.value)} className="h-12 text-xs w-48" />
             <Select value={filterMaterial} onValueChange={setFilterMaterial}>
               <SelectTrigger className="h-12 text-xs w-44"><SelectValue placeholder="Material" /></SelectTrigger>
               <SelectContent>
