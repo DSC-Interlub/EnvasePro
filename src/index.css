@@ -378,6 +378,32 @@ transition: stroke-dashoffset 0.9s var(--curva-forte), stroke var(--tempo);
   to   { opacity: 1; transform: none; }
 }
 
+/* --- TV: o anel da meta se desenha uma vez -----------------------------
+ * Do protótipo (`.arc`): 2s, com 0.4s de espera para a entrada do cartão
+ * acontecer antes. As duas variáveis vêm do componente, que calcula a
+ * circunferência e o recuo final. */
+.anel-tv {
+  animation: fluxo-desenha-anel 2s var(--curva-forte) .4s both;
+}
+
+@keyframes fluxo-desenha-anel {
+  from { stroke-dashoffset: var(--anel-volta); }
+  to   { stroke-dashoffset: var(--anel-fim); }
+}
+
+/* --- TV: as manchas de luz derivam devagar -----------------------------
+ * 14s no protótipo. Dão profundidade ao fundo quase preto. Param com
+ * prefers-reduced-motion, como todo o resto. */
+.glow {
+  animation: fluxo-deriva 14s ease-in-out infinite;
+}
+
+@keyframes fluxo-deriva {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(40px, 30px); }
+  100% { transform: translate(0, 0); }
+}
+
 @keyframes fluxo-pulso {
   0%   { box-shadow: 0 0 0 0 rgb(var(--ok) / 0.5); }
   100% { box-shadow: 0 0 0 10px rgb(var(--ok) / 0); }
@@ -401,5 +427,11 @@ transition: stroke-dashoffset 0.9s var(--curva-forte), stroke var(--tempo);
   .cta-fluxo:hover,
   .press:active {
     transform: none;
+  }
+  /* O anel da TV nao anima, mas tem de FICAR no valor final — senao ele
+     apareceria vazio e o painel mentiria sobre a meta. */
+  .anel-tv {
+    animation: none;
+    stroke-dashoffset: var(--anel-fim);
   }
 }

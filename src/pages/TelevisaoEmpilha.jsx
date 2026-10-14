@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { MolduraTV, CartaoVidro, NumeroTV, MetaTV, StatusTV, ListaTV } from "@/components/fluxo/tv";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Warehouse, User, MapPin, Package, Clock, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
@@ -86,200 +87,96 @@ export default function TelevisaoEmpilha() {
     return `${hours}h ${mins.toString().padStart(2, "0")}m`;
   };
 
+  // ---------------------------------------------------------------------
+  // Reconstruido sobre o prototipo TV-fabrica.html, com os mesmos componentes
+  // da TV de envase. Os DADOS acima nao mudaram — as mesmas consultas, os
+  // mesmos filtros, os mesmos KPIs.
+  //
+  // O anel mostra a fracao CONCLUIDA do dia. Nao ha campo de meta no banco
+  // (ver docs e o relatorio do modulo), entao nao ha "meta 150" a mostrar.
+  // ---------------------------------------------------------------------
+  const situacoes = [
+    {
+      nome: 'Em andamento',
+      situacao: emAndamento > 0 ? `${emAndamento} linha(s) agora` : 'nenhuma linha ativa',
+      tom: emAndamento > 0 ? 'ok' : 'neutro',
+    },
+    {
+      nome: 'Críticos',
+      situacao: criticosPendentes > 0 ? `${criticosPendentes} pendente(s)` : 'nenhum pendente',
+      tom: criticosPendentes > 0 ? 'erro' : 'ok',
+    },
+    {
+      nome: 'Ocorrências',
+      situacao: ocorrenciasHoje.length > 0 ? `${ocorrenciasHoje.length} aberta(s)` : 'nenhuma aberta',
+      tom: ocorrenciasHoje.length > 0 ? 'erro' : 'ok',
+    },
+    {
+      nome: 'Tempo médio',
+      situacao: tempoMedioMin > 0 ? `${tempoMedio} por linha` : 'sem linha concluída',
+      tom: 'neutro',
+    },
+  ];
+
   return (
-    <div className="min-h-screen h-screen bg-gradient-to-br from-slate-950 via-amber-950 to-slate-950 p-3 overflow-hidden flex flex-col">
-      <style>{`
-        @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
-        .animate-pulse-slow { animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-slide-up { animation: slide-up 0.5s ease-out; }
-      `}</style>
-
-      <div className="max-w-[1920px] mx-auto w-full flex flex-col h-full gap-2">
-        {/* Header */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-amber-600 via-amber-700 to-orange-700 rounded-2xl p-3 shadow-xl flex-shrink-0">
-          <div className="relative flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <Warehouse className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-black text-white tracking-tight">Empilhadeira — Interlub</h1>
-                <p className="text-amber-100 text-sm font-medium">
-                  {format(currentTime, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                </p>
-              </div>
-            </div>
-            <div className="text-4xl font-black text-white font-mono tabular-nums">
-              {format(currentTime, "HH:mm:ss")}
-            </div>
-          </div>
-        </div>
-
-        {/* KPIs */}
-        <div className="grid grid-cols-5 gap-2 flex-shrink-0">
-          {[
-            { label: "Total Linhas", value: totalLinhas, color: "from-slate-600 to-slate-700" },
-            { label: "Concluídas", value: concluidas, color: "from-emerald-500 to-emerald-600" },
-            { label: "Em Andamento", value: emAndamento, color: "from-marca to-marca" },
-            { label: "Críticos Pend.", value: criticosPendentes, color: "from-red-500 to-red-600" },
-            { label: "Tempo Médio", value: tempoMedio, color: "from-purple-500 to-purple-600" },
-          ].map(({ label, value, color }) => (
-            <Card key={label} className={`bg-gradient-to-br ${color} border-0 shadow-lg`}>
-              <CardContent className="p-2">
-                <p className="text-white/80 text-[10px] font-semibold">{label}</p>
-                <p className="text-2xl font-black text-white tabular-nums">{value}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Linhas em andamento */}
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
-          <div className="flex items-center gap-2 px-1">
-            <div className="w-1 h-6 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
-            <h2 className="text-xl font-black text-white flex items-center gap-2">
-              <Warehouse className="w-5 h-5 text-amber-400" />
-              EM ANDAMENTO ({linhasEmAndamento.length})
-            </h2>
-          </div>
-
-          {linhasEmAndamento.length === 0 ? (
-            <Card className="bg-slate-900/50 border-slate-700">
-              <CardContent className="p-6 text-center">
-                <Warehouse className="w-10 h-10 mx-auto text-slate-600 mb-2" />
-                <p className="text-slate-400 font-semibold">Nenhuma linha em andamento</p>
-              </CardContent>
-            </Card>
-          ) : (
-            linhasEmAndamento.map((linha, index) => {
-              const foto1 = getOperatorPhoto(linha.operador_empilhadeira);
-              const foto2 = getOperatorPhoto(linha.operador_ajudante);
-              return (
-                <Card
-                  key={linha.id}
-                  className={`backdrop-blur-xl shadow-xl animate-slide-up ${
-                    linha.critico
-                      ? "bg-gradient-to-r from-red-900/90 to-red-800/90 border-l-4 border-red-500"
-                      : "bg-gradient-to-r from-slate-900/90 to-slate-800/90 border-l-4 border-amber-500"
-                  }`}
-                  style={{ animationDelay: `${index * 80}ms` }}
-                >
-                  <CardContent className="p-3">
-                    <div className="grid grid-cols-7 gap-3 items-center">
-                      {/* Status crítico */}
-                      <div>
-                        {linha.critico && (
-                          <Badge className="bg-red-600 text-white text-xs font-black flex items-center gap-1 animate-pulse-slow w-fit">
-                            <AlertCircle className="w-3 h-3" /> CRÍTICO
-                          </Badge>
-                        )}
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mt-1">Depósito</p>
-                        <p className="text-lg font-black text-white">{linha.deposito || "—"}</p>
-                        <p className="text-slate-300 text-sm flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {linha.rua_torre || "—"}
-                        </p>
-                      </div>
-
-                      {/* Produto */}
-                      <div className="col-span-2">
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Produto</p>
-                        <p className="text-xl font-bold text-white leading-tight">{linha.descricao_produto || "Sem descrição"}</p>
-                        {linha.numero_item && (
-                          <p className="text-slate-400 font-mono text-xs mt-1">{linha.numero_item}</p>
-                        )}
-                        {linha.quantidade && (
-                          <p className="text-amber-400 font-semibold text-sm">{linha.quantidade} un.</p>
-                        )}
-                      </div>
-
-                      {/* Empilhador */}
-                      <div>
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Empilhador</p>
-                        <div className="flex items-center gap-2">
-                          {foto1 ? (
-                            <img src={foto1} alt={linha.operador_empilhadeira} className="w-10 h-10 rounded-full object-cover border-2 border-amber-400" />
-                          ) : (
-                            <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center">
-                              <User className="w-5 h-5 text-amber-400" />
-                            </div>
-                          )}
-                          <p className="text-base font-black text-white leading-tight">{linha.operador_empilhadeira || "—"}</p>
-                        </div>
-                      </div>
-
-                      {/* Ajudante */}
-                      <div>
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Ajudante</p>
-                        {linha.operador_ajudante && linha.operador_ajudante !== "nenhum" ? (
-                          <div className="flex items-center gap-2">
-                            {foto2 ? (
-                              <img src={foto2} alt={linha.operador_ajudante} className="w-9 h-9 rounded-full object-cover border-2 border-slate-400" />
-                            ) : (
-                              <div className="w-9 h-9 bg-slate-500/20 rounded-full flex items-center justify-center">
-                                <User className="w-4 h-4 text-slate-400" />
-                              </div>
-                            )}
-                            <p className="text-base font-bold text-slate-300 leading-tight">{linha.operador_ajudante}</p>
-                          </div>
-                        ) : (
-                          <p className="text-slate-500 text-sm">—</p>
-                        )}
-                      </div>
-
-                      {/* Tempo */}
-                      <div className="col-span-2 text-right">
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Tempo Decorrido</p>
-                        <div className="flex items-center justify-end gap-2">
-                          <Clock className={`w-7 h-7 ${linha.critico ? "text-red-400" : "text-amber-400"} animate-pulse-slow`} />
-                          <div>
-                            <p className={`text-5xl font-black ${linha.critico ? "text-red-400" : "text-amber-400"} font-mono tabular-nums leading-tight`}>
-                              {calculateElapsed(linha.hora_inicio)}
-                            </p>
-                            {linha.hora_inicio && (
-                              <p className="text-slate-400 text-[10px] font-semibold mt-1">desde {linha.hora_inicio}</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-
-          {/* Ocorrências não resolvidas */}
-          {ocorrenciasHoje.length > 0 && (
-            <div className="mt-2">
-              <div className="flex items-center gap-2 px-1 mb-2">
-                <div className="w-1 h-5 bg-orange-500 rounded-full"></div>
-                <h2 className="text-base font-black text-orange-400 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" /> OCORRÊNCIAS NÃO RESOLVIDAS ({ocorrenciasHoje.length})
-                </h2>
-              </div>
-              <div className="grid gap-2">
-                {ocorrenciasHoje.slice(0, 3).map(o => (
-                  <Card key={o.id} className="bg-orange-900/40 border-l-4 border-orange-500 backdrop-blur-xl">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-3">
-                        <AlertTriangle className="w-5 h-5 text-orange-400 flex-shrink-0" />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-orange-700 text-white text-xs">{o.tipo}</Badge>
-                            <span className="text-orange-300 text-xs">{o.hora} — {o.registrado_por}</span>
-                          </div>
-                          <p className="text-white text-sm font-medium mt-0.5">{o.descricao}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+    <MolduraTV
+      titulo="Movimentação de hoje"
+      modulo="Empilhadeira"
+      rodape={situacoes.map((s, i) => (
+        <StatusTV key={s.nome} nome={s.nome} situacao={s.situacao} tom={s.tom} atraso={0.45 + i * 0.05} />
+      ))}
+    >
+      <div
+        className="grid min-h-0 flex-1 lg:grid-cols-[1.25fr_1fr_1fr]"
+        style={{ gap: 'clamp(14px, 1.5vw, 28px)' }}
+      >
+        <MetaTV
+          rotulo="Concluídas"
+          valor={concluidas}
+          meta={totalLinhas}
+          unidade="linhas"
+          legenda={totalLinhas > 0
+            ? `${totalLinhas - concluidas} em aberto · ${totalLinhas} no dia`
+            : 'sem linhas'}
+        />
+        <NumeroTV
+          rotulo="Em andamento"
+          valor={emAndamento}
+          pilula={`${progHoje.length} programação(ões) hoje`}
+          atraso={0.15}
+        />
+        <NumeroTV
+          rotulo="Críticos pendentes"
+          valor={criticosPendentes}
+          tom="erro"
+          pilula={criticosPendentes > 0 ? 'prioridade' : 'nenhum crítico'}
+          pilulaTom={criticosPendentes > 0 ? 'erro' : 'atencao'}
+          atraso={0.3}
+        />
       </div>
-    </div>
+
+      {/* A faixa so aparece quando ha linha: sem isso ela ocuparia espaco sem
+          dizer nada e afastaria o rodape, que no prototipo fica colado embaixo. */}
+      {linhasEmAndamento.length > 0 && (
+        <CartaoVidro atraso={0.35} className="min-h-0 flex-1 overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto" style={{ padding: 'clamp(14px, 1.5vw, 28px)' }}>
+            <ListaTV
+              titulo="Linhas em andamento"
+              contagem={`${linhasEmAndamento.length} ativa(s)`}
+              vazio="Nenhuma linha em andamento agora"
+              itens={linhasEmAndamento.map((l) => ({
+                id: l.id,
+                tom: l.critico ? 'erro' : l.status === 'Pausado' ? 'atencao' : 'neutro',
+                foto: getOperatorPhoto(l.operador_empilhadeira),
+                principal: l.descricao_produto || l.codigo_produto || 'Linha',
+                secundario: `${l.operador_empilhadeira || 'sem operador'}${l.critico ? ' · crítico' : ''}${l.deposito ? ` · ${l.deposito}` : ''}`,
+                direita: calculateElapsed(l.hora_inicio),
+                direitaLegenda: 'decorrido',
+              }))}
+            />
+          </div>
+        </CartaoVidro>
+      )}
+    </MolduraTV>
   );
 }
