@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MolduraTV, CartaoVidro, NumeroTV, MetaTV, StatusTV, ListaTV } from "@/components/fluxo/tv";
+import { MolduraTV, CartaoVidro, NumeroTV, MetaTV, StatusTV, ListaTV, PainelImportacoes } from "@/components/fluxo/tv";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,7 +117,8 @@ export default function Televisao() {
     return () => clearInterval(timer);
   }, []);
 
-  const NUM_SLIDES = 3;
+  // Quatro paineis: Envase, Check-out, Empilhadeira e Importacoes.
+  const NUM_SLIDES = 4;
 
   useEffect(() => {
     if (autoPlay) {
@@ -240,6 +241,15 @@ export default function Televisao() {
     refetchInterval: 300000,
   });
 
+
+  // Importacoes (SAP): voltou como o quarto painel do carrossel, a pedido do
+  // dono. Mesma consulta de antes.
+  const { data: importacoes = [], isLoading: loadingImportacoes } = useQuery({
+    queryKey: ['importacoes-tv'],
+    queryFn: () => base44.entities.SapPedido.list(),
+    refetchInterval: 300000,
+    initialData: [],
+  });
 
   const markMaterialAsRetirado = useMutation({
     mutationFn: async (recordId) => base44.entities.EnvaseRecord.update(recordId, { material_retirado: true }),
@@ -409,6 +419,14 @@ export default function Televisao() {
         />
       ),
     },
+    {
+      modulo: 'Importações',
+      titulo: 'Importações previstas',
+      // Este painel nao usa anel nem os dois numeros padrao: a propria
+      // PainelImportacoes monta a faixa de cima inteira, porque o conteudo
+      // (data da proxima chegada) nao cabe na forma "anel + dois numeros".
+      proprio: <PainelImportacoes pedidos={importacoes} carregando={loadingImportacoes} />,
+    },
   ];
 
   const painel = PAINEIS[slideIndex] || PAINEIS[0];
@@ -485,7 +503,11 @@ export default function Televisao() {
         <StatusTV key={s.nome} nome={s.nome} situacao={s.situacao} tom={s.tom} atraso={0.45 + i * 0.05} />
       ))}
     >
+      {/* Painel que monta a propria faixa de cima (Importacoes) */}
+      {painel.proprio}
+
       {/* A faixa de cima e a do prototipo: anel da meta (1.25fr) + dois numeros */}
+      {!painel.proprio && (
       <div
         className="grid min-h-0 flex-1 lg:grid-cols-[1.25fr_1fr_1fr]"
         style={{ gap: 'clamp(14px, 1.5vw, 28px)' }}
@@ -501,6 +523,7 @@ export default function Televisao() {
           <NumeroTV key={n.rotulo} {...n} atraso={0.15 + i * 0.15} />
         ))}
       </div>
+      )}
 
       {/*
         ESTA FAIXA NAO ESTA NO PROTOTIPO, e e uma decisao declarada.
@@ -511,7 +534,7 @@ export default function Televisao() {
         funcao por aparencia. Fica aqui, com a mesma gramatica de vidro, e
         esta na lista de divergencias do relatorio.
       */}
-      {painel.temLinhas && (
+      {painel.detalhe && painel.temLinhas && (
         <CartaoVidro atraso={0.35} className="min-h-0 flex-1 overflow-hidden">
           <div className="min-h-0 flex-1 overflow-y-auto" style={{ padding: 'clamp(14px, 1.5vw, 28px)' }}>
             {painel.detalhe}
