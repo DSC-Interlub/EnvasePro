@@ -4,13 +4,18 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
+  // Sem borda: o aviso se destaca pelo FUNDO suave do estado, como os
+  // selos. Borda mais fundo mais icone e sinal repetido tres vezes.
+  "relative w-full rounded-painel px-4 py-3.5 text-sm font-semibold " +
+  "[&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7",
   {
     variants: {
       variant: {
-        default: "bg-background text-foreground",
+        default: "bg-marca-suave text-marca [&>svg]:text-marca",
+        ok: "bg-ok-suave text-ok [&>svg]:text-ok",
+        atencao: "bg-atencao-suave text-atencao-tinta [&>svg]:text-atencao-tinta",
         destructive:
-          "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
+          "bg-erro-suave text-erro [&>svg]:text-erro",
       },
     },
     defaultVariants: {
