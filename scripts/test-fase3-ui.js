@@ -313,19 +313,53 @@ async function main() {
    * algumas rodadas o modal ainda nao tinha renderizado e o clique estourava
    * em 30 s, derrubando a suite inteira. Agora espera o elemento existir.
    */
+  /**
+   * Espera a pagina voltar a aceitar clique.
+   *
+   * Enquanto um Select do Radix esta aberto, o corpo fica com
+   * `pointer-events: none`. Ao fechar, a restauracao nao e sincrona: durante
+   * alguns milissegundos o corpo ainda recusa clique, e um clique nesse
+   * intervalo e ENGOLIDO sem erro — o segundo select do dialogo simplesmente
+   * nao abria.
+   *
+   * Isso tornava a suite intermitente: media 1 em 2. Nao e defeito da tela —
+   * uma pessoa clica mais devagar que o Playwright. O erro era do teste, que
+   * clicava antes de a pagina estar clicavel.
+   */
+  async function esperarPaginaClicavel(page) {
+    await page.waitForFunction(() => {
+      const corpo = document.body;
+      if (getComputedStyle(corpo).pointerEvents === 'none') return false;
+      if (corpo.style.pointerEvents === 'none') return false;
+      // nenhum popper do Radix ainda montado
+      return document.querySelectorAll('[data-radix-popper-content-wrapper]').length === 0;
+    }, null, { timeout: 8000 }).catch(() => {});
+  }
+
   async function escolherNoSelect(page, escopo, indice, texto) {
     const caixas = escopo.getByRole('combobox');
     const apareceu = await esperarPor(async () => (await caixas.count()) > indice, 15000);
     if (!apareceu) throw new Error(`combobox ${indice} nao apareceu para escolher "${texto}"`);
 
+    await esperarPaginaClicavel(page);
     await caixas.nth(indice).click({ force: true });
 
     const opcao = page.getByRole('option', { name: texto, exact: false });
     const abriu = await esperarPor(async () => (await opcao.count()) > 0, 10000);
-    if (!abriu) throw new Error(`opcao "${texto}" nao apareceu na lista`);
+    if (!abriu) {
+      // Dizer o que EXISTE, nao so o que falta: sem isto a falha nao
+      // distingue "a lista nao abriu" de "a opcao nao esta nela".
+      const presentes = await page.evaluate(() =>
+        [...document.querySelectorAll('[role="option"]')].map((e) => (e.textContent || '').trim()));
+      const aberta = await page.evaluate(() => !!document.querySelector('[role="listbox"]'));
+      throw new Error(
+        `opcao "${texto}" nao apareceu. Lista ${aberta ? 'ABERTA' : 'FECHADA'}; ` +
+        `opcoes presentes: ${presentes.length ? presentes.join(' | ') : '(nenhuma)'}`);
+    }
 
     await opcao.first().click({ force: true });
     await esperarPor(async () => (await opcao.count()) === 0, 5000);
+    await esperarPaginaClicavel(page);
   }
 
   console.log('\n[EMPILHADEIRA] iniciar linha com operador e ajudante (escrita real)');

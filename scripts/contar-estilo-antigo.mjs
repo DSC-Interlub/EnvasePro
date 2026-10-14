@@ -82,9 +82,50 @@ const NOVOS = [
 /** Linha de comentário não é código. */
 const ehComentario = (l) => /^\s*(\*|\/\/|\/\*|--)/.test(l);
 
+/**
+ * Quais componentes de `ui/` o sistema realmente alcança, seguindo os imports
+ * de forma transitiva a partir das telas.
+ *
+ * POR QUE SEPARAR
+ *
+ * `src/components/ui` tem 49 arquivos e o sistema importa 19. Os outros 30
+ * vieram no pacote do shadcn e nunca foram usados — `menubar`, `carousel`,
+ * `command`, e desde a troca da casca também `sidebar`.
+ *
+ * Somar a dívida deles no total mistura duas coisas muito diferentes: estilo
+ * antigo que o operador VÊ, e estilo antigo em código que ninguém carrega.
+ * O primeiro é o que o dono reclamou; o segundo é inventário.
+ */
+function uiAlcancados() {
+  const importaDe = {};
+  for (const f of arquivos) {
+    const rel = f.split(path.sep).join('/');
+    const nomes = [...fs.readFileSync(f, 'utf8')
+      .matchAll(/from ["']@\/components\/ui\/([a-z-]+)["']/g)].map((m) => m[1]);
+    importaDe[rel] = [...new Set(nomes)];
+  }
+  const vistos = new Set();
+  const fila = [];
+  for (const [rel, nomes] of Object.entries(importaDe)) {
+    if (rel.includes('/components/ui/')) continue;
+    fila.push(...nomes);
+  }
+  while (fila.length) {
+    const n = fila.pop();
+    if (vistos.has(n)) continue;
+    vistos.add(n);
+    const alvo = 'src/components/ui/' + n + '.jsx';
+    if (importaDe[alvo]) fila.push(...importaDe[alvo]);
+  }
+  return vistos;
+}
+
 /** Pastas por módulo, para o relatório dizer onde está a dívida. */
-function moduloDe(rel) {
-  if (rel.startsWith('src/components/ui/')) return 'ui (base)';
+function moduloDe(rel, alcancados) {
+  if (rel.startsWith('src/components/ui/')) {
+    const nome = rel.replace('src/components/ui/', '').replace(/\.jsx?$/, '');
+    return alcancados.has(nome) ? 'ui (base, EM USO)' : 'ui (base, nunca importado)';
+  }
   if (rel.startsWith('src/components/casca/')) return 'casca';
   if (rel.startsWith('src/components/')) return 'componentes/' + rel.split('/')[2];
   if (rel.startsWith('src/pages/')) return 'telas';
@@ -100,6 +141,7 @@ const arquivos = [];
   }
 })('src');
 
+const ALCANCADOS = uiAlcancados();
 const porMarcador = {};
 const porModulo = {};
 const porArquivo = {};
@@ -111,7 +153,7 @@ for (const n of NOVOS) novos[n.id] = 0;
 
 for (const f of arquivos) {
   const rel = f.split(path.sep).join('/');
-  const mod = moduloDe(rel);
+  const mod = moduloDe(rel, ALCANCADOS);
   porModulo[mod] = porModulo[mod] || { antigo: 0, novo: 0, arquivos: 0 };
   porModulo[mod].arquivos += 1;
 
@@ -139,6 +181,8 @@ for (const f of arquivos) {
 
 const totalAntigo = Object.values(porMarcador).reduce((a, b) => a + b, 0);
 const totalNovo = Object.values(novos).reduce((a, b) => a + b, 0);
+const morto = porModulo['ui (base, nunca importado)']?.antigo || 0;
+const emUso = totalAntigo - morto;
 
 console.log('='.repeat(78));
 console.log('ESTILO ANTIGO RESTANTE — a meta e zero');
@@ -171,15 +215,17 @@ if (detalhe) {
 }
 
 console.log('\n' + '='.repeat(78));
-console.log(`TOTAL de estilo antigo: ${totalAntigo}`);
-console.log(`TOTAL de uso novo:      ${totalNovo}`);
+console.log(`ESTILO ANTIGO EM CODIGO QUE O OPERADOR VE: ${emUso}      <- a meta e zero`);
+console.log(`  (+ ${morto} em componentes de ui/ que o sistema NUNCA importa: inventario,`);
+console.log(`   nao aparece em tela nenhuma e nao entra no bundle)`);
+console.log(`TOTAL de uso de componente novo: ${totalNovo}`);
 console.log('='.repeat(78));
 
 if (saidaJson) {
   fs.mkdirSync(path.dirname(saidaJson), { recursive: true });
   fs.writeFileSync(saidaJson, JSON.stringify({
     quando: new Date().toISOString(),
-    total_antigo: totalAntigo, total_novo: totalNovo,
+    total_antigo: totalAntigo, em_uso: emUso, morto, total_novo: totalNovo,
     por_marcador: porMarcador, por_modulo: porModulo, novos,
     por_arquivo: porArquivo,
   }, null, 2));
