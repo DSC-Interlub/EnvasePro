@@ -23,24 +23,47 @@ export default function PageHeader({
     <header className={`entra flex flex-col gap-3 ${className}`}>
       {migalha.length > 0 && (
         <nav aria-label="Você está em" className="flex items-center gap-1 flex-wrap">
-          {migalha.map((passo, i) => (
-            <React.Fragment key={`${passo.rotulo}-${i}`}>
-              {i > 0 && (
-                <ChevronRight className="w-3.5 h-3.5 text-texto-apagado flex-shrink-0" aria-hidden="true" />
-              )}
-              {passo.url ? (
-                <Link
-                  to={passo.url}
-                  className="press foco-fluxo rounded-token-sm px-1 text-[13px] font-bold
-                             text-texto-fraco hover:text-marca"
-                >
-                  {passo.rotulo}
-                </Link>
-              ) : (
-                <span className="px-1 text-[13px] font-bold text-texto-apagado">{passo.rotulo}</span>
-              )}
-            </React.Fragment>
-          ))}
+          {/*
+            SEM `<React.Fragment>` aqui, de propósito.
+
+            O plugin de desenvolvimento `visual-edit-plugin` injeta
+            `data-source-location` em todo JSXElement e pula apenas o
+            JSXFragment da forma curta (`<>`). `<React.Fragment>` escrito por
+            extenso é um JSXElement como qualquer outro, então recebia o
+            atributo e o React reclamava — "Invalid prop supplied to
+            React.Fragment" — em TODA tela com migalha, enchendo o console e
+            escondendo erro de verdade no meio.
+
+            A lista achatada resolve sem truque: cada item e cada separador é um
+            elemento com a sua própria chave.
+          */}
+          {migalha.flatMap((passo, i) => {
+            const itens = [];
+            if (i > 0) {
+              itens.push(
+                <ChevronRight
+                  key={`sep-${i}`}
+                  className="w-3.5 h-3.5 text-texto-apagado flex-shrink-0"
+                  aria-hidden="true"
+                />
+              );
+            }
+            itens.push(passo.url ? (
+              <Link
+                key={`passo-${i}`}
+                to={passo.url}
+                className="press foco-fluxo rounded-token-sm px-1 text-[13px] font-bold
+                           text-texto-fraco hover:text-marca"
+              >
+                {passo.rotulo}
+              </Link>
+            ) : (
+              <span key={`passo-${i}`} className="px-1 text-[13px] font-bold text-texto-apagado">
+                {passo.rotulo}
+              </span>
+            ));
+            return itens;
+          })}
         </nav>
       )}
 

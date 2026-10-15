@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Camera, ImagePlus, Trash2, Loader2, CheckCircle2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Camera, ImagePlus, Trash2, Loader2, CheckCircle2, ExternalLink, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
