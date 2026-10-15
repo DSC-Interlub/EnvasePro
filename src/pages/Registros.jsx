@@ -1,12 +1,9 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Factory, Clock, CheckCircle, Package } from "lucide-react";
+import { Plus, Factory, Clock, CheckCircle, Package, List } from "lucide-react";
 import { formatarData } from "@/lib/datas";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -17,6 +14,7 @@ import RecordEdit from "../components/registros/RecordEdit";
 import AcoesDaLinha from "../components/listas/AcoesDaLinha";
 import RodapeDaLista from "../components/listas/RodapeDaLista";
 import { useListaPaginada } from "../components/listas/useListaPaginada";
+import { PageHeader, ListaCard, ChipsFiltro, EmptyState, StatusPill } from "@/components/fluxo";
 import { useEhCelular } from "../components/listas/useEhCelular";
 
 export default function Registros() {
@@ -126,27 +124,15 @@ export default function Registros() {
   // identidade nova a cada render e remonta a subarvore inteira.
   const status = (record) => {
     if (record.sala === "Bio" && record.termino && !record.material_retirado) {
-      return (
-        <Badge className="bg-yellow-500 text-white">
-          <Package className="w-3 h-3 mr-1" />
-          Pronto
-        </Badge>
-      );
+      // StatusPill: o mesmo estado com a mesma cara em todo o sistema.
+      // Antes era bg-yellow-500/bg-green-600/bg-marca escritos aqui, e o
+      // mesmo "Concluido" aparecia de outro jeito em cada tela.
+      return <StatusPill variante="atencao" texto="Pronto" />;
     }
     if (record.termino || record.material_retirado) {
-      return (
-        <Badge className="bg-green-600 text-white">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Concluído
-        </Badge>
-      );
+      return <StatusPill estado="Concluído" />;
     }
-    return (
-      <Badge className="bg-marca text-white">
-        <Clock className="w-3 h-3 mr-1" />
-        Em Andamento
-      </Badge>
-    );
+    return <StatusPill estado="Em Andamento" />;
   };
 
   const acoes = (record) => (
@@ -161,7 +147,7 @@ export default function Registros() {
         <Button
           variant="outline"
           onClick={() => handleMarcarRetirado(record)}
-          className="h-12 bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
+          className="h-12 bg-ok-suave text-ok hover:bg-ok-suave"
           disabled={marcarRetiradoMutation.isPending}
         >
           <CheckCircle className="w-4 h-4 mr-1" />
@@ -171,162 +157,167 @@ export default function Registros() {
     />
   );
 
+  // ---------------------------------------------------------------------
+  // Padrao Lista do prototipo: cabecalho com migalha + titulo 38px + acoes,
+  // chips de filtro COM CONTAGEM, busca, tabela em cartao, rodape.
+  //
+  // Os filtros eram abas (<Tabs>), e nelas nao dava para saber QUANTO tem em
+  // cada faixa sem trocar de aba. Agora o chip mostra o numero, contado sobre
+  // a lista COMPLETA — contar a pagina visivel daria "3" quando ha 40.
+  //
+  // A REGRA DE FILTRO NAO MUDOU: e a mesma expressao de `filteredRecords`,
+  // inclusive a definicao de "finalizado" (termino E (sala !== Bio OU
+  // material_retirado)).
+  // ---------------------------------------------------------------------
+  const ehFinalizado = (r) => r.termino && (r.sala !== 'Bio' || r.material_retirado);
+  const combinaBusca = (r) => {
+    const t = searchTerm.toLowerCase();
+    if (!t) return true;
+    return (r.op?.toLowerCase().includes(t) || r.operador?.toLowerCase().includes(t)
+      || r.descricao_produto?.toLowerCase().includes(t) || r.codigo_produto?.toLowerCase().includes(t));
+  };
+  const naBusca = records.filter(combinaBusca);
+
+  const CHIPS = [
+    { valor: 'all', rotulo: 'Em andamento', contagem: naBusca.filter((r) => !ehFinalizado(r)).length },
+    { valor: 'bio', rotulo: 'Sala Bio', contagem: naBusca.filter((r) => !ehFinalizado(r) && r.sala === 'Bio').length },
+    { valor: 'industrial', rotulo: 'Sala Industrial', contagem: naBusca.filter((r) => !ehFinalizado(r) && r.sala === 'Industrial').length },
+    { valor: 'finalizados', rotulo: 'Finalizados', contagem: naBusca.filter(ehFinalizado).length },
+  ];
+
   return (
     <div className="min-h-screen bg-fundo p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Todos os Registros</h1>
-            <p className="text-slate-600 mt-1">Visualize e gerencie todos os registros de envase</p>
+      <div className="mx-auto flex max-w-7xl flex-col gap-4">
+        <PageHeader
+          migalha={[{ rotulo: 'Envase' }, { rotulo: 'Registros' }]}
+          titulo="Todos os registros"
+          legenda="Acompanhe e gerencie os lançamentos de envase"
+          acoes={
+            <Link to={createPageUrl('NovoRegistro')}>
+              <Button size="lg">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Novo registro
+              </Button>
+            </Link>
+          }
+        />
+
+        <ListaCard
+          chips={
+            <ChipsFiltro
+              rotulo="Filtrar registros"
+              opcoes={CHIPS}
+              valor={selectedFilter}
+              aoEscolher={setSelectedFilter}
+            />
+          }
+          busca={searchTerm}
+          aoBuscar={setSearchTerm}
+          placeholderBusca="OP, operador ou produto"
+          rotuloBusca="Buscar registros"
+          rodape={lista.total > 0 ? <RodapeDaLista {...lista} substantivo="registros" /> : null}
+        >
+          {/* Celular: cartao por registro. A tabela tem 8 colunas; no celular
+              as acoes ficavam fora da tela. */}
+          {ehCelular && (
+          <div className="divide-y divide-borda">
+            {isLoading ? (
+              <EmptyState carregando />
+            ) : lista.total === 0 ? (
+              <EmptyState
+                icone={List}
+                titulo="Nenhum registro encontrado"
+                legenda="Ajuste o filtro ou lance um registro novo."
+                acao={
+                  <Link to={createPageUrl('NovoRegistro')}>
+                    <Button><Plus className="h-4 w-4" aria-hidden="true" />Novo registro</Button>
+                  </Link>
+                }
+              />
+            ) : lista.pagina.map((record) => (
+              <div key={record.id} className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="codigo font-bold text-tinta">{record.op}</p>
+                    <p className="text-sm font-semibold text-texto-fraco">{formatarData(record.data)}</p>
+                  </div>
+                  {status(record)}
+                </div>
+                <p className="font-semibold text-tinta">{record.descricao_produto}</p>
+                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-texto-fraco">
+                  <Badge variant="secondary">{record.sala}</Badge>
+                  <span>{record.operador}</span>
+                  <span className="num font-bold text-tinta">
+                    {record.quantidade_produzida?.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                {acoes(record)}
+              </div>
+            ))}
           </div>
-          <Link to={createPageUrl("NovoRegistro")}>
-            <Button className="bg-marca hover:bg-marca-forte">
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Registro
-            </Button>
-          </Link>
-        </div>
+          )}
 
-        {/* Filtros */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 min-w-0">
-                <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
-                  <TabsList className="bg-white border border-slate-200 w-full grid grid-cols-2 sm:grid-cols-4 h-auto">
-                    <TabsTrigger value="all">Em Andamento</TabsTrigger>
-                    <TabsTrigger value="bio">Sala Bio</TabsTrigger>
-                    <TabsTrigger value="industrial">Sala Industrial</TabsTrigger>
-                    <TabsTrigger value="finalizados">Finalizados</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                  <Input
-                    placeholder="Buscar por OP, operador, produto..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Lista de Registros */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="text-xl font-bold text-slate-900">
-              {selectedFilter === "finalizados" ? "Registros Finalizados" : "Registros em Andamento"} ({filteredRecords.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {/* Celular: cartao por registro. A tabela tem 8 colunas; no
-                celular as acoes ficavam fora da tela. */}
-            {ehCelular && (
-            <div className="divide-y divide-slate-100">
-              {isLoading ? (
-                <p className="text-center py-8 text-slate-500">Carregando registros...</p>
-              ) : lista.total === 0 ? (
-                <p className="text-center py-8 text-slate-500">Nenhum registro encontrado</p>
-              ) : lista.pagina.map((record) => (
-                <div key={record.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-mono font-semibold text-slate-900">{record.op}</p>
-                      <p className="text-sm text-slate-600">{formatarData(record.data)}</p>
-                    </div>
-                    {status(record)}
-                  </div>
-                  <p className="text-slate-700">{record.descricao_produto}</p>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                    <Badge variant={record.sala === "Bio" ? "default" : "secondary"}>
-                      <Factory className="w-3 h-3 mr-1" />
-                      {record.sala}
-                    </Badge>
-                    <span>{record.operador}</span>
-                    <span className="font-semibold">
-                      {record.quantidade_produzida?.toLocaleString("pt-BR")}
-                    </span>
-                  </div>
-                  {acoes(record)}
-                </div>
-              ))}
-            </div>
-            )}
-
-            {!ehCelular && (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    <TableHead>Data</TableHead>
-                    <TableHead>OP</TableHead>
-                    <TableHead>Sala</TableHead>
-                    <TableHead>Operador</TableHead>
-                    <TableHead>Produto</TableHead>
-                    <TableHead>Qtd. Produzida</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+          {!ehCelular && (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-cartao-fraco">
+                  <TableHead>Data</TableHead>
+                  <TableHead>OP</TableHead>
+                  <TableHead>Sala</TableHead>
+                  <TableHead>Operador</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Quantidade</TableHead>
+                  <TableHead>Situação</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8}><EmptyState carregando /></TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-slate-500">
-                        Carregando registros...
+                ) : lista.total === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8}>
+                      <EmptyState
+                        icone={List}
+                        titulo="Nenhum registro encontrado"
+                        legenda="Ajuste o filtro ou lance um registro novo."
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  lista.pagina.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-semibold">{formatarData(record.data)}</TableCell>
+                      <TableCell className="codigo">{record.op}</TableCell>
+                      <TableCell>
+                        <Badge variant={record.sala === 'Bio' ? 'ok' : 'secondary'} ponto={false}>
+                          {record.sala}
+                        </Badge>
                       </TableCell>
-                    </TableRow>
-                  ) : lista.total === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-slate-500">
-                        Nenhum registro encontrado
+                      <TableCell>{record.operador}</TableCell>
+                      <TableCell className="max-w-xs truncate">{record.descricao_produto}</TableCell>
+                      <TableCell className="num font-bold">
+                        {record.quantidade_produzida?.toLocaleString('pt-BR')}
                       </TableCell>
+                      <TableCell>{status(record)}</TableCell>
+                      <TableCell className="text-right">{acoes(record)}</TableCell>
                     </TableRow>
-                  ) : (
-                    lista.pagina.map((record) => (
-                      <TableRow key={record.id} className="hover:bg-slate-50">
-                        <TableCell className="font-medium">
-                          {formatarData(record.data)}
-                        </TableCell>
-                        <TableCell className="font-mono">{record.op}</TableCell>
-                        <TableCell>
-                          <Badge variant={record.sala === "Bio" ? "default" : "secondary"}>
-                            <Factory className="w-3 h-3 mr-1" />
-                            {record.sala}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{record.operador}</TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {record.descricao_produto}
-                        </TableCell>
-                        <TableCell className="font-semibold">
-                          {record.quantidade_produzida?.toLocaleString('pt-BR')}
-                        </TableCell>
-                        <TableCell>{status(record)}</TableCell>
-                        <TableCell className="text-right">{acoes(record)}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-            )}
-
-            <RodapeDaLista {...lista} substantivo="registros" />
-          </CardContent>
-        </Card>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          )}
+        </ListaCard>
       </div>
 
       {/* Modals */}
       {selectedRecord && (
-        <RecordDetails 
-          record={selectedRecord} 
+        <RecordDetails
+          record={selectedRecord}
           onClose={handleCloseModals}
           onEdit={() => handleEdit(selectedRecord)}
         />
