@@ -26,7 +26,7 @@ export default function SectionCard({
               <span aria-hidden="true"
                     className="w-9 h-9 rounded-token bg-marca-suave text-marca
                                flex items-center justify-center flex-shrink-0">
-                <Icone className="w-4.5 h-4.5" />
+                <Icone className="w-[18px] h-[18px]" />
               </span>
             )}
             <div className="min-w-0">
