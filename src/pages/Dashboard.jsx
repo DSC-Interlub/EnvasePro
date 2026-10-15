@@ -29,6 +29,7 @@ import CategoryStatsGrid from "../components/dashboard/CategoryStatsGrid";
 import CheckoutStatsGrid from "../components/dashboard/CheckoutStatsGrid"; 
 import CheckoutAnalysisGrid from "../components/dashboard/CheckoutAnalysisGrid"; 
 import { formatarData, paraData } from '@/lib/datas';
+import { PageHeader, SegmentoPeriodo, ChipsFiltro } from "@/components/fluxo";
 
 export default function Dashboard() {
   const { user: currentUser } = useAuth();
@@ -75,18 +76,26 @@ export default function Dashboard() {
     staleTime: Infinity,
   });
 
-  const filteredRecords = records.filter(record => {
-    const salaMatch = selectedSala === "all" || record.sala === selectedSala;
-    const operatorMatch = selectedOperator === "all" || record.operador === selectedOperator;
-    
+  /**
+   * O filtro de periodo e de operador, SEM a sala.
+   *
+   * Separado de proposito: a contagem do chip de sala tem de ser calculada
+   * sobre os registros do periodo, nao sobre os que ja passaram pelo filtro de
+   * sala — senao a aba "Sala Bio" mostraria sempre a propria contagem e as
+   * outras duas apareceriam zeradas.
+   *
+   * A regra de data e EXATAMENTE a mesma de antes, inclusive o cuidado com
+   * data invalida (sem data valida o registro nao pertence a mes nenhum).
+   */
+  const combinaPeriodoEOperador = (record) => {
+    const operatorMatch = selectedOperator === 'all' || record.operador === selectedOperator;
+
     let dateMatch = true;
     if (selectedMonth) {
       const recordDate = paraData(record.data);
-      // Sem data válida o registro não pertence a mês nenhum: fica de fora do
-      // filtro em vez de derrubar a tela com "Invalid time value".
-      const recordMonth = recordDate ? format(recordDate, "yyyy-MM") : null;
+      const recordMonth = recordDate ? format(recordDate, 'yyyy-MM') : null;
       dateMatch = recordMonth === selectedMonth;
-      
+
       if (startDate || endDate) {
         const recordDateStr = record.data;
         if (startDate && endDate) {
@@ -98,9 +107,14 @@ export default function Dashboard() {
         }
       }
     }
-    
-    return salaMatch && operatorMatch && dateMatch;
-  });
+
+    return operatorMatch && dateMatch;
+  };
+
+  const registrosDoPeriodo = records.filter(combinaPeriodoEOperador);
+
+  const filteredRecords = registrosDoPeriodo.filter(
+    (record) => selectedSala === 'all' || record.sala === selectedSala);
 
   const filteredCheckoutItems = checkoutItems.filter(item => {
     const itemProgramacao = checkoutProgramacoes.find(p => p.id === item.programacao_id);
@@ -368,155 +382,133 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-fundo p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
-              Dashboard de Operações Interlub
-            </h1>
-            <p className="text-slate-600 mt-1">
-              {format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            </p>
-          </div>
-          <div className="flex gap-3 w-full md:w-auto">
-            <Button
-              variant="outline"
-              className="flex-1 md:flex-none"
-              onClick={() => setShowExportDialog(true)}
-              disabled={viewMode === "envase" ? records.length === 0 : checkoutItems.length === 0}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-            <Link to={createPageUrl("NovoRegistro")} className="flex-1 md:flex-none">
-              <Button className="w-full bg-marca hover:bg-marca-forte">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Registro
+      <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-4">
+        <PageHeader
+          migalha={[{ rotulo: "Acompanhar" }, { rotulo: "Dashboard" }]}
+          titulo="Dashboard"
+          legenda={format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          acoes={
+            <>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setShowExportDialog(true)}
+                disabled={viewMode === "envase" ? records.length === 0 : checkoutItems.length === 0}
+              >
+                <Download className="h-4 w-4" aria-hidden="true" />
+                Exportar
               </Button>
-            </Link>
+              <Link to={createPageUrl("NovoRegistro")}>
+                <Button size="lg">
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Novo registro
+                </Button>
+              </Link>
+            </>
+          }
+        />
+
+        {/*
+          FILTROS — eram DOIS cartões brancos de 6rem de altura, um só para
+          escolher entre Envase e Check-out e outro com sala, operador e
+          período, cada campo com o seu `<Label>` em cima. Ocupavam a primeira
+          tela inteira: para ver qualquer número era preciso rolar.
+
+          Agora é uma barra só. O que mudou de verdade:
+           - "Visualizar dados de" virou o controle segmentado do padrão;
+           - "Filtrar por sala" virou chip COM CONTAGEM, calculada sobre os
+             registros do período — antes era aba, e não dava para saber se a
+             Sala Bio tinha algum registro sem trocar de aba;
+           - os três campos de data ficaram, porque são três coisas diferentes
+             (mês fechado, ou intervalo livre), mas sem rótulo acima de cada um:
+             o `aria-label` informa o leitor de tela e o `type` já diz ao olho.
+        */}
+        <div className="cartao-fluxo flex min-w-0 flex-col gap-4 p-4">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+            <SegmentoPeriodo
+              rotulo="Visualizar dados de"
+              opcoes={[
+                { valor: "envase", rotulo: "Envase" },
+                { valor: "checkout", rotulo: "Check-out" },
+              ]}
+              valor={viewMode}
+              aoEscolher={setViewMode}
+            />
+
+            <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+              <Input
+                id="month"
+                type="month"
+                aria-label="Filtrar por mês"
+                value={selectedMonth}
+                onChange={(e) => {
+                  setSelectedMonth(e.target.value);
+                  setStartDate("");
+                  setEndDate("");
+                }}
+                className="w-44"
+              />
+              <Input
+                id="startDate"
+                type="date"
+                aria-label="Data inicial"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                max={endDate || undefined}
+                className="w-40"
+              />
+              <span className="text-sm font-bold text-texto-apagado">até</span>
+              <Input
+                id="endDate"
+                type="date"
+                aria-label="Data final"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || undefined}
+                className="w-40"
+              />
+            </div>
           </div>
+
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+            {viewMode === "envase" ? (
+              <ChipsFiltro
+                rotulo="Filtrar por sala"
+                opcoes={[
+                  { valor: "all", rotulo: "Todas", contagem: registrosDoPeriodo.length },
+                  { valor: "Bio", rotulo: "Sala Bio",
+                    contagem: registrosDoPeriodo.filter((r) => r.sala === "Bio").length },
+                  { valor: "Industrial", rotulo: "Sala Industrial",
+                    contagem: registrosDoPeriodo.filter((r) => r.sala === "Industrial").length },
+                ]}
+                valor={selectedSala}
+                aoEscolher={setSelectedSala}
+              />
+            ) : <span />}
+
+            <Select value={selectedOperator} onValueChange={setSelectedOperator}>
+              <SelectTrigger id="operador-filtro" aria-label="Filtrar por operador" className="w-64">
+                <SelectValue placeholder="Todos os operadores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os operadores</SelectItem>
+                {operators.map((op) => (
+                  <SelectItem key={op.id} value={op.nome}>{op.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {(startDate || endDate) && (
+            <p className="text-xs font-semibold text-texto-fraco">
+              {startDate && endDate
+                ? `Mostrando registros de ${formatarData(startDate, "dd/MM/yyyy")} até ${formatarData(endDate, "dd/MM/yyyy")}`
+                : startDate
+                  ? `Mostrando registros a partir de ${formatarData(startDate, "dd/MM/yyyy")}`
+                  : `Mostrando registros até ${formatarData(endDate, "dd/MM/yyyy")}`}
+            </p>
+          )}
         </div>
-
-        {/* Modo de Visualização */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardContent className="p-6">
-            <Label className="text-sm font-medium text-slate-700 mb-3 block">
-              Visualizar Dados de:
-            </Label>
-            <Tabs value={viewMode} onValueChange={setViewMode}>
-              <TabsList className="bg-white border border-slate-200 w-full max-w-md">
-                <TabsTrigger value="envase" className="flex-1">Envase</TabsTrigger>
-                <TabsTrigger value="checkout" className="flex-1">Check-out</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {/* Filtros */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardContent className="p-6 space-y-4">
-            {viewMode === "envase" && (
-              <div>
-                <Label className="text-sm font-medium text-slate-700 mb-2 block">
-                  Filtrar por Sala
-                </Label>
-                <Tabs value={selectedSala} onValueChange={setSelectedSala}>
-                  <TabsList className="bg-white border border-slate-200 w-full">
-                    <TabsTrigger value="all" className="flex-1">Todas</TabsTrigger>
-                    <TabsTrigger value="Bio" className="flex-1">Sala Bio</TabsTrigger>
-                    <TabsTrigger value="Industrial" className="flex-1">Sala Industrial</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-            )}
-
-            <div>
-              <Label className="text-sm font-medium text-slate-700 mb-2 block">
-                Filtrar por Operador
-              </Label>
-              <Select value={selectedOperator} onValueChange={setSelectedOperator}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Todos os operadores" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Operadores</SelectItem>
-                  {operators.map((op) => (
-                    <SelectItem key={op.id} value={op.nome}>
-                      {op.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="border-t border-slate-200 pt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Calendar className="w-4 h-4 text-slate-600" />
-                <Label className="text-sm font-medium text-slate-700">
-                  Filtrar por Período
-                </Label>
-              </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="month" className="text-sm text-slate-600 mb-1 block">
-                    Mês
-                  </Label>
-                  <Input
-                    id="month"
-                    type="month"
-                    value={selectedMonth}
-                    onChange={(e) => {
-                      setSelectedMonth(e.target.value);
-                      setStartDate("");
-                      setEndDate("");
-                    }}
-                    className="bg-white"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="startDate" className="text-sm text-slate-600 mb-1 block">
-                    Data Inicial
-                  </Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="bg-white"
-                    max={endDate || undefined}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="endDate" className="text-sm text-slate-600 mb-1 block">
-                    Data Final
-                  </Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="bg-white"
-                    min={startDate || undefined}
-                  />
-                </div>
-              </div>
-              {(startDate || endDate) && (
-                <p className="text-xs text-slate-500 mt-2">
-                  {startDate && endDate ? (
-                    <>Mostrando registros de {formatarData(startDate, "dd/MM/yyyy")} até {formatarData(endDate, "dd/MM/yyyy")}</>
-                  ) : startDate ? (
-                    <>Mostrando registros a partir de {formatarData(startDate, "dd/MM/yyyy")}</>
-                  ) : (
-                    <>Mostrando registros até {formatarData(endDate, "dd/MM/yyyy")}</>
-                  )}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Bloco de Recebimentos */}
         <BlocoRecebimento isAdmin={isAdmin} />
