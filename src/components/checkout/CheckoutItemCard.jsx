@@ -389,7 +389,7 @@ export default function CheckoutItemCard({ item, operators }) {
               <Button variant="outline" size="lg" onClick={descartarEdicao}>
                 Cancelar
               </Button>
-              <Button size="lg" onClick={handleSave} disabled={updateMutation.isPending}>
+              <Button aria-label="Salvar" size="lg" onClick={handleSave} disabled={updateMutation.isPending}>
                 <Save className="h-4 w-4" aria-hidden="true" />
                 {updateMutation.isPending ? "Salvando…" : "Salvar"}
               </Button>

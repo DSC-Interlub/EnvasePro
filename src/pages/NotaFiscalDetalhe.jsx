@@ -71,12 +71,12 @@ export default function NotaFiscalDetalhe() {
 
   if (isLoading) return (
     <div className="p-6 flex justify-center">
-      <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+      <Loader2 className="w-6 h-6 animate-spin text-texto-apagado" />
     </div>
   );
 
   if (!nf) return (
-    <div className="p-6 text-center text-slate-400">
+    <div className="p-6 text-center text-texto-apagado">
       Nota fiscal não encontrada.
       <Button variant="link" onClick={() => navigate("/NotasFiscais")}>Voltar</Button>
     </div>
@@ -85,30 +85,30 @@ export default function NotaFiscalDetalhe() {
   return (
     <div className="p-4 md:p-6 max-w-xl mx-auto space-y-5">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/NotasFiscais")}>
+        <Button aria-label="Voltar" variant="ghost" size="icon" onClick={() => navigate("/NotasFiscais")}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-xl font-bold text-slate-900">NF {nf.numero_nf}</h1>
+        <h1 className="text-xl font-bold text-tinta">NF {nf.numero_nf}</h1>
       </div>
 
       {/* Info */}
       <Card>
         <CardContent className="p-5 space-y-1 text-sm">
           <div className="flex justify-between">
-            <span className="text-slate-500">Número</span>
+            <span className="text-texto-fraco">Número</span>
             <span className="font-mono font-bold text-marca">{nf.numero_nf}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Arquivado em</span>
+            <span className="text-texto-fraco">Arquivado em</span>
             <span>{fmtDate(nf.created_date)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Por</span>
+            <span className="text-texto-fraco">Por</span>
             <span>{nf.arquivado_por_nome || "—"}</span>
           </div>
           {nf.observacoes && (
             <div className="flex justify-between">
-              <span className="text-slate-500">Obs</span>
+              <span className="text-texto-fraco">Obs</span>
               <span className="text-right max-w-xs">{nf.observacoes}</span>
             </div>
           )}
@@ -118,16 +118,16 @@ export default function NotaFiscalDetalhe() {
       {/* Arquivo */}
       <Card>
         <CardContent className="p-5 space-y-3">
-          <p className="text-sm font-medium text-slate-700">Arquivo / Foto</p>
+          <p className="text-sm font-medium text-tinta-media">Arquivo / Foto</p>
           {nf.signed_url || nf.arquivo_url ? (
             <div className="space-y-3">
               {nf.arquivo_nome?.toLowerCase().endsWith('.pdf') ? (
-                <div className="p-6 bg-slate-50 border rounded-xl flex items-center justify-between">
+                <div className="p-6 bg-fundo border rounded-painel flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <FileText className="w-8 h-8 text-marca" />
                     <div>
-                      <p className="font-medium text-slate-800">{nf.arquivo_nome || "Documento PDF"}</p>
-                      <p className="text-xs text-slate-400">PDF Arquivado (retenção legal)</p>
+                      <p className="font-medium text-tinta">{nf.arquivo_nome || "Documento PDF"}</p>
+                      <p className="text-xs text-texto-apagado">PDF Arquivado (retenção legal)</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => window.open(nf.signed_url || nf.arquivo_url, "_blank")}>
@@ -135,7 +135,7 @@ export default function NotaFiscalDetalhe() {
                   </Button>
                 </div>
               ) : (
-                <img src={nf.signed_url || nf.arquivo_url} alt="NF" className="w-full rounded-xl border object-contain max-h-80" />
+                <img src={nf.signed_url || nf.arquivo_url} alt="NF" className="w-full rounded-painel border object-contain max-h-80" />
               )}
               <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(nf.signed_url || nf.arquivo_url, "_blank")}>
@@ -168,13 +168,13 @@ export default function NotaFiscalDetalhe() {
       {/* Excluir */}
       <div className="pt-2">
         {!confirmDelete ? (
-          <Button variant="outline" className="text-red-500 border-red-200 hover:bg-red-50 gap-1 w-full" onClick={() => setConfirmDelete(true)}>
+          <Button variant="outline" className="text-erro border-erro hover:bg-erro-suave gap-1 w-full" onClick={() => setConfirmDelete(true)}>
             <Trash2 className="w-4 h-4" /> Excluir registro
           </Button>
         ) : (
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>Cancelar</Button>
-            <Button className="flex-1 bg-red-600 hover:bg-red-700 gap-1" onClick={handleDelete} disabled={deleting}>
+            <Button className="flex-1 bg-erro hover:bg-erro gap-1" onClick={handleDelete} disabled={deleting}>
               {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Confirmar exclusão
             </Button>
           </div>

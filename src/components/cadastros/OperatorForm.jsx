@@ -211,7 +211,7 @@ export default function OperatorForm({ operator, onClose }) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-marca hover:bg-marca-forte" disabled={saveMutation.isPending || uploading}>
+            <Button aria-label="Salvar" type="submit" className="bg-marca hover:bg-marca-forte" disabled={saveMutation.isPending || uploading}>
               <Save className="w-4 h-4 mr-2" />
               {saveMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>

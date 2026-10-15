@@ -22,7 +22,7 @@ const PIE_COLORS = ["#22c55e", "#eab308", "#ef4444"];
 export default function IndicadoresChecklist({ checklists }) {
   if (!checklists || checklists.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-400">
+      <div className="text-center py-12 text-texto-apagado">
         <ClipboardCheck className="w-10 h-10 mx-auto mb-2 opacity-30" />
         <p>Nenhum checklist no período</p>
       </div>
@@ -112,20 +112,20 @@ export default function IndicadoresChecklist({ checklists }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: "Total checklists", value: total, cls: "text-slate-700" },
+              { label: "Total checklists", value: total, cls: "text-tinta-media" },
               { label: "Nota média", value: notaMedia, cls: corTexto(notaMedia) },
-              { label: "Aprovados (≥80)", value: aprovados, cls: "text-green-700" },
-              { label: "Reprovados (<0)", value: reprovados, cls: "text-red-700" },
+              { label: "Aprovados (≥80)", value: aprovados, cls: "text-ok" },
+              { label: "Reprovados (<0)", value: reprovados, cls: "text-erro" },
             ].map(k => (
-              <div key={k.label} className="text-center bg-slate-50 rounded-lg p-3">
-                <p className="text-xs text-slate-500">{k.label}</p>
+              <div key={k.label} className="text-center bg-fundo rounded-token p-3">
+                <p className="text-xs text-texto-fraco">{k.label}</p>
                 <p className={`text-2xl font-bold ${k.cls}`}>{k.value}</p>
               </div>
             ))}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-semibold text-slate-500 mb-2">Distribuição por resultado</p>
+              <p className="text-xs font-semibold text-texto-fraco mb-2">Distribuição por resultado</p>
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie data={pieData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
@@ -136,7 +136,7 @@ export default function IndicadoresChecklist({ checklists }) {
               </ResponsiveContainer>
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 mb-2">Evolução da nota média por dia</p>
+              <p className="text-xs font-semibold text-texto-fraco mb-2">Evolução da nota média por dia</p>
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={porDia}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -156,7 +156,7 @@ export default function IndicadoresChecklist({ checklists }) {
         <CardHeader><CardTitle className="text-base">📦 Por Fornecedor</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <p className="text-xs font-semibold text-slate-500 mb-2">Nota média por fornecedor (top 10)</p>
+            <p className="text-xs font-semibold text-texto-fraco mb-2">Nota média por fornecedor (top 10)</p>
             <ResponsiveContainer width="100%" height={Math.max(160, porFornecedor.length * 32)}>
               <BarChart data={porFornecedor} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 10 }} domain={['auto', 'auto']} />
@@ -167,15 +167,15 @@ export default function IndicadoresChecklist({ checklists }) {
             </ResponsiveContainer>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 mb-2">Fornecedores com mais checklists reprovados</p>
+            <p className="text-xs font-semibold text-texto-fraco mb-2">Fornecedores com mais checklists reprovados</p>
             <div className="space-y-1">
               {porFornecedor.filter(f => f.reprovados > 0).sort((a, b) => b.reprovados - a.reprovados).map(f => (
-                <div key={f.nome} className="flex justify-between items-center text-sm px-3 py-1.5 bg-red-50 border border-red-100 rounded">
-                  <span className="text-slate-700">{f.nome}</span>
-                  <span className="text-red-700 font-bold">{f.reprovados} reprovados</span>
+                <div key={f.nome} className="flex justify-between items-center text-sm px-3 py-1.5 bg-erro-suave border border-red-100 rounded">
+                  <span className="text-tinta-media">{f.nome}</span>
+                  <span className="text-erro font-bold">{f.reprovados} reprovados</span>
                 </div>
               ))}
-              {porFornecedor.filter(f => f.reprovados > 0).length === 0 && <p className="text-xs text-slate-400">Nenhum reprovado no período</p>}
+              {porFornecedor.filter(f => f.reprovados > 0).length === 0 && <p className="text-xs text-texto-apagado">Nenhum reprovado no período</p>}
             </div>
           </div>
         </CardContent>
@@ -185,21 +185,21 @@ export default function IndicadoresChecklist({ checklists }) {
       <Card>
         <CardHeader><CardTitle className="text-base">🔍 Por Campo de Checklist</CardTitle></CardHeader>
         <CardContent>
-          <p className="text-xs text-slate-500 mb-3">Ordenado pelos campos com maior % de "Não" (pontos críticos)</p>
+          <p className="text-xs text-texto-fraco mb-3">Ordenado pelos campos com maior % de "Não" (pontos críticos)</p>
           <div className="space-y-2">
             {porCampo.map(c => (
               <div key={c.label}>
                 <div className="flex justify-between text-xs mb-0.5">
-                  <span className="text-slate-700 font-medium">{c.label}</span>
-                  <span className="text-slate-500">
-                    <span className="text-green-700 font-bold">{c.sim}%</span> Sim ·
-                    <span className="text-red-700 font-bold ml-1">{c.nao}%</span> Não ·
-                    <span className="text-slate-400 ml-1">{c.na}%</span> N/A
+                  <span className="text-tinta-media font-medium">{c.label}</span>
+                  <span className="text-texto-fraco">
+                    <span className="text-ok font-bold">{c.sim}%</span> Sim ·
+                    <span className="text-erro font-bold ml-1">{c.nao}%</span> Não ·
+                    <span className="text-texto-apagado ml-1">{c.na}%</span> N/A
                   </span>
                 </div>
-                <div className="flex h-2 rounded-full overflow-hidden bg-slate-100">
-                  <div className="bg-green-500" style={{ width: `${c.sim}%` }} />
-                  <div className="bg-red-500" style={{ width: `${c.nao}%` }} />
+                <div className="flex h-2 rounded-full overflow-hidden bg-fundo">
+                  <div className="bg-ok" style={{ width: `${c.sim}%` }} />
+                  <div className="bg-erro" style={{ width: `${c.nao}%` }} />
                   <div className="bg-slate-300" style={{ width: `${c.na}%` }} />
                 </div>
               </div>
@@ -214,16 +214,16 @@ export default function IndicadoresChecklist({ checklists }) {
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+              <thead className="bg-fundo">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500">Inspetor</th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold text-slate-500">Checklists</th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold text-slate-500">Nota média</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-texto-fraco">Inspetor</th>
+                  <th className="px-3 py-2 text-center text-xs font-semibold text-texto-fraco">Checklists</th>
+                  <th className="px-3 py-2 text-center text-xs font-semibold text-texto-fraco">Nota média</th>
                 </tr>
               </thead>
               <tbody>
                 {porInspetor.map(i => (
-                  <tr key={i.nome} className="border-t border-slate-100">
+                  <tr key={i.nome} className="border-t border-borda">
                     <td className="px-3 py-2">{i.nome}</td>
                     <td className="px-3 py-2 text-center font-bold">{i.count}</td>
                     <td className={`px-3 py-2 text-center font-bold ${corTexto(i.media)}`}>
@@ -242,7 +242,7 @@ export default function IndicadoresChecklist({ checklists }) {
         <CardHeader><CardTitle className="text-base">📋 Tabela Resumo</CardTitle></CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="bg-slate-50">
+            <thead className="bg-fundo">
               <tr>
                 <th className="px-3 py-2 text-left">Cód. Fornecedor</th>
                 <th className="px-3 py-2 text-left">Nome Fornecedor</th>
@@ -254,7 +254,7 @@ export default function IndicadoresChecklist({ checklists }) {
             </thead>
             <tbody>
               {checklists.map(c => (
-                <tr key={c.id} className="border-t hover:bg-slate-50">
+                <tr key={c.id} className="border-t hover:bg-fundo">
                   <td className="px-3 py-2">{c.codigo_fornecedor || "—"}</td>
                   <td className="px-3 py-2 max-w-[150px] truncate">{c.nome_fornecedor}</td>
                   <td className="px-3 py-2">{(c.inspecionado_por || []).join(", ")}</td>

@@ -158,7 +158,7 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" size="sm" variant="outline" onClick={handleAddResponsavel} disabled={!responsavelSelecionado}>
+                <Button aria-label="Adicionar" type="button" size="sm" variant="outline" onClick={handleAddResponsavel} disabled={!responsavelSelecionado}>
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -171,11 +171,11 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Data prevista *</Label>
-              <Input type="date" value={form.data_prevista} onChange={e => { setForm(f => ({ ...f, data_prevista: e.target.value })); setAviso(false); }} />
+              <Input aria-label="Data prevista" type="date" value={form.data_prevista} onChange={e => { setForm(f => ({ ...f, data_prevista: e.target.value })); setAviso(false); }} />
             </div>
             <div>
               <Label>Hora (opcional)</Label>
-              <Input type="time" value={form.hora_prevista} onChange={e => setForm(f => ({ ...f, hora_prevista: e.target.value }))} />
+              <Input aria-label="Hora (opcional)" type="time" value={form.hora_prevista} onChange={e => setForm(f => ({ ...f, hora_prevista: e.target.value }))} />
             </div>
           </div>
           <div>

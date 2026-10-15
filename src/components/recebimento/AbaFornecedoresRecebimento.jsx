@@ -46,8 +46,8 @@ export default function AbaFornecedoresRecebimento() {
   };
 
   return (
-    <Card className="border-slate-200 shadow-md">
-      <CardHeader className="border-b border-slate-100">
+    <Card className="border-borda shadow-cartao">
+      <CardHeader className="border-b border-borda">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Truck className="w-5 h-5 text-marca" /> Fornecedores ({fornecedores.length})
@@ -59,27 +59,27 @@ export default function AbaFornecedoresRecebimento() {
       </CardHeader>
       <CardContent className="p-0">
         {fornecedores.length === 0 ? (
-          <div className="text-center py-8 text-slate-400">Nenhum fornecedor cadastrado</div>
+          <div className="text-center py-8 text-texto-apagado">Nenhum fornecedor cadastrado</div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-borda">
             {fornecedores.map(f => (
-              <div key={f.id} className="flex items-center justify-between px-5 py-3 hover:bg-slate-50">
+              <div key={f.id} className="flex items-center justify-between px-5 py-3 hover:bg-fundo">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-800">{f.nome}</span>
-                    <Badge className={`text-xs ${f.ativo !== false ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                    <span className="font-medium text-tinta">{f.nome}</span>
+                    <Badge className={`text-xs ${f.ativo !== false ? "bg-ok-suave text-ok" : "bg-fundo text-texto-fraco"}`}>
                       {f.ativo !== false ? "Ativo" : "Inativo"}
                     </Badge>
                     <Badge className="text-xs bg-marca-suave text-marca">{f.tipo}</Badge>
-                    {f.pais_origem && <span className="text-xs text-slate-400">{f.pais_origem}</span>}
+                    {f.pais_origem && <span className="text-xs text-texto-apagado">{f.pais_origem}</span>}
                   </div>
-                  {f.observacoes && <p className="text-xs text-slate-400 mt-0.5">{f.observacoes}</p>}
+                  {f.observacoes && <p className="text-xs text-texto-apagado mt-0.5">{f.observacoes}</p>}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="h-12 text-xs px-2" onClick={() => handleAbrirModal(f)}>
+                  <Button aria-label="Editar" size="sm" variant="outline" className="h-12 text-xs px-2" onClick={() => handleAbrirModal(f)}>
                     <Pencil className="w-3 h-3" />
                   </Button>
-                  <Button size="sm" variant="outline" className={`h-12 text-xs px-3 ${f.ativo !== false ? "border-red-200 text-red-600" : "border-green-200 text-green-600"}`}
+                  <Button aria-label={f.ativo !== false ? "Desativar o fornecedor" : "Ativar o fornecedor"} size="sm" variant="outline" className={`h-12 text-xs px-3 ${f.ativo !== false ? "border-erro text-erro" : "border-ok text-ok"}`}
                     onClick={() => toggleAtivo.mutate({ id: f.id, ativo: !(f.ativo !== false) })}>
                     <Power className="w-3 h-3" />
                   </Button>
@@ -117,7 +117,7 @@ export default function AbaFornecedoresRecebimento() {
             )}
             <div>
               <Label>Observações</Label>
-              <Textarea value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} rows={2} />
+              <Textarea aria-label="Observações" value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} rows={2} />
             </div>
           </div>
           <DialogFooter>

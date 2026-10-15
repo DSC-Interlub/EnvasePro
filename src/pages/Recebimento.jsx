@@ -9,12 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Package, BarChart2, X, ChevronLeft, ListTodo, Truck } from "lucide-react";
+import { Plus, Package, BarChart2, X, ChevronLeft, ListTodo, Truck, CalendarClock, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
+import { PageHeader, StatCard, SegmentoPeriodo, EmptyState } from "@/components/fluxo";
 import RecebimentoCard from "@/components/recebimento/RecebimentoCard";
 import AbaFornecedoresRecebimento from "@/components/recebimento/AbaFornecedoresRecebimento";
 
@@ -234,15 +235,15 @@ export default function Recebimento() {
     return (
       <div className="p-6 max-w-2xl mx-auto space-y-5">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => { setShowForm(false); setForm(FORM_INICIAL); }}>
+          <Button aria-label="Voltar" variant="ghost" size="sm" onClick={() => { setShowForm(false); setForm(FORM_INICIAL); }}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl font-bold text-tinta flex items-center gap-2">
             <Package className="w-5 h-5 text-marca" /> Novo Recebimento
           </h1>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+        <div className="bg-cartao border border-borda rounded-painel p-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Tipo *</Label>
@@ -285,7 +286,7 @@ export default function Recebimento() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div><Label>Data de chegada</Label><Input type="date" value={form.data_chegada} onChange={e => setForm(f => ({ ...f, data_chegada: e.target.value }))} /></div>
+            <div><Label>Data de chegada</Label><Input aria-label="Data de chegada" type="date" value={form.data_chegada} onChange={e => setForm(f => ({ ...f, data_chegada: e.target.value }))} /></div>
             <div>
               <Label>Prioridade</Label>
               <Select value={form.prioridade} onValueChange={v => setForm(f => ({ ...f, prioridade: v }))}>
@@ -312,7 +313,7 @@ export default function Recebimento() {
                 {form.equipe.map(e => (
                   <Badge key={e.operator_id} className="bg-marca-suave text-marca border border-marca-suave-2 gap-1 pr-1">
                     {e.operator_nome}
-                    <button onClick={() => setForm(f => ({ ...f, equipe: f.equipe.filter(x => x.operator_id !== e.operator_id) }))} className="ml-0.5 hover:text-red-600">
+                    <button onClick={() => setForm(f => ({ ...f, equipe: f.equipe.filter(x => x.operator_id !== e.operator_id) }))} className="ml-0.5 hover:text-erro">
                       <X className="w-3 h-3" />
                     </button>
                   </Badge>
@@ -326,7 +327,7 @@ export default function Recebimento() {
                   {operadores.filter(o => o.ativo !== false && !form.equipe.some(e => e.operator_id === o.id)).map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button type="button" size="sm" variant="outline" onClick={handleAddEquipe} disabled={!operadorSelecionado}><Plus className="w-4 h-4" /></Button>
+              <Button aria-label="Adicionar" type="button" size="sm" variant="outline" onClick={handleAddEquipe} disabled={!operadorSelecionado}><Plus className="w-4 h-4" /></Button>
             </div>
           </div>
 
@@ -341,84 +342,91 @@ export default function Recebimento() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Package className="w-6 h-6 text-marca" /> Recebimento
-          </h1>
-          <p className="text-sm text-slate-500">Controle de entrada de materiais</p>
-        </div>
-        {abaAtiva === "lista" && (
-          <Button className="bg-marca hover:bg-marca-forte gap-1" onClick={() => setShowForm(true)}>
-            <Plus className="w-4 h-4" /> Novo Recebimento
-          </Button>
-        )}
-      </div>
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
+      <div className="mx-auto flex min-w-0 max-w-[1200px] flex-col gap-4">
+        <PageHeader
+          migalha={[{ rotulo: "Operação" }, { rotulo: "Recebimento" }]}
+          titulo="Recebimento"
+          legenda="Controle de entrada de materiais"
+          acoes={abaAtiva === "lista" && (
+            <Button size="lg" onClick={() => setShowForm(true)}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Novo recebimento
+            </Button>
+          )}
+        />
+
+        {/* As três áreas do módulo. Eram TabsTrigger de 36px. */}
+        <SegmentoPeriodo
+          rotulo="Área do módulo"
+          opcoes={[
+            { valor: "lista", rotulo: "Lista" },
+            ...(isAdmin ? [{ valor: "indicadores", rotulo: "Indicadores" }] : []),
+            ...(isAdmin ? [{ valor: "fornecedores", rotulo: "Fornecedores" }] : []),
+          ]}
+          valor={abaAtiva}
+          aoEscolher={setAbaAtiva}
+          className="self-start"
+        />
 
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-        <TabsList className="mb-2">
-          <TabsTrigger value="lista" className="flex items-center gap-2">
-            <ListTodo className="w-4 h-4" /> Lista
-          </TabsTrigger>
-          {isAdmin && (
-            <TabsTrigger value="indicadores" className="flex items-center gap-2">
-              <BarChart2 className="w-4 h-4" /> Indicadores
-            </TabsTrigger>
-          )}
-          {isAdmin && (
-            <TabsTrigger value="fornecedores" className="flex items-center gap-2">
-              <Truck className="w-4 h-4" /> Fornecedores
-            </TabsTrigger>
-          )}
-        </TabsList>
 
         {/* ── ABA: LISTA ──────────────────────────────────────────────── */}
         <TabsContent value="lista" className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {[
-              { label: "Total", value: kpis.total, cls: "text-slate-700" },
-              { label: "Agendados", value: kpis.agendados, cls: "text-slate-600" },
-              { label: "Em andamento", value: kpis.emAndamento, cls: "text-marca" },
-              { label: "Concluídos", value: kpis.concluidos, cls: "text-green-700" },
-              { label: "Com ocorrência", value: kpis.comOcorrencia, cls: "text-red-700" },
-            ].map(k => (
-              <div key={k.label} className="text-center bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-                <p className="text-xs text-slate-500">{k.label}</p>
-                <p className={`text-2xl font-bold ${k.cls}`}>{k.value}</p>
-              </div>
-            ))}
+          {/* Eram cinco caixinhas centralizadas com número de 24px. O total
+              vai em destaque porque é o que se olha primeiro. */}
+          <div className="grid min-w-0 gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+            <StatCard rotulo="Total" valor={kpis.total} icone={Package} destaque atraso={0.05} />
+            <StatCard rotulo="Agendados" valor={kpis.agendados} icone={CalendarClock} atraso={0.1} />
+            <StatCard rotulo="Em andamento" valor={kpis.emAndamento} icone={Clock} tom="info" atraso={0.15} />
+            <StatCard rotulo="Concluídos" valor={kpis.concluidos} icone={CheckCircle2} tom="ok" atraso={0.2} />
+            <StatCard
+              rotulo="Com ocorrência" valor={kpis.comOcorrencia} icone={AlertTriangle}
+              tom={kpis.comOcorrencia > 0 ? "erro" : "neutro"} atraso={0.25}
+            />
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-sm font-medium text-slate-600">Período:</span>
-              {[["hoje", "Hoje"], ["semana", "Esta semana"], ["mes", "Este mês"]].map(([k, l]) => (
-                <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => setFiltroRapido(k)}>{l}</Button>
+          <div className="cartao-fluxo flex min-w-0 flex-col gap-3 p-4">
+            <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+              <span className="text-[13px] font-bold text-texto-fraco">Período</span>
+              {[["hoje", "Hoje"], ["semana", "Semana"], ["mes", "Mês"]].map(([k, l]) => (
+                <Button key={k} size="lg" variant="outline" onClick={() => setFiltroRapido(k)}>{l}</Button>
               ))}
-              <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-12 text-xs w-36" />
-              <span className="text-slate-400 text-sm">até</span>
-              <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="h-12 text-xs w-36" />
+              <Input
+                type="date" aria-label="Data inicial" value={dataInicio}
+                onChange={e => setDataInicio(e.target.value)} className="w-40"
+              />
+              <span className="text-sm font-bold text-texto-apagado">até</span>
+              <Input
+                type="date" aria-label="Data final" value={dataFim}
+                onChange={e => setDataFim(e.target.value)} className="w-40"
+              />
             </div>
             <div className="flex flex-wrap gap-2">
               <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-                <SelectTrigger className="h-12 text-xs w-44"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Filtrar por tipo" className="w-52"><SelectValue /></SelectTrigger>
                 <SelectContent>{["Todos", "Importação", "Nacional", "Devolução", "Material auxiliar", "Outro"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
               <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                <SelectTrigger className="h-12 text-xs w-44"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Filtrar por situação" className="w-52"><SelectValue /></SelectTrigger>
                 <SelectContent>{["Todos", "Agendado", "Em andamento", "Pausado", "Concluído", "Cancelado"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
 
           {filtrados.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
-              <Package className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-              <p>Nenhum recebimento no período</p>
-              <Button className="mt-4 bg-marca hover:bg-marca-forte" onClick={() => setShowForm(true)}>
-                <Plus className="w-4 h-4 mr-1" /> Criar primeiro recebimento
-              </Button>
+            <div className="cartao-fluxo">
+              <EmptyState
+                icone={Package}
+                titulo="Nenhum recebimento no período"
+                legenda="Ajuste o período acima ou registre uma entrada."
+                acao={
+                  <Button onClick={() => setShowForm(true)}>
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Criar primeiro recebimento
+                  </Button>
+                }
+              />
             </div>
           ) : (
             <div className="space-y-3">
@@ -448,9 +456,9 @@ export default function Recebimento() {
             {[["hoje", "Hoje"], ["semana", "Esta semana"], ["mes", "Este mês"]].map(([k, l]) => (
               <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => setFiltroInd(k)}>{l}</Button>
             ))}
-            <Input type="date" value={indInicio} onChange={e => setIndInicio(e.target.value)} className="h-12 text-xs w-36" />
-            <span className="text-slate-400 text-xs">até</span>
-            <Input type="date" value={indFim} onChange={e => setIndFim(e.target.value)} className="h-12 text-xs w-36" />
+            <Input aria-label="Data inicial dos indicadores" type="date" value={indInicio} onChange={e => setIndInicio(e.target.value)} className="h-12 text-xs w-36" />
+            <span className="text-texto-apagado text-xs">até</span>
+            <Input aria-label="Data final dos indicadores" type="date" value={indFim} onChange={e => setIndFim(e.target.value)} className="h-12 text-xs w-36" />
           </div>
 
           {/* Volume */}
@@ -459,20 +467,20 @@ export default function Recebimento() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "Total", value: filtradosInd.length, cls: "text-slate-700" },
-                  { label: "Concluídos", value: filtradosInd.filter(r => r.status === "Concluído").length, cls: "text-green-700" },
+                  { label: "Total", value: filtradosInd.length, cls: "text-tinta-media" },
+                  { label: "Concluídos", value: filtradosInd.filter(r => r.status === "Concluído").length, cls: "text-ok" },
                   { label: "Em andamento", value: filtradosInd.filter(r => r.status === "Em andamento").length, cls: "text-marca" },
-                  { label: "Cancelados", value: filtradosInd.filter(r => r.status === "Cancelado").length, cls: "text-red-700" },
+                  { label: "Cancelados", value: filtradosInd.filter(r => r.status === "Cancelado").length, cls: "text-erro" },
                 ].map(k => (
-                  <div key={k.label} className="text-center bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-500">{k.label}</p>
+                  <div key={k.label} className="text-center bg-fundo rounded-token p-3">
+                    <p className="text-xs text-texto-fraco">{k.label}</p>
                     <p className={`text-2xl font-bold ${k.cls}`}>{k.value}</p>
                   </div>
                 ))}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 mb-2">Por tipo</p>
+                  <p className="text-xs font-semibold text-texto-fraco mb-2">Por tipo</p>
                   <ResponsiveContainer width="100%" height={160}>
                     <PieChart>
                       <Pie data={porTipo} cx="50%" cy="50%" outerRadius={60} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
@@ -483,7 +491,7 @@ export default function Recebimento() {
                   </ResponsiveContainer>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 mb-2">Recebimentos por dia</p>
+                  <p className="text-xs font-semibold text-texto-fraco mb-2">Recebimentos por dia</p>
                   <ResponsiveContainer width="100%" height={160}>
                     <BarChart data={porDia}>
                       <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
@@ -508,14 +516,14 @@ export default function Recebimento() {
                   { label: "Tempo total pausado", value: minToHM(tempoPausadoTotal) },
                   { label: "Baseado em", value: `${concluidosInd.length} concluídos` },
                 ].map(k => (
-                  <div key={k.label} className="text-center bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-500">{k.label}</p>
-                    <p className="text-lg font-bold text-slate-700">{k.value}</p>
+                  <div key={k.label} className="text-center bg-fundo rounded-token p-3">
+                    <p className="text-xs text-texto-fraco">{k.label}</p>
+                    <p className="text-lg font-bold text-tinta-media">{k.value}</p>
                   </div>
                 ))}
               </div>
               <div>
-                <p className="text-xs font-semibold text-slate-500 mb-2">Tempo médio por tipo (minutos)</p>
+                <p className="text-xs font-semibold text-texto-fraco mb-2">Tempo médio por tipo (minutos)</p>
                 <ResponsiveContainer width="100%" height={140}>
                   <BarChart data={tempoMedioPorTipo}>
                     <XAxis dataKey="tipo" tick={{ fontSize: 11 }} />
@@ -526,9 +534,9 @@ export default function Recebimento() {
                 </ResponsiveContainer>
               </div>
               {tempoPausadoTotal > 0 && (
-                <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl text-center">
-                  <p className="text-xs text-orange-600">Tempo improdutivo (pausas) no período</p>
-                  <p className="text-3xl font-bold text-orange-700">{minToHM(tempoPausadoTotal)}</p>
+                <div className="p-4 bg-atencao-suave border border-atencao rounded-painel text-center">
+                  <p className="text-xs text-atencao">Tempo improdutivo (pausas) no período</p>
+                  <p className="text-3xl font-bold text-atencao">{minToHM(tempoPausadoTotal)}</p>
                 </div>
               )}
             </CardContent>
@@ -540,24 +548,24 @@ export default function Recebimento() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {[
-                  { label: "Total", value: ocFiltradas.length, cls: "text-slate-700" },
-                  { label: "Abertas", value: ocFiltradas.filter(o => !o.resolvido).length, cls: "text-red-700" },
-                  { label: "Resolvidas", value: ocFiltradas.filter(o => o.resolvido).length, cls: "text-green-700" },
+                  { label: "Total", value: ocFiltradas.length, cls: "text-tinta-media" },
+                  { label: "Abertas", value: ocFiltradas.filter(o => !o.resolvido).length, cls: "text-erro" },
+                  { label: "Resolvidas", value: ocFiltradas.filter(o => o.resolvido).length, cls: "text-ok" },
                 ].map(k => (
-                  <div key={k.label} className="text-center bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-500">{k.label}</p>
+                  <div key={k.label} className="text-center bg-fundo rounded-token p-3">
+                    <p className="text-xs text-texto-fraco">{k.label}</p>
                     <p className={`text-2xl font-bold ${k.cls}`}>{k.value}</p>
                   </div>
                 ))}
               </div>
               <div className="flex flex-wrap gap-2">
                 {ocPorTipo.map(o => (
-                  <div key={o.name} className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-center">
-                    <p className="text-red-600 font-medium">{o.name}</p>
-                    <p className="text-xl font-bold text-red-700">{o.value}</p>
+                  <div key={o.name} className="bg-erro-suave border border-erro rounded-token px-3 py-2 text-xs text-center">
+                    <p className="text-erro font-medium">{o.name}</p>
+                    <p className="text-xl font-bold text-erro">{o.value}</p>
                   </div>
                 ))}
-                {ocPorTipo.length === 0 && <p className="text-xs text-slate-400">Sem ocorrências no período</p>}
+                {ocPorTipo.length === 0 && <p className="text-xs text-texto-apagado">Sem ocorrências no período</p>}
               </div>
             </CardContent>
           </Card>
@@ -566,8 +574,8 @@ export default function Recebimento() {
           <Card>
             <CardHeader><CardTitle className="text-base">👥 Equipe</CardTitle></CardHeader>
             <CardContent>
-              <p className="text-xs font-semibold text-slate-500 mb-2">Participações por operador</p>
-              {rankingOp.length === 0 ? <p className="text-slate-400 text-sm">Sem dados no período</p> : (
+              <p className="text-xs font-semibold text-texto-fraco mb-2">Participações por operador</p>
+              {rankingOp.length === 0 ? <p className="text-texto-apagado text-sm">Sem dados no período</p> : (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={rankingOp} layout="vertical">
                     <XAxis type="number" tick={{ fontSize: 10 }} />
@@ -581,6 +589,7 @@ export default function Recebimento() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

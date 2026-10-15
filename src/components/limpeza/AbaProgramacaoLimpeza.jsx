@@ -136,11 +136,11 @@ export default function AbaProgramacaoLimpeza({ currentUser, isAdmin }) {
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <Label className="text-xs">De</Label>
-          <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="w-36" />
+          <Input aria-label="De" type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="w-36" />
         </div>
         <div>
           <Label className="text-xs">Até</Label>
-          <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="w-36" />
+          <Input aria-label="Até" type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="w-36" />
         </div>
         <div className="flex gap-2 flex-wrap">
           {[["semana", "Esta semana"], ["mes", "Este mês"], ["proximos7", "Próx. 7 dias"]].map(([k, l]) => (
@@ -211,11 +211,11 @@ export default function AbaProgramacaoLimpeza({ currentUser, isAdmin }) {
                               <PenLine className="w-3 h-3 mr-1" /> Assinar
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" className="h-12 w-12 p-0" onClick={() => { setEditando(p); setModalProg(true); }}>
+                          <Button aria-label="Editar" size="sm" variant="ghost" className="h-12 w-12 p-0" onClick={() => { setEditando(p); setModalProg(true); }}>
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           {p.status === "Pendente" && (
-                            <Button size="sm" variant="ghost" className="h-12 w-12 p-0 text-red-500 hover:text-red-700" onClick={() => deleteMutation.mutate(p.id)}>
+                            <Button aria-label="Excluir" size="sm" variant="ghost" className="h-12 w-12 p-0 text-red-500 hover:text-red-700" onClick={() => deleteMutation.mutate(p.id)}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                           )}

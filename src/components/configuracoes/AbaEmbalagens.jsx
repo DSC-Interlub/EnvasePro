@@ -76,8 +76,8 @@ export default function AbaEmbalagens() {
                     <TableCell className="font-mono">{e.ultimos_4_digitos}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingEmbalagem(e); setShowForm(true); }}><Edit className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => confirm("Excluir embalagem?") && deleteMutation.mutate(e.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                        <Button aria-label={`Editar a embalagem ${e.codigo}`} variant="ghost" size="icon" onClick={() => { setEditingEmbalagem(e); setShowForm(true); }}><Edit className="w-4 h-4" /></Button>
+                        <Button aria-label={`Excluir a embalagem ${e.codigo}`} variant="ghost" size="icon" onClick={() => confirm("Excluir embalagem?") && deleteMutation.mutate(e.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>

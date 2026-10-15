@@ -813,7 +813,7 @@ export default function Empilhadeira() {
         <DialogContent>
           <DialogHeader><DialogTitle>Registrar Manutenção</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label>Data da Manutenção *</Label><Input type="date" value={manutencaoForm.data_manutencao} onChange={e => setManutencaoForm(p => ({ ...p, data_manutencao: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Data da Manutenção *</Label><Input aria-label="Data da Manutenção" type="date" value={manutencaoForm.data_manutencao} onChange={e => setManutencaoForm(p => ({ ...p, data_manutencao: e.target.value }))} /></div>
             <div className="space-y-2">
               <Label>Tipo *</Label>
               <Select value={manutencaoForm.tipo} onValueChange={v => setManutencaoForm(p => ({ ...p, tipo: v }))}>
