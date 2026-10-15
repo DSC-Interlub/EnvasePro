@@ -51,10 +51,16 @@ const MARCADORES = [
   { id: 'borda-dura', re: /\bborder(-[0-9])?\s+border-(slate|gray|zinc)-\d{2,3}\b/g,
     o_que: 'borda dura de cartão -> cartao-fluxo (sombra, sem borda)' },
 
-  // --- altura de linha de tabela -----------------------------------------
-  { id: 'tabela-antiga', re: /<Table(Row|Head|Cell)?\b(?![^>]*className)/g,
-    o_que: 'Table sem estilo novo -> o Table já carrega linha de 56px e cabeçalho pequeno' },
-
+  // O marcador `tabela-antiga` foi REMOVIDO em 14/10/2026.
+  //
+  // Ele exigia `className` em todo <Table>/<TableHead>/<TableRow>, e fazia
+  // sentido enquanto o Table carregava o estilo antigo: a tela precisava
+  // corrigir caso a caso. Depois do Lote A o proprio Table ja tem linha de
+  // 56px, cabecalho pequeno e nenhuma grade — usar o componente PURO passou
+  // a ser o certo, e o marcador passou a acusar o codigo CORRETO.
+  //
+  // Eram 81 ocorrencias no baseline. Tirar o marcador NAO melhora o codigo:
+  // melhora a medicao. Fica registrado para o numero nao parecer um ganho.
   // --- gradiente decorativo solto ----------------------------------------
   { id: 'gradiente-solto', re: /\bbg-gradient-to-[a-z]{1,2}\b/g,
     o_que: 'gradiente solto -> superfície de token, ou gradiente da marca' },

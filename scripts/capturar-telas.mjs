@@ -53,6 +53,22 @@ for (const [nomeL, w, h] of LARGURAS) {
     await page.goto(`${APP}/${tela}`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelectorAll('button,a,input').length > 3,
       null, { timeout: 60000 }).catch(() => {});
+
+    // O modal "Quem e voce hoje?" cobre a tela inteira enquanto nenhum operador
+    // fisico estiver escolhido, e e isso que o operador de verdade ve primeiro.
+    // Escolher o primeiro e exatamente o que ele faz; sem isso a captura
+    // fotografa o modal, nao a tela.
+    const modal = page.getByText(/Quem é você hoje/i);
+    if (await modal.count()) {
+      // O cartao comeca com as INICIAIS do avatar ("SE"), nao com o nome, entao
+      // ancorar em /^SEED-/ nunca casa. Vale o nome em qualquer posicao.
+      const cartao = page.locator('button').filter({ hasText: /SEED-/ });
+      if (await cartao.count()) {
+        await cartao.first().click();
+        await modal.first().waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {});
+      }
+    }
+
     await page.waitForTimeout(3000);
     const arq = `${pasta}/${nomeL}_${tela}.png`;
     await page.screenshot({ path: arq, fullPage: true });
