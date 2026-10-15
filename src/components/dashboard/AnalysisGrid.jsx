@@ -1,8 +1,9 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  ChartCard, SectionCard, EmptyState, CORES_GRAFICO, EIXO, GRADE, TOOLTIP, RAIO_BARRA,
+} from "@/components/fluxo";
 
 export default function AnalysisGrid({ records, isLoading }) {
   // Consistência - Média de tempo produtivo
@@ -128,20 +129,10 @@ export default function AnalysisGrid({ records, isLoading }) {
       media: (data.total / data.count).toFixed(2)
     })).sort((a, b) => parseFloat(a.media) - parseFloat(b.media));
   };
-
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-          <Card key={i} className="border-slate-200">
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-48 w-full" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="cartao-fluxo">
+        <EmptyState carregando />
       </div>
     );
   }
@@ -150,212 +141,133 @@ export default function AnalysisGrid({ records, isLoading }) {
   const mesData = getMesAnalysis();
   const operadorQtdData = getOperadorQuantidadeAnalysis();
   const dificuldadeData = getDificuldadeAnalysis();
-  const produtoData = getProdutoAnalysis();
   const embalagemData = getEmbalagemAnalysis();
   const operadorTempoData = getOperadorTempoAnalysis();
 
+  const cores = CORES_GRAFICO();
+  const eixo = EIXO();
+  const grade = GRADE();
+  const tooltip = TOOLTIP();
+
+  /** As barras, que eram seis cópias do mesmo bloco com uma cor diferente. */
+  const Barras = ({ dados, eixoX, chave, cor, unidade }) => (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={dados} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
+        <CartesianGrid {...grade} />
+        <XAxis dataKey={eixoX} {...eixo} />
+        <YAxis {...eixo} />
+        <Tooltip {...tooltip} formatter={(v) => [`${v.toLocaleString("pt-BR")}${unidade || ""}`, ""]} />
+        <Bar dataKey={chave} fill={cor} radius={RAIO_BARRA} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">Análises de Produção</h2>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Consistência - Média de tempo produtivo */}
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Consistência - Tempo Médio Produtivo
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={consistenciaData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="consistencia" stroke="#64748b" />
-                <YAxis stroke="#64748b" label={{ value: 'Minutos', angle: -90, position: 'insideLeft' }} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar dataKey="media" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+    <div className="flex min-w-0 flex-col gap-4">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard
+          titulo="Consistência"
+          legenda="Tempo médio produtivo, em minutos"
+          vazio={consistenciaData.length === 0}
+          atraso={0.05}
+        >
+          <Barras dados={consistenciaData} eixoX="consistencia" chave="media" cor={cores[0]} unidade=" min" />
+        </ChartCard>
 
-        {/* Mês - Quantidade envasada */}
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Mês - Quantidade Envasada
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={mesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="mes" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar dataKey="quantidade" fill="#10b981" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <ChartCard
+          titulo="Mês a mês"
+          legenda="Quantidade envasada"
+          vazio={mesData.length === 0}
+          atraso={0.1}
+        >
+          <Barras dados={mesData} eixoX="mes" chave="quantidade" cor={cores[1]} />
+        </ChartCard>
 
-        {/* Operador - Quantidade envasada */}
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Operador - Quantidade Envasada
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Operador</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {operadorQtdData.map((item, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium">{item.operador}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {item.quantidade.toLocaleString('pt-BR')}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        <Ranking
+          titulo="Por operador"
+          legenda="Quantidade envasada"
+          coluna="Operador"
+          itens={operadorQtdData.map((i) => ({ nome: i.operador, valor: i.quantidade }))}
+          atraso={0.15}
+        />
 
-        {/* Dificuldade - Quantidade envasada */}
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Dificuldade - Quantidade Envasada
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={dificuldadeData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="dificuldade" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar dataKey="quantidade" fill="#f59e0b" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <ChartCard
+          titulo="Por dificuldade"
+          legenda="Quantidade envasada"
+          vazio={dificuldadeData.length === 0}
+          atraso={0.2}
+        >
+          <Barras dados={dificuldadeData} eixoX="dificuldade" chave="quantidade" cor={cores[2]} />
+        </ChartCard>
 
-        {/* Produto - Quantidade envasada */}
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Top 10 Produtos - Quantidade Envasada
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="overflow-x-auto max-h-64 overflow-y-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Produto</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {produtoData.map((item, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium">{item.produto}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {item.quantidade.toLocaleString('pt-BR')}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        <Ranking
+          titulo="Por embalagem"
+          legenda="Quantidade envasada"
+          coluna="Embalagem"
+          itens={embalagemData.map((i) => ({ nome: i.embalagem, valor: i.quantidade }))}
+          atraso={0.25}
+        />
 
-        {/* Embalagem - Quantidade envasada */}
-        <Card className="border-slate-200">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Top 10 Embalagens - Quantidade Envasada
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="overflow-x-auto max-h-64 overflow-y-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Embalagem</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {embalagemData.map((item, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium">{item.embalagem}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {item.quantidade.toLocaleString('pt-BR')}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Operador - Média de Tempo por embalagem */}
-        <Card className="border-slate-200 lg:col-span-2">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Operador - Tempo Médio por Embalagem (minutos)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={operadorTempoData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="operador" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar dataKey="media" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <ChartCard
+          titulo="Tempo por embalagem"
+          legenda="Média em minutos, por operador"
+          vazio={operadorTempoData.length === 0}
+          atraso={0.3}
+          className="lg:col-span-2"
+        >
+          <Barras dados={operadorTempoData} eixoX="operador" chave="media" cor={cores[4]} unidade=" min" />
+        </ChartCard>
       </div>
     </div>
+  );
+}
+
+/**
+ * Tabela de ranking — era o mesmo bloco escrito duas vezes (operador e
+ * embalagem), com `<Table>` cru dentro de um `<Card>`.
+ *
+ * Ganhou a barra de proporção: uma coluna de números ordenada já diz a ordem,
+ * mas não a DISTÂNCIA entre o primeiro e o segundo, que é o que interessa
+ * quando se compara operador com operador.
+ */
+function Ranking({ titulo, legenda, coluna, itens, atraso }) {
+  const maior = Math.max(...itens.map((i) => i.valor), 1);
+
+  return (
+    <SectionCard titulo={titulo} legenda={legenda} atraso={atraso} semPadding>
+      {itens.length === 0 ? (
+        <EmptyState titulo="Sem dados no período" />
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-cartao-fraco">
+              <TableHead>{coluna}</TableHead>
+              <TableHead className="text-right">Quantidade</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {itens.map((item) => (
+              <TableRow key={item.nome}>
+                <TableCell>
+                  <span className="block font-semibold text-tinta">{item.nome}</span>
+                  <span
+                    aria-hidden="true"
+                    className="mt-1.5 block h-1.5 max-w-[220px] overflow-hidden rounded-full bg-fundo"
+                  >
+                    <span
+                      className="block h-full rounded-full bg-marca"
+                      style={{ width: `${Math.round((item.valor / maior) * 100)}%` }}
+                    />
+                  </span>
+                </TableCell>
+                <TableCell className="num text-right font-bold">
+                  {item.valor.toLocaleString("pt-BR")}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </SectionCard>
   );
 }

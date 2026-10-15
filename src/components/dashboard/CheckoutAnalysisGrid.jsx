@@ -1,11 +1,10 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import {
+  ChartCard, SectionCard, EmptyState, CORES_GRAFICO, EIXO, GRADE, TOOLTIP, RAIO_BARRA,
+} from "@/components/fluxo";
 
 export default function CheckoutAnalysisGrid({ items, programacoes, isLoading }) {
   // Operador - Tempo médio
@@ -59,163 +58,126 @@ export default function CheckoutAnalysisGrid({ items, programacoes, isLoading })
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-slate-900">Análises de Check-out</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="border-slate-200">
-              <CardHeader>
-                <Skeleton className="h-6 w-48" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-48 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="cartao-fluxo">
+        <EmptyState carregando />
       </div>
     );
   }
 
-  const operadorTempo = getOperadorTempoMedio();
+  const operadorTempo = getOperadorTempoAnalysis();
+  const operadorQuantidade = getOperadorQuantidadeAnalysis();
   const pedidosCriticos = getPedidosCriticos();
   const pedidosAtrasados = getPedidosAtrasados();
-  const operadorQuantidade = getOperadorQuantidade();
+
+  const cores = CORES_GRAFICO();
+  const eixo = EIXO();
+  const grade = GRADE();
+  const tooltip = TOOLTIP();
+
+  const Barras = ({ dados, chave, cor, unidade }) => (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={dados} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
+        <CartesianGrid {...grade} />
+        <XAxis dataKey="operador" {...eixo} />
+        <YAxis {...eixo} />
+        <Tooltip {...tooltip} formatter={(v) => [`${v.toLocaleString("pt-BR")}${unidade || ""}`, ""]} />
+        <Bar dataKey={chave} fill={cor} radius={RAIO_BARRA} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">Análises de Check-out</h2>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Operador - Tempo Médio */}
-        <Card className="border-slate-200">
-          <CardHeader className="bg-slate-50 border-b border-slate-200">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Operador - Tempo Médio por Pedido (minutos)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={operadorTempo}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="operador" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar dataKey="media" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+    <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
+      <ChartCard
+        titulo="Tempo por operador"
+        legenda="Média em minutos por pedido"
+        vazio={operadorTempo.length === 0}
+        atraso={0.05}
+      >
+        <Barras dados={operadorTempo} chave="media" cor={cores[0]} unidade=" min" />
+      </ChartCard>
 
-        {/* Operador - Quantidade de Pedidos */}
-        <Card className="border-slate-200">
-          <CardHeader className="bg-slate-50 border-b border-slate-200">
-            <CardTitle className="text-lg font-bold text-slate-900">
-              Operador - Quantidade de Pedidos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={operadorQuantidade}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="operador" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar dataKey="quantidade" fill="#10b981" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <ChartCard
+        titulo="Pedidos por operador"
+        legenda="Quantidade concluída"
+        vazio={operadorQuantidade.length === 0}
+        atraso={0.1}
+      >
+        <Barras dados={operadorQuantidade} chave="quantidade" cor={cores[1]} />
+      </ChartCard>
 
-        {/* Pedidos Críticos */}
-        <Card className="border-slate-200">
-          <CardHeader className="bg-slate-50 border-b border-slate-200">
-            <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-500" />
-              Pedidos Críticos ({pedidosCriticos.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="max-h-64 overflow-y-auto">
-              {pedidosCriticos.length === 0 ? (
-                <p className="text-slate-500 text-center py-4">Nenhum pedido crítico</p>
-              ) : (
-                <div className="space-y-2">
-                  {pedidosCriticos.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-                      <div className="flex-1">
-                        <p className="font-semibold text-slate-900">{item.numero_pedido}</p>
-                        <p className="text-sm text-slate-600">{item.cliente}</p>
-                      </div>
-                      {item.data_saida && (
-                        <Badge variant="outline" className="text-xs">
-                          Saída: {format(new Date(item.data_saida), "dd/MM")}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
+      <SectionCard
+        titulo="Pedidos críticos"
+        legenda={`${pedidosCriticos.length} em aberto`}
+        icone={AlertTriangle}
+        atraso={0.15}
+      >
+        {pedidosCriticos.length === 0 ? (
+          <EmptyState titulo="Nenhum pedido crítico" legenda="Nada exigindo atenção agora." />
+        ) : (
+          // A rolagem ficava num `div` de altura fixa sem indicação nenhuma de
+          // que havia mais coisa embaixo. A contagem no cabeçalho agora diz
+          // quantos existem, mesmo que só três caibam na tela.
+          <ul className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+            {pedidosCriticos.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-center justify-between gap-3 rounded-token bg-atencao-suave px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-extrabold text-tinta">{item.numero_pedido}</p>
+                  <p className="truncate text-sm font-semibold text-texto-fraco">{item.cliente}</p>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                {item.data_saida && (
+                  <span className="num flex-none rounded-full bg-cartao px-3 py-1 text-xs font-bold text-texto-fraco">
+                    saída {format(new Date(item.data_saida), "dd/MM")}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </SectionCard>
 
-        {/* Pedidos Finalizados com Atraso */}
-        <Card className="border-slate-200">
-          <CardHeader className="bg-slate-50 border-b border-slate-200">
-            <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-red-500" />
-              Finalizados com Atraso ({pedidosAtrasados.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="max-h-64 overflow-y-auto">
-              {pedidosAtrasados.length === 0 ? (
-                <p className="text-slate-500 text-center py-4">Nenhum pedido com atraso</p>
-              ) : (
-                <div className="space-y-2">
-                  {pedidosAtrasados.map((item) => {
-                    const programacao = programacoes.find(p => p.id === item.programacao_id);
-                    return (
-                      <div key={item.id} className="p-3 bg-red-50 rounded-lg border border-red-200">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <p className="font-semibold text-slate-900">{item.numero_pedido}</p>
-                            <p className="text-sm text-slate-600">{item.cliente}</p>
-                          </div>
-                        </div>
-                        <div className="text-xs text-slate-500 space-y-1">
-                          {programacao && (
-                            <p>Programado: {format(new Date(programacao.data_programada), "dd/MM/yyyy")}</p>
-                          )}
-                          {item.data_finalizacao_real && (
-                            <p>Finalizado: {format(new Date(item.data_finalizacao_real), "dd/MM/yyyy")}</p>
-                          )}
-                          {item.motivo_atraso && (
-                            <p className="text-red-600 font-medium mt-1">Motivo: {item.motivo_atraso}</p>
-                          )}
-                        </div>
+      <SectionCard
+        titulo="Finalizados com atraso"
+        legenda={`${pedidosAtrasados.length} fora do prazo`}
+        icone={Calendar}
+        atraso={0.2}
+      >
+        {pedidosAtrasados.length === 0 ? (
+          <EmptyState titulo="Nenhum pedido com atraso" legenda="Tudo entregue dentro do prazo." />
+        ) : (
+          <ul className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+            {pedidosAtrasados.map((item) => {
+              const programacao = programacoes.find((p) => p.id === item.programacao_id);
+              return (
+                <li key={item.id} className="rounded-token bg-erro-suave px-4 py-3">
+                  <p className="truncate font-extrabold text-tinta">{item.numero_pedido}</p>
+                  <p className="truncate text-sm font-semibold text-texto-fraco">{item.cliente}</p>
+                  <dl className="mt-1.5 flex flex-wrap gap-x-4 text-xs font-semibold text-texto-fraco">
+                    {programacao && (
+                      <div className="flex gap-1">
+                        <dt>Programado:</dt>
+                        <dd className="num">{format(new Date(programacao.data_programada), "dd/MM/yyyy")}</dd>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                    )}
+                    {item.data_finalizacao_real && (
+                      <div className="flex gap-1">
+                        <dt>Finalizado:</dt>
+                        <dd className="num">{format(new Date(item.data_finalizacao_real), "dd/MM/yyyy")}</dd>
+                      </div>
+                    )}
+                  </dl>
+                  {item.motivo_atraso && (
+                    <p className="mt-1 text-xs font-bold text-erro">Motivo: {item.motivo_atraso}</p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </SectionCard>
     </div>
   );
 }
