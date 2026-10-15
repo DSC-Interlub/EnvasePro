@@ -94,7 +94,7 @@ export default function ModalParada({ open, onClose, empilhadeiraId, programacao
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button
-            className="bg-orange-600 hover:bg-orange-700"
+            className="bg-atencao hover:bg-atencao"
             onClick={() => mutation.mutate(form)}
             disabled={!form.registrado_por || !form.hora_inicio || mutation.isPending}
           >

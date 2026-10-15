@@ -223,7 +223,7 @@ export default function ExecutarCheckout() {
     <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-4">
         <PageHeader
-          migalha={[{ rotulo: "Check-out", url: createPageUrl("Checkout") }, { rotulo: "Execução" }]}
+          migalha={[{ rotulo: "Check-out" }, { rotulo: "Execução" }]}
           titulo={`Check-out de ${programacao?.data_programada ? formatarData(programacao.data_programada, "dd/MM/yyyy") : ""}`}
           legenda={programacao?.data_programada
             ? formatarData(programacao.data_programada, "EEEE, d 'de' MMMM 'de' yyyy") : ""}

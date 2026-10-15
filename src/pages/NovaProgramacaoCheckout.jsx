@@ -111,7 +111,7 @@ export default function NovaProgramacaoCheckout() {
     <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="mx-auto flex min-w-0 max-w-5xl flex-col gap-4">
         <PageHeader
-          migalha={[{ rotulo: "Check-out", url: createPageUrl("Checkout") }, { rotulo: "Nova programação" }]}
+          migalha={[{ rotulo: "Check-out" }, { rotulo: "Nova programação" }]}
           titulo="Nova programação de check-out"
           legenda="Escolha a data e cole os pedidos"
           acoes={

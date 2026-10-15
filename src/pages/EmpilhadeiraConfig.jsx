@@ -90,17 +90,17 @@ export default function EmpilhadeiraConfigPage() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-              <Settings className="w-7 h-7 text-amber-600" /> Configuração da Empilhadeira
+            <h1 className="text-2xl font-bold text-tinta flex items-center gap-3">
+              <Settings className="w-7 h-7 text-atencao" /> Configuração da Empilhadeira
             </h1>
-            <p className="text-slate-500 text-sm mt-1">Cadastro, manutenções e alertas</p>
+            <p className="text-texto-fraco text-sm mt-1">Cadastro, manutenções e alertas</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleEditInit}>
               {empilhadeira ? "Editar" : "Cadastrar Empilhadeira"}
             </Button>
             {empilhadeira && (
-              <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => setShowManutencaoModal(true)}>
+              <Button className="bg-atencao hover:bg-atencao" onClick={() => setShowManutencaoModal(true)}>
                 <Wrench className="w-4 h-4 mr-2" /> Registrar Manutenção
               </Button>
             )}
@@ -109,23 +109,23 @@ export default function EmpilhadeiraConfigPage() {
 
         {/* Status da manutenção */}
         {empilhadeira && diasParaManutencao !== null && (
-          <Card className={`border-2 shadow-lg ${diasParaManutencao < 0 ? "border-red-400 bg-red-50" : diasParaManutencao <= 7 ? "border-orange-400 bg-orange-50" : "border-green-300 bg-green-50"}`}>
+          <Card className={`border-2 shadow-cartao ${diasParaManutencao < 0 ? "border-erro bg-erro-suave" : diasParaManutencao <= 7 ? "border-orange-400 bg-atencao-suave" : "border-ok bg-ok-suave"}`}>
             <CardContent className="p-5">
               <div className="flex items-center gap-4">
                 {diasParaManutencao < 0
-                  ? <AlertCircle className="w-10 h-10 text-red-600 flex-shrink-0" />
+                  ? <AlertCircle className="w-10 h-10 text-erro flex-shrink-0" />
                   : diasParaManutencao <= 7
-                  ? <AlertCircle className="w-10 h-10 text-orange-600 flex-shrink-0" />
-                  : <CheckCircle className="w-10 h-10 text-green-600 flex-shrink-0" />}
+                  ? <AlertCircle className="w-10 h-10 text-atencao flex-shrink-0" />
+                  : <CheckCircle className="w-10 h-10 text-ok flex-shrink-0" />}
                 <div>
-                  <p className="font-bold text-lg text-slate-900">
+                  <p className="font-bold text-lg text-tinta">
                     {diasParaManutencao < 0
                       ? `Manutenção atrasada há ${Math.abs(diasParaManutencao)} dias`
                       : diasParaManutencao === 0
                       ? "Manutenção prevista para HOJE"
                       : `Próxima manutenção em ${diasParaManutencao} dias`}
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-texto-fraco">
                     Prevista para: {empilhadeira.data_proxima_manutencao
                       ? format(parseISO(empilhadeira.data_proxima_manutencao), "dd/MM/yyyy")
                       : "Não definida"}
@@ -139,31 +139,31 @@ export default function EmpilhadeiraConfigPage() {
 
         {/* Dados da empilhadeira */}
         {empilhadeira && !editMode && (
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="border-b border-slate-100">
+          <Card className="border-borda shadow-cartao">
+            <CardHeader className="border-b border-borda">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Wrench className="w-5 h-5 text-amber-600" /> {empilhadeira.nome}
-                <Badge className={empilhadeira.ativa ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                <Wrench className="w-5 h-5 text-atencao" /> {empilhadeira.nome}
+                <Badge className={empilhadeira.ativa ? "bg-ok-suave text-ok" : "bg-erro-suave text-erro"}>
                   {empilhadeira.ativa ? "Ativa" : "Inativa"}
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="grid md:grid-cols-3 gap-4 text-sm">
-                {empilhadeira.marca && <div><p className="text-slate-500">Marca</p><p className="font-medium">{empilhadeira.marca}</p></div>}
-                {empilhadeira.modelo && <div><p className="text-slate-500">Modelo</p><p className="font-medium">{empilhadeira.modelo}</p></div>}
-                {empilhadeira.numero_serie && <div><p className="text-slate-500">Nº Série</p><p className="font-medium font-mono">{empilhadeira.numero_serie}</p></div>}
-                <div><p className="text-slate-500">Intervalo de Manutenção</p><p className="font-medium">{empilhadeira.intervalo_manutencao_dias} dias</p></div>
+                {empilhadeira.marca && <div><p className="text-texto-fraco">Marca</p><p className="font-medium">{empilhadeira.marca}</p></div>}
+                {empilhadeira.modelo && <div><p className="text-texto-fraco">Modelo</p><p className="font-medium">{empilhadeira.modelo}</p></div>}
+                {empilhadeira.numero_serie && <div><p className="text-texto-fraco">Nº Série</p><p className="font-medium font-mono">{empilhadeira.numero_serie}</p></div>}
+                <div><p className="text-texto-fraco">Intervalo de Manutenção</p><p className="font-medium">{empilhadeira.intervalo_manutencao_dias} dias</p></div>
               </div>
-              {empilhadeira.observacoes && <p className="text-sm text-slate-500 mt-3 italic">"{empilhadeira.observacoes}"</p>}
+              {empilhadeira.observacoes && <p className="text-sm text-texto-fraco mt-3 italic">"{empilhadeira.observacoes}"</p>}
             </CardContent>
           </Card>
         )}
 
         {/* Formulário de edição */}
         {editMode && configForm && (
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="border-b border-slate-100">
+          <Card className="border-borda shadow-cartao">
+            <CardHeader className="border-b border-borda">
               <CardTitle>Dados da Empilhadeira</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
@@ -213,7 +213,7 @@ export default function EmpilhadeiraConfigPage() {
               </div>
               <div className="flex gap-3 justify-end">
                 <Button variant="outline" onClick={() => setEditMode(false)}>Cancelar</Button>
-                <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => salvarConfigMutation.mutate(configForm)} disabled={!configForm.nome || salvarConfigMutation.isPending}>
+                <Button className="bg-atencao hover:bg-atencao" onClick={() => salvarConfigMutation.mutate(configForm)} disabled={!configForm.nome || salvarConfigMutation.isPending}>
                   {salvarConfigMutation.isPending ? "Salvando..." : "Salvar"}
                 </Button>
               </div>
@@ -222,31 +222,31 @@ export default function EmpilhadeiraConfigPage() {
         )}
 
         {/* Histórico de manutenções */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <CardTitle className="text-lg">Histórico de Manutenções ({manutencoes.length})</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             {manutencoes.length === 0 ? (
-              <p className="text-slate-400 text-center py-6">Nenhuma manutenção registrada</p>
+              <p className="text-texto-apagado text-center py-6">Nenhuma manutenção registrada</p>
             ) : (
               <div className="space-y-3">
                 {manutencoes.map(m => (
-                  <div key={m.id} className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Wrench className="w-5 h-5 text-amber-700" />
+                  <div key={m.id} className="flex items-start gap-4 p-4 bg-fundo rounded-token border border-borda">
+                    <div className="w-10 h-10 bg-atencao-suave rounded-token flex items-center justify-center flex-shrink-0">
+                      <Wrench className="w-5 h-5 text-atencao" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge className="bg-amber-100 text-amber-800 text-xs">{m.tipo}</Badge>
-                        <span className="text-sm font-medium text-slate-700">
+                        <Badge className="bg-atencao-suave text-atencao text-xs">{m.tipo}</Badge>
+                        <span className="text-sm font-medium text-tinta-media">
                           {format(parseISO(m.data_manutencao), "dd/MM/yyyy")}
                         </span>
-                        {m.responsavel && <span className="text-xs text-slate-400">por {m.responsavel}</span>}
+                        {m.responsavel && <span className="text-xs text-texto-apagado">por {m.responsavel}</span>}
                       </div>
-                      {m.descricao && <p className="text-sm text-slate-600">{m.descricao}</p>}
+                      {m.descricao && <p className="text-sm text-texto-fraco">{m.descricao}</p>}
                       {m.proxima_prevista && (
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-texto-apagado mt-1">
                           Próxima prevista: {format(parseISO(m.proxima_prevista), "dd/MM/yyyy")}
                         </p>
                       )}
@@ -290,7 +290,7 @@ export default function EmpilhadeiraConfigPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowManutencaoModal(false)}>Cancelar</Button>
-            <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => registrarManutencaoMutation.mutate(manutencaoForm)} disabled={registrarManutencaoMutation.isPending}>
+            <Button className="bg-atencao hover:bg-atencao" onClick={() => registrarManutencaoMutation.mutate(manutencaoForm)} disabled={registrarManutencaoMutation.isPending}>
               {registrarManutencaoMutation.isPending ? "Registrando..." : "Registrar"}
             </Button>
           </DialogFooter>

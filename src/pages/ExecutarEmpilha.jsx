@@ -100,14 +100,14 @@ export default function ExecutarEmpilha() {
   const empilhadeira = empilhadeiras.find(e => e.id === programacao?.empilhadeira_id);
   const paradaAtiva = paradas.find(p => !p.hora_fim);
 
-  const statusColor = statusCalculado === "Concluído" ? "bg-green-100 text-green-800"
+  const statusColor = statusCalculado === "Concluído" ? "bg-ok-suave text-ok"
     : statusCalculado === "Em Andamento" ? "bg-marca-suave text-marca"
-    : "bg-yellow-100 text-yellow-800";
+    : "bg-atencao-suave text-atencao";
 
   if (!programacaoId) {
     return (
       <div className="min-h-screen bg-fundo p-8">
-        <Card className="border-red-200"><CardContent className="p-6"><p className="text-red-600">Programação não encontrada</p></CardContent></Card>
+        <Card className="border-erro"><CardContent className="p-6"><p className="text-erro">Programação não encontrada</p></CardContent></Card>
       </div>
     );
   }
@@ -117,7 +117,7 @@ export default function ExecutarEmpilha() {
       <div className="min-h-screen bg-fundo p-8 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Carregando programação...</p>
+          <p className="text-texto-fraco">Carregando programação...</p>
         </div>
       </div>
     );
@@ -129,9 +129,9 @@ export default function ExecutarEmpilha() {
 
         {/* Banner parada ativa */}
         {paradaAtiva && (
-          <Alert className="border-red-400 bg-red-50">
-            <OctagonX className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800 font-semibold">
+          <Alert className="border-erro bg-erro-suave">
+            <OctagonX className="h-4 w-4 text-erro" />
+            <AlertDescription className="text-erro font-semibold">
               ⚠ Empilhadeira parada desde {paradaAtiva.hora_inicio} — {paradaAtiva.tipo}
               {paradaAtiva.descricao && ` — ${paradaAtiva.descricao}`}
             </AlertDescription>
@@ -144,13 +144,13 @@ export default function ExecutarEmpilha() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-slate-900">
+            <h1 className="text-2xl font-bold text-tinta">
               {empilhadeira ? empilhadeira.nome : "Empilhadeira"} —{" "}
               {programacao?.data_programada
                 ? format(new Date(programacao.data_programada + "T00:00:00"), "dd/MM/yyyy")
                 : ""}
             </h1>
-            <p className="text-slate-500 text-sm">
+            <p className="text-texto-fraco text-sm">
               {programacao?.data_programada
                 ? format(new Date(programacao.data_programada + "T00:00:00"), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })
                 : ""}
@@ -164,35 +164,35 @@ export default function ExecutarEmpilha() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-borda shadow-cartao">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div><p className="text-xs font-medium text-slate-500">Total</p><p className="text-2xl font-bold mt-1 text-slate-600">{linhas.length}</p></div>
-                <ListTodo className="w-8 h-8 text-slate-400 opacity-50" />
+                <div><p className="text-xs font-medium text-texto-fraco">Total</p><p className="text-2xl font-bold mt-1 text-texto-fraco">{linhas.length}</p></div>
+                <ListTodo className="w-8 h-8 text-texto-apagado opacity-50" />
               </div>
             </CardContent>
           </Card>
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-borda shadow-cartao">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div><p className="text-xs font-medium text-slate-500">Pendentes</p><p className="text-2xl font-bold mt-1 text-yellow-600">{pendentes}</p></div>
+                <div><p className="text-xs font-medium text-texto-fraco">Pendentes</p><p className="text-2xl font-bold mt-1 text-atencao">{pendentes}</p></div>
                 <Clock className="w-8 h-8 text-yellow-400 opacity-50" />
               </div>
             </CardContent>
           </Card>
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-borda shadow-cartao">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div><p className="text-xs font-medium text-slate-500">Em Andamento</p><p className="text-2xl font-bold mt-1 text-marca">{emAndamento}</p></div>
+                <div><p className="text-xs font-medium text-texto-fraco">Em Andamento</p><p className="text-2xl font-bold mt-1 text-marca">{emAndamento}</p></div>
                 <AlertCircle className="w-8 h-8 text-marca-suave opacity-50" />
               </div>
             </CardContent>
           </Card>
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-borda shadow-cartao">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div><p className="text-xs font-medium text-slate-500">Concluídas</p><p className="text-2xl font-bold mt-1 text-green-600">{concluidas}</p></div>
-                <CheckCircle className="w-8 h-8 text-green-400 opacity-50" />
+                <div><p className="text-xs font-medium text-texto-fraco">Concluídas</p><p className="text-2xl font-bold mt-1 text-ok">{concluidas}</p></div>
+                <CheckCircle className="w-8 h-8 text-ok opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -200,11 +200,11 @@ export default function ExecutarEmpilha() {
 
         {/* Botões de ação */}
         <div className="flex gap-2 flex-wrap justify-end">
-          <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50" onClick={() => setShowParada(true)}>
+          <Button variant="outline" className="border-atencao text-atencao hover:bg-atencao-suave" onClick={() => setShowParada(true)}>
             <OctagonX className="w-4 h-4 mr-2" /> Registrar Parada
           </Button>
           {isAdmin && (
-            <Button variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50" onClick={() => setShowAddLinha(true)}>
+            <Button variant="outline" className="border-amber-300 text-atencao hover:bg-atencao-suave" onClick={() => setShowAddLinha(true)}>
               <Plus className="w-4 h-4 mr-2" /> Adicionar Linha
             </Button>
           )}
@@ -213,10 +213,10 @@ export default function ExecutarEmpilha() {
         {/* Lista de linhas */}
         <div className="space-y-3">
           {linhasOrdenadas.length === 0 ? (
-            <Card className="border-slate-200">
+            <Card className="border-borda">
               <CardContent className="p-12 text-center">
-                <ListTodo className="w-14 h-14 mx-auto text-slate-300 mb-4" />
-                <p className="text-slate-500">Nenhuma linha nesta programação</p>
+                <ListTodo className="w-14 h-14 mx-auto text-texto-apagado mb-4" />
+                <p className="text-texto-fraco">Nenhuma linha nesta programação</p>
               </CardContent>
             </Card>
           ) : (

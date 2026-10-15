@@ -119,7 +119,7 @@ export default function ModalAdicionarLinha({ open, onClose, programacaoId }) {
             <DialogFooter>
               <Button variant="outline" onClick={onClose}>Cancelar</Button>
               <Button
-                className={form.tipo_linha === "Crítico" ? "bg-red-600 hover:bg-red-700" : "bg-amber-500 hover:bg-amber-600"}
+                className={form.tipo_linha === "Crítico" ? "bg-erro hover:bg-erro" : "bg-amber-500 hover:bg-atencao"}
                 onClick={handleManual}
                 disabled={(!form.descricao_produto && !form.numero_item) || addMutation.isPending}
               >
@@ -140,8 +140,8 @@ export default function ModalAdicionarLinha({ open, onClose, programacaoId }) {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-xs text-slate-500">
-              Colunas: <code className="bg-slate-100 px-1 rounded">Data | Nº Item | Descrição | Lote | Depósito | Rua/Torre | Quantidade | Operador | Líder</code>
+            <p className="text-xs text-texto-fraco">
+              Colunas: <code className="bg-fundo px-1 rounded">Data | Nº Item | Descrição | Lote | Depósito | Rua/Torre | Quantidade | Operador | Líder</code>
             </p>
             <Textarea
               value={rawText}
@@ -155,21 +155,21 @@ export default function ModalAdicionarLinha({ open, onClose, programacaoId }) {
             </Button>
 
             {importPreview.length > 0 && (
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+              <div className="border rounded-token overflow-hidden">
+                <div className="bg-fundo px-3 py-2 text-xs font-semibold text-texto-fraco">
                   {importPreview.length} linhas encontradas
                 </div>
                 <div className="max-h-40 overflow-y-auto">
                   {importPreview.map((l, i) => (
                     <div key={i} className="flex items-center gap-2 px-3 py-1.5 border-t text-xs">
-                      <Badge className={l.tipo_linha === "Crítico" ? "bg-red-600 text-white" : "bg-amber-500 text-white"}>
+                      <Badge className={l.tipo_linha === "Crítico" ? "bg-erro text-white" : "bg-amber-500 text-white"}>
                         {l.tipo_linha}
                       </Badge>
                       <span className="font-medium">{l.descricao_produto || l.numero_item}</span>
-                      <span className="text-slate-400">{l.rua_torre}</span>
-                      <span className="ml-auto text-slate-500">{l.quantidade} un.</span>
+                      <span className="text-texto-apagado">{l.rua_torre}</span>
+                      <span className="ml-auto text-texto-fraco">{l.quantidade} un.</span>
                       <Button variant="ghost" size="icon" className="w-5 h-5" onClick={() => setImportPreview(p => p.filter((_, j) => j !== i))}>
-                        <Trash2 className="w-3 h-3 text-red-500" />
+                        <Trash2 className="w-3 h-3 text-erro" />
                       </Button>
                     </div>
                   ))}
