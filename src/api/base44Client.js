@@ -18,6 +18,16 @@ import { supabase } from '../lib/supabaseClient.js';
 import { validarUpload, tipoRealDoArquivo, ErroDeUpload, mensagemDeErroSegura, registrarErro } from '@/lib/uploadSeguro';
 import { executarComRenovacao as repetirSeSessao } from '@/lib/sessaoRetry';
 
+/**
+ * Colunas que sao chave estrangeira de TEXTO (referenciam `products.codigo`,
+ * `embalagens.codigo`). Vazio nelas tem de virar NULL.
+ */
+const FKS_DE_TEXTO = new Set([
+  'codigo_produto',
+  'codigo_embalagem',
+  'produto_codigo',
+]);
+
 const TABELAS_MAPEAMENTO = {
   Product: 'products',
   Embalagem: 'embalagens',
@@ -133,7 +143,18 @@ async function sanitizarPayload(tabela, data, isCreate = false) {
         lowerKey.includes('created_at') ||
         lowerKey.includes('updated_at') ||
         lowerKey.endsWith('_id') ||
-        lowerKey === 'id'
+        lowerKey === 'id' ||
+        // Chaves estrangeiras de TEXTO. String vazia NAO e "em branco" para o
+        // Postgres: e um valor, e como '' nao existe em `products` nem em
+        // `embalagens`, o insert morre com 23503 ("Key is not present in
+        // table"), que o PostgREST devolve como HTTP 409.
+        //
+        // Era o que fazia o autosave do envase falhar EM SILENCIO (so no
+        // console) sempre que os 4 ultimos digitos do produto nao casavam com
+        // embalagem nenhuma do cadastro: o rascunho nunca chegava ao banco e o
+        // operador so descobria ao tentar finalizar. Encontrado pelo
+        // test-envase-m2 em 15/10/2026.
+        FKS_DE_TEXTO.has(lowerKey)
       ) {
         clone[key] = null;
       }
