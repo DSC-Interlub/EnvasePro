@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Square, Save } from "lucide-react";
+import { Play, Square, Check, Package, Hash, ClipboardList } from "lucide-react";
+import { SectionCard, TecladoNumerico } from "@/components/fluxo";
+import BuscaProduto from "./BuscaProduto";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -81,6 +83,9 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedEmbalagem, setSelectedEmbalagem] = useState(null);
+  const [qtdTexto, setQtdTexto] = useState(() =>
+    formData.quantidade_produzida ? String(formData.quantidade_produzida) : ""
+  );
   const [timing, setTiming] = useState(false);
 
   useEffect(() => {
@@ -381,261 +386,307 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
     setTiming(false);
   };
 
+  // ---------------------------------------------------------------------
+  // A quantidade tem DUAS representacoes de proposito: o texto que o operador
+  // ve (pode estar vazio, pode ter virgula no meio da digitacao) e o numero que
+  // vai para o banco e para as contas derivadas. Guardar so o numero fazia
+  // "1," virar NaN; guardar so o texto quebraria
+  // `Math.floor(quantidade / multiplo)`.
+  // ---------------------------------------------------------------------
+  const mudarQuantidade = (texto) => {
+    setQtdTexto(texto);
+    const n = parseFloat(String(texto).replace(",", "."));
+    setFormData(prev => ({ ...prev, quantidade_produzida: Number.isFinite(n) ? n : 0 }));
+  };
+
+  const temProduto = Boolean(selectedProduct);
+  const temQuantidade = Number(formData.quantidade_produzida) > 0;
+  const ocupado = isLoading || isSubmitting || autoSaveMutation.isPending;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Sala e Data */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="sala">Sala *</Label>
-          <Select
-            value={formData.sala}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, sala: value }))}
-            required
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a sala" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Bio">Sala Bio</SelectItem>
-              <SelectItem value="Industrial">Sala Industrial</SelectItem>
-            </SelectContent>
-          </Select>
-          {formErrors.sala && <p className="text-xs text-red-500">{formErrors.sala}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="data">Data *</Label>
-          <Input
-            id="data"
-            type="date"
-            value={formData.data}
-            onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
-            required
+    <form onSubmit={handleSubmit} className="flex min-w-0 flex-col gap-4">
+      {/* =================================================================
+          Linha de cima — o caminho curto do padrao Envase: escolher o
+          produto (esquerda) e bater a quantidade (direita).
+          Era o 8o e o 5o campo de uma pilha de 14; agora sao as duas
+          unicas coisas na primeira tela.
+          ================================================================= */}
+      <div className="flex min-w-0 flex-col items-start gap-4 lg:flex-row">
+        <SectionCard
+          titulo="Produto"
+          legenda="Busque pelo nome ou dispare o leitor de código"
+          icone={Package}
+          atraso={0.08}
+          className="w-full min-w-0 flex-1"
+        >
+          <BuscaProduto
+            products={products}
+            codigo={formData.codigo_produto}
+            aoEscolher={(codigo) => setFormData(prev => ({ ...prev, codigo_produto: codigo }))}
+            produtoSelecionado={selectedProduct}
+            embalagem={selectedEmbalagem}
+            erro={formErrors.codigo_produto || formErrors.codigo_embalagem}
           />
-          {formErrors.data && <p className="text-xs text-red-500">{formErrors.data}</p>}
-        </div>
-      </div>
+        </SectionCard>
 
-      {/* OP e Operador */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="op">Ordem de Produção (OP)</Label>
-          <Input
-            id="op"
-            value={formData.op}
-            onChange={(e) => setFormData(prev => ({ ...prev, op: e.target.value }))}
-            placeholder="Ex: OP-2025-001"
+        <SectionCard
+          titulo="Quantidade"
+          icone={Hash}
+          atraso={0.16}
+          className="w-full lg:w-[400px] lg:flex-none"
+        >
+          <TecladoNumerico
+            id="quantidade_produzida"
+            rotulo={`Produzido${selectedProduct?.unidade_medida ? ` em ${selectedProduct.unidade_medida}` : ""}`}
+            unidade={selectedProduct?.unidade_medida || "un"}
+            valor={qtdTexto}
+            aoMudar={mudarQuantidade}
+            erro={formErrors.quantidade_produzida}
           />
-          {formErrors.op && <p className="text-xs text-red-500">{formErrors.op}</p>}
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="operador">Operador *</Label>
-          <Select
-            value={formData.operador}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, operador: value }))}
-            required
+          {/* O calculo derivado fica DO LADO do numero que o gera. Antes
+              aparecia 300px abaixo, dentro do bloco de tempo. */}
+          {formData.quantidade_embalagens > 0 && (
+            <dl className="mt-4 grid grid-cols-2 gap-2.5">
+              <div className="rounded-token bg-fundo px-4 py-3">
+                <dt className="text-xs font-bold text-texto-fraco">Embalagens</dt>
+                <dd className="num text-xl font-extrabold text-tinta">
+                  {formData.quantidade_embalagens}
+                </dd>
+              </div>
+              <div className="rounded-token bg-fundo px-4 py-3">
+                <dt className="text-xs font-bold text-texto-fraco">Por embalagem</dt>
+                <dd className="num text-xl font-extrabold text-tinta">
+                  {formData.tempo_por_embalagem || "—"}
+                </dd>
+              </div>
+            </dl>
+          )}
+
+          <Button
+            type="submit"
+            size="lg"
+            disabled={ocupado}
+            className="mt-4 h-[72px] w-full rounded-painel text-lg"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o operador" />
-            </SelectTrigger>
-            <SelectContent>
-              {operators.map((op) => (
-                <SelectItem key={op.id} value={op.nome}>
-                  {op.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {formErrors.operador && <p className="text-xs text-red-500">{formErrors.operador}</p>}
-        </div>
+            <Check className="h-6 w-6" strokeWidth={2.6} aria-hidden="true" />
+            {isSubmitting ? "Finalizando…" : isLoading ? "Salvando…" : "Registrar envase"}
+          </Button>
+
+          {/* O aviso de autosave ocupa espaco fixo: sem isso o botao subia e
+              descia 20px a cada gravacao automatica. */}
+          <p
+            aria-live="polite"
+            className={`mt-2 min-h-[20px] text-center text-sm font-semibold transition-opacity
+                        ${autoSaveMutation.isPending ? "text-marca opacity-100" : "opacity-0"}`}
+          >
+            {autoSaveMutation.isPending ? "Salvando automaticamente…" : " "}
+          </p>
+
+          {!temProduto && !temQuantidade && (
+            <p className="mt-1 text-center text-xs font-semibold text-texto-apagado">
+              Escolha o produto e informe a quantidade
+            </p>
+          )}
+        </SectionCard>
       </div>
 
-      {/* Código do Produto */}
-      <div className="space-y-2">
-        <Label htmlFor="codigo_produto">Código do Produto</Label>
-        <Input
-          id="codigo_produto"
-          value={formData.codigo_produto}
-          onChange={(e) => setFormData(prev => ({ ...prev, codigo_produto: e.target.value }))}
-          placeholder="Digite o código do produto"
-        />
-        {formErrors.codigo_produto && <p className="text-xs text-red-500">{formErrors.codigo_produto}</p>}
-        {selectedProduct && (
-          <div className="text-sm text-slate-600 mt-2 p-4 bg-marca-suave rounded-lg border border-marca-suave-2">
-            <p className="font-semibold text-tinta mb-2">{selectedProduct.nome}</p>
-            <div className="grid grid-cols-2 gap-2">
-              <p><strong>Código:</strong> {selectedProduct.codigo}</p>
-              <p><strong>Consistência:</strong> {selectedProduct.consistencia}</p>
-              {selectedProduct.unidade_medida && (
-                <p><strong>Unidade:</strong> {selectedProduct.unidade_medida}</p>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Dados da Embalagem */}
-      {selectedEmbalagem && (
-        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-          <h3 className="font-semibold text-slate-900 mb-2">Embalagem Identificada</h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-slate-600">Código: <strong>{selectedEmbalagem.codigo}</strong></p>
-              <p className="text-slate-600">Descrição: <strong>{selectedEmbalagem.descricao}</strong></p>
-            </div>
-            <div>
-              <p className="text-slate-600">Conteúdo: <strong>{selectedEmbalagem.conteudo}</strong></p>
-              <p className="text-slate-600">Tipo: <strong>{selectedEmbalagem.tipo}</strong></p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Quantidade Produzida */}
-      <div className="space-y-2">
-        <Label htmlFor="quantidade_produzida">Quantidade Produzida</Label>
-        <Input
-          id="quantidade_produzida"
-          type="number"
-          value={formData.quantidade_produzida}
-          onChange={(e) => setFormData(prev => ({ ...prev, quantidade_produzida: parseFloat(e.target.value) || 0 }))}
-          placeholder="Ex: 1000"
-        />
-        {formErrors.quantidade_produzida && <p className="text-xs text-red-500">{formErrors.quantidade_produzida}</p>}
-      </div>
-
-      {/* Controle de Tempo */}
-      <div className="space-y-4">
-        <Label>Controle de Tempo</Label>
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="inicio">Início *</Label>
-            <div className="flex gap-2">
-              <Input
-                id="inicio"
-                type="time"
-                value={formData.inicio}
-                onChange={(e) => setFormData(prev => ({ ...prev, inicio: e.target.value }))}
-              />
-              <Button
-                type="button"
-                onClick={handleStartTimer}
-                disabled={timing}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Play className="w-4 h-4" />
-              </Button>
-            </div>
-            {formErrors.inicio && <p className="text-xs text-red-500">{formErrors.inicio}</p>}
+      {/* =================================================================
+          Dados do registro — tudo o que nao e produto nem quantidade.
+          Continuam sendo os MESMOS 14 campos; o que mudou e que eles
+          deixaram de disputar a primeira tela com o que o operador
+          realmente vem fazer aqui.
+          ================================================================= */}
+      <SectionCard
+        titulo="Dados do registro"
+        legenda="Turno, tempo e rastreabilidade"
+        icone={ClipboardList}
+        atraso={0.24}
+      >
+        <div className="grid min-w-0 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="sala">Sala *</Label>
+            <Select
+              value={formData.sala}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, sala: value }))}
+              required
+            >
+              <SelectTrigger id="sala">
+                <SelectValue placeholder="Selecione a sala" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Bio">Sala Bio</SelectItem>
+                <SelectItem value="Industrial">Sala Industrial</SelectItem>
+              </SelectContent>
+            </Select>
+            {formErrors.sala && <p className="text-xs font-bold text-erro">{formErrors.sala}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="termino">Término</Label>
-            <div className="flex gap-2">
-              <Input
-                id="termino"
-                type="time"
-                value={formData.termino}
-                onChange={(e) => setFormData(prev => ({ ...prev, termino: e.target.value }))}
-              />
-              <Button
-                type="button"
-                onClick={handleStopTimer}
-                disabled={!timing}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <Square className="w-4 h-4" />
-              </Button>
-            </div>
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="operador">Operador *</Label>
+            <Select
+              value={formData.operador}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, operador: value }))}
+              required
+            >
+              <SelectTrigger id="operador">
+                <SelectValue placeholder="Selecione o operador" />
+              </SelectTrigger>
+              <SelectContent>
+                {operators.map((op) => (
+                  <SelectItem key={op.id} value={op.nome}>
+                    {op.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {formErrors.operador && (
+              <p className="text-xs font-bold text-erro">{formErrors.operador}</p>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label>Tempo Produtivo</Label>
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="data">Data *</Label>
             <Input
-              value={formData.tempo_produtivo || "--:--"}
-              disabled
-              className="bg-slate-100"
+              id="data"
+              type="date"
+              value={formData.data}
+              onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
+              required
+            />
+            {formErrors.data && <p className="text-xs font-bold text-erro">{formErrors.data}</p>}
+          </div>
+
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="op">Ordem de produção (OP)</Label>
+            <Input
+              id="op"
+              value={formData.op}
+              onChange={(e) => setFormData(prev => ({ ...prev, op: e.target.value }))}
+              placeholder="Ex: OP-2025-001"
+            />
+            {formErrors.op && <p className="text-xs font-bold text-erro">{formErrors.op}</p>}
+          </div>
+
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="dificuldade">Dificuldade</Label>
+            <Select
+              value={formData.dificuldade_codigo.toString()}
+              onValueChange={(value) =>
+                setFormData(prev => ({ ...prev, dificuldade_codigo: parseInt(value) }))
+              }
+            >
+              <SelectTrigger id="dificuldade">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DIFICULDADES.map((d) => (
+                  <SelectItem key={d.codigo} value={d.codigo.toString()}>
+                    {d.descricao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="lote_embalagem">Lote da embalagem</Label>
+            <Input
+              id="lote_embalagem"
+              value={formData.lote_embalagem}
+              onChange={(e) => setFormData(prev => ({ ...prev, lote_embalagem: e.target.value }))}
+              placeholder="Ex: L2025-001"
+            />
+          </div>
+
+          <div className="min-w-0 space-y-2">
+            <Label htmlFor="lotes_tampa">Lotes da tampa</Label>
+            <Input
+              id="lotes_tampa"
+              value={formData.lotes_tampa}
+              onChange={(e) => setFormData(prev => ({ ...prev, lotes_tampa: e.target.value }))}
+              placeholder="Ex: LT2025-001"
             />
           </div>
         </div>
 
-        {formData.quantidade_embalagens > 0 && (
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
-            <p><strong>Quantidade de Embalagens:</strong> {formData.quantidade_embalagens}</p>
-            <p><strong>Tempo por Embalagem:</strong> {formData.tempo_por_embalagem}</p>
+        {/* Controle de tempo — os botoes do cronometro ficavam de 40px colados
+            no campo; agora tem 48px e rotulo acessivel. */}
+        <fieldset className="mt-6 min-w-0 rounded-painel bg-fundo p-4 sm:p-5">
+          <legend className="px-1 text-[13px] font-bold text-texto-fraco">Controle de tempo</legend>
+          <div className="grid min-w-0 gap-4 md:grid-cols-3">
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="inicio">Início *</Label>
+              <div className="flex min-w-0 gap-2">
+                <Input
+                  id="inicio"
+                  type="time"
+                  className="min-w-0 flex-1 bg-cartao"
+                  value={formData.inicio}
+                  onChange={(e) => setFormData(prev => ({ ...prev, inicio: e.target.value }))}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={handleStartTimer}
+                  disabled={timing}
+                  aria-label="Marcar o início agora"
+                  className="flex-none bg-ok text-white hover:bg-ok"
+                >
+                  <Play className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </div>
+              {formErrors.inicio && (
+                <p className="text-xs font-bold text-erro">{formErrors.inicio}</p>
+              )}
+            </div>
+
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="termino">Término</Label>
+              <div className="flex min-w-0 gap-2">
+                <Input
+                  id="termino"
+                  type="time"
+                  className="min-w-0 flex-1 bg-cartao"
+                  value={formData.termino}
+                  onChange={(e) => setFormData(prev => ({ ...prev, termino: e.target.value }))}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={handleStopTimer}
+                  disabled={!timing}
+                  aria-label="Marcar o término agora"
+                  className="flex-none bg-erro text-white hover:bg-erro"
+                >
+                  <Square className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="tempo_produtivo">Tempo produtivo</Label>
+              <Input
+                id="tempo_produtivo"
+                value={formData.tempo_produtivo || "--:--"}
+                disabled
+                className="num bg-cartao font-bold"
+              />
+            </div>
           </div>
-        )}
-      </div>
+        </fieldset>
 
-      {/* Dificuldade */}
-      <div className="space-y-2">
-        <Label htmlFor="dificuldade">Dificuldade</Label>
-        <Select
-          value={formData.dificuldade_codigo.toString()}
-          onValueChange={(value) => setFormData(prev => ({ ...prev, dificuldade_codigo: parseInt(value) }))}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {DIFICULDADES.map((d) => (
-              <SelectItem key={d.codigo} value={d.codigo.toString()}>
-                {d.descricao}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Lotes */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="lote_embalagem">Lote da Embalagem</Label>
-          <Input
-            id="lote_embalagem"
-            value={formData.lote_embalagem}
-            onChange={(e) => setFormData(prev => ({ ...prev, lote_embalagem: e.target.value }))}
-            placeholder="Ex: L2025-001"
+        <div className="mt-6 min-w-0 space-y-2">
+          <Label htmlFor="observacoes">Observações</Label>
+          <Textarea
+            id="observacoes"
+            value={formData.observacoes}
+            onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+            placeholder="Observações adicionais…"
+            rows={3}
           />
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="lotes_tampa">Lotes da Tampa</Label>
-          <Input
-            id="lotes_tampa"
-            value={formData.lotes_tampa}
-            onChange={(e) => setFormData(prev => ({ ...prev, lotes_tampa: e.target.value }))}
-            placeholder="Ex: LT2025-001"
-          />
-        </div>
-      </div>
-
-      {/* Observações */}
-      <div className="space-y-2">
-        <Label htmlFor="observacoes">Observações</Label>
-        <Textarea
-          id="observacoes"
-          value={formData.observacoes}
-          onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
-          placeholder="Observações adicionais..."
-          rows={3}
-        />
-      </div>
-
-      {/* Botão Salvar com trava anti-corrida */}
-      <Button
-        type="submit"
-        className="w-full bg-marca hover:bg-marca-forte"
-        disabled={isLoading || isSubmitting || autoSaveMutation.isPending}
-      >
-        <Save className="w-4 h-4 mr-2" />
-        {isSubmitting ? "Finalizando..." : isLoading ? "Salvando..." : "Finalizar Registro"}
-      </Button>
-      
-      {autoSaveMutation.isPending && (
-        <p className="text-sm text-marca text-center animate-pulse">Salvando automaticamente em segundo plano...</p>
-      )}
+      </SectionCard>
     </form>
   );
 }
