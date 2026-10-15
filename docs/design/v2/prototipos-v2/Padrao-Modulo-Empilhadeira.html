@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Módulo operacional — empilhadeira</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Manrope',sans-serif;color:#141A2B;background:#F3F4F8;-webkit-font-smoothing:antialiased}
+button,a{font-family:inherit;cursor:pointer;transition:transform .15s ease,box-shadow .25s ease,background-color .2s ease,color .2s ease}
+button:active{transform:scale(.97)}
+.nv:hover{background:#EEF1FF;color:#3B5BFF}
+.card{transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s ease}
+.card:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(20,26,43,.12)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.in{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(18,166,107,.5)}100%{box-shadow:0 0 0 10px rgba(18,166,107,0)}}
+.live{animation:pulse 1.8s ease-out infinite}
+@keyframes grow{from{width:0}to{width:var(--w)}}
+.fill{animation:grow 1.2s cubic-bezier(.2,.8,.2,1) .3s both}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;min-height:900px;padding:16px;gap:16px;box-sizing:border-box;background:#F3F4F8">
+  <aside style="flex:1 1 248px;max-width:100%;background:#fff;border-radius:24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);padding:20px 14px;display:flex;flex-direction:column;gap:2px;box-sizing:border-box">
+    <div style="display:flex;align-items:center;gap:12px;padding:4px 10px 20px"><div style="width:44px;height:44px;border-radius:14px;background:#141A2B;color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center">EP</div><div><div style="font-weight:800;font-size:18px;letter-spacing:-.02em;line-height:1.1">EnvasePro</div><div style="font-size:12px;font-weight:600;color:#7A8296">Operações Interlub</div></div></div>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Painel geral</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Check-out</a>
+    <a href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;background:#EEF1FF;color:#3B5BFF;text-decoration:none;font-weight:700;font-size:15px">Empilhadeira</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Recebimento</a>
+  </aside>
+
+  <main style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+    <header class="in" style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between;padding:6px 4px 0">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#7A8296"><span class="live" style="width:9px;height:9px;border-radius:5px;background:#12A66B"></span>Em operação</div>
+        <h1 style="margin:4px 0 0;font-size:38px;line-height:1.1;font-weight:800;letter-spacing:-.03em">Empilhadeira</h1>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button style="height:52px;padding:0 22px;border:0;border-radius:16px;background:#FDE3E4;color:#C93138;font-size:15px;font-weight:800">Registrar parada</button>
+        <button style="height:52px;padding:0 24px;border:0;border-radius:16px;background:#3B5BFF;color:#fff;font-size:15px;font-weight:800;box-shadow:0 10px 24px rgba(59,91,255,.34)">+ Iniciar linha</button>
+      </div>
+    </header>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px">
+      <div class="card in" style="animation-delay:.05s;background:#3B5BFF;color:#fff;border-radius:24px;padding:22px;box-shadow:0 14px 34px rgba(59,91,255,.35)"><div style="font-size:14px;font-weight:700;opacity:.8">Linhas concluídas hoje</div><div style="font-size:60px;font-weight:800;letter-spacing:-.04em;line-height:1.05;margin-top:6px">9</div><div style="margin-top:6px;font-size:14px;font-weight:700;background:rgba(255,255,255,.18);display:inline-block;padding:4px 10px;border-radius:999px">meta do turno: 12</div></div>
+      <div class="card in" style="animation-delay:.1s;background:#fff;border-radius:24px;padding:22px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05)"><div style="font-size:14px;font-weight:700;color:#7A8296">Tempo parada hoje</div><div style="font-size:60px;font-weight:800;letter-spacing:-.04em;line-height:1.05;margin-top:6px">0h38</div><div style="margin-top:6px;font-size:14px;font-weight:600;color:#7A8296">2 paradas</div></div>
+      <div class="card in" style="animation-delay:.15s;background:#fff;border-radius:24px;padding:22px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05)"><div style="font-size:14px;font-weight:700;color:#7A8296">Esperando assinatura</div><div style="font-size:60px;font-weight:800;letter-spacing:-.04em;line-height:1.05;margin-top:6px">3</div><div style="margin-top:6px;font-size:14px;font-weight:600;color:#7A8296">linhas concluídas</div></div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <section class="in" style="animation-delay:.2s;flex:2 1 460px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);box-sizing:border-box">
+        <h2 style="margin:0 0 16px;font-size:20px;font-weight:800;letter-spacing:-.02em">Linhas de hoje</h2>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card" style="border:2px solid #3B5BFF;background:#F0F3FF;border-radius:20px;padding:16px 18px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:800;font-size:18px">[Produto / destino] <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:#5A6AA8;margin-left:6px">L-0412</span></div><span style="display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:800;background:#E3E8FF;color:#2A43C7"><span style="width:7px;height:7px;border-radius:4px;background:#3B5BFF"></span>Em andamento</span></div>
+            <div style="height:10px;background:#fff;border-radius:5px;margin-top:14px;overflow:hidden"><div class="fill" style="--w:64%;width:64%;height:100%;background:#3B5BFF;border-radius:5px"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#5A6AA8;margin-top:8px"><span>64% concluído</span><span>há 18 min</span></div>
+          </div>
+          <div class="card" style="border:2px solid #EDEFF5;border-radius:20px;padding:16px 18px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:800;font-size:18px">[Produto / destino] <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:#7A8296;margin-left:6px">L-0411</span></div><span style="display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:800;background:#FFF1D6;color:#8A5A00"><span style="width:7px;height:7px;border-radius:4px;background:#E69A00"></span>Aguarda assinatura</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span style="font-size:13px;font-weight:700;color:#7A8296">Concluída 13:05</span><button style="height:44px;padding:0 20px;border:0;border-radius:14px;background:#141A2B;color:#fff;font-size:14px;font-weight:800">Assinar</button></div>
+          </div>
+          <div class="card" style="border:2px solid #EDEFF5;border-radius:20px;padding:16px 18px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:800;font-size:18px">[Produto / destino] <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:#7A8296;margin-left:6px">L-0410</span></div><span style="display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:800;background:#DDF4EA;color:#0A6B45"><span style="width:7px;height:7px;border-radius:4px;background:#12A66B"></span>Concluída</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="in" style="animation-delay:.25s;flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <div class="card" style="background:#fff;border-radius:24px;padding:22px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05)">
+          <h2 style="margin:0 0 14px;font-size:20px;font-weight:800;letter-spacing:-.02em">Paradas</h2>
+          <div style="display:flex;flex-direction:column;gap:14px;border-left:2px solid #E6E8EF;margin-left:6px;padding-left:18px">
+            <div style="position:relative"><span style="position:absolute;left:-27px;top:4px;width:14px;height:14px;border-radius:7px;background:#E5484D;border:3px solid #fff"></span><div style="font-size:15px;font-weight:800">[Motivo da parada]</div><div style="font-size:13px;font-weight:600;color:#7A8296">11:20 – 11:41 · 21 min</div></div>
+            <div style="position:relative"><span style="position:absolute;left:-27px;top:4px;width:14px;height:14px;border-radius:7px;background:#E69A00;border:3px solid #fff"></span><div style="font-size:15px;font-weight:800">[Motivo da parada]</div><div style="font-size:13px;font-weight:600;color:#7A8296">09:02 – 09:19 · 17 min</div></div>
+          </div>
+        </div>
+        <div class="card" style="background:#fff;border-radius:24px;padding:22px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05)">
+          <h2 style="margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.02em">Próxima manutenção</h2>
+          <div style="font-size:40px;font-weight:800;letter-spacing:-.03em;color:#B87500">5 dias</div>
+          <div style="height:10px;background:#EDEFF5;border-radius:5px;margin-top:10px;overflow:hidden"><div class="fill" style="--w:82%;width:82%;height:100%;background:#E69A00;border-radius:5px"></div></div>
+          <div style="font-size:13px;font-weight:600;color:#7A8296;margin-top:8px">82% do intervalo consumido</div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

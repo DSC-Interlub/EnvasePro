@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Formulário — novo produto</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Manrope',sans-serif;color:#141A2B;background:#F3F4F8;-webkit-font-smoothing:antialiased}
+button,a{font-family:inherit;cursor:pointer;transition:transform .15s ease,box-shadow .25s ease,background-color .2s ease,color .2s ease,border-color .2s ease}
+button:active{transform:scale(.97)}
+.nv:hover{background:#EEF1FF;color:#3B5BFF}
+.fld{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fld span{font-size:13px;font-weight:700;color:#4A5268}
+.fld input{height:56px;box-sizing:border-box;border:2px solid transparent;background:#F3F4F8;border-radius:16px;padding:0 16px;font-family:'Manrope',sans-serif;font-size:16px;font-weight:600;color:#141A2B;outline:0;transition:border-color .2s,box-shadow .2s,background-color .2s}
+.fld input:focus{background:#fff;border-color:#3B5BFF;box-shadow:0 0 0 4px rgba(59,91,255,.14)}
+.pri:hover{box-shadow:0 14px 30px rgba(59,91,255,.4);transform:translateY(-2px)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.in{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;min-height:900px;padding:16px;gap:16px;box-sizing:border-box;background:#F3F4F8">
+  <aside style="flex:1 1 248px;max-width:100%;background:#fff;border-radius:24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);padding:20px 14px;display:flex;flex-direction:column;gap:2px;box-sizing:border-box">
+    <div style="display:flex;align-items:center;gap:12px;padding:4px 10px 20px"><div style="width:44px;height:44px;border-radius:14px;background:#141A2B;color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center">EP</div><div><div style="font-weight:800;font-size:18px;letter-spacing:-.02em;line-height:1.1">EnvasePro</div><div style="font-size:12px;font-weight:600;color:#7A8296">Operações Interlub</div></div></div>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Painel geral</a>
+    <a href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;background:#EEF1FF;color:#3B5BFF;text-decoration:none;font-weight:700;font-size:15px">Produtos e embalagens</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Operadores</a>
+  </aside>
+
+  <main style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+    <header class="in" style="padding:6px 4px 0">
+      <div style="font-size:13px;font-weight:600;color:#7A8296">Cadastros <span style="margin:0 6px">/</span> Produtos <span style="margin:0 6px">/</span> Novo</div>
+      <h1 style="margin:4px 0 0;font-size:38px;line-height:1.1;font-weight:800;letter-spacing:-.03em">Novo produto</h1>
+    </header>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+      <div style="flex:2 1 520px;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <section class="in" style="animation-delay:.05s;background:#fff;border-radius:24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);padding:24px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><span style="width:34px;height:34px;border-radius:17px;background:#3B5BFF;color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center">1</span><h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em">Identificação</h2></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+            <label class="fld"><span>Código</span><input placeholder="Ex.: IVP050211010"></label>
+            <label class="fld"><span>Nome do produto</span><input placeholder="Ex.: Intergrease LC N 2"></label>
+            <label class="fld"><span>Consistência</span><input placeholder="Ex.: 2"></label>
+            <label class="fld"><span>Categoria</span><input placeholder="Escolha uma categoria"></label>
+          </div>
+        </section>
+
+        <section class="in" style="animation-delay:.1s;background:#fff;border-radius:24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);padding:24px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><span style="width:34px;height:34px;border-radius:17px;background:#3B5BFF;color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center">2</span><h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em">Unidade e certificações</h2></div>
+          <div style="font-size:13px;font-weight:700;color:#4A5268;margin-bottom:8px">Unidade</div>
+          <div style="display:inline-flex;gap:4px;background:#F3F4F8;padding:5px;border-radius:16px">
+            <sc-for list="{{units}}" as="u" hint-placeholder-count="3"><button onClick="{{u.press}}" style="height:46px;padding:0 26px;border:0;border-radius:12px;font-size:15px;font-weight:800;background:{{u.bg}};color:{{u.fg}};box-shadow:{{u.sh}}">{{u.label}}</button></sc-for>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:#4A5268;margin:20px 0 8px">Certificações</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <sc-for list="{{certs}}" as="c" hint-placeholder-count="3"><button onClick="{{c.press}}" style="height:52px;padding:0 20px 0 14px;border-radius:16px;font-size:15px;font-weight:800;background:{{c.bg}};color:{{c.fg}};border:2px solid {{c.bd}};display:flex;align-items:center;gap:10px"><span style="width:24px;height:24px;border-radius:12px;background:{{c.dot}};display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{c.tick}}"><path d="M4 12l5 5L20 6"/></svg></span>{{c.label}}</button></sc-for>
+          </div>
+        </section>
+      </div>
+
+      <aside class="in" style="animation-delay:.15s;flex:1 1 300px;min-width:0;background:#fff;border-radius:24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);padding:24px;display:flex;flex-direction:column;gap:16px;box-sizing:border-box">
+        <div style="font-size:13px;font-weight:700;color:#7A8296">Como vai aparecer</div>
+        <div style="background:#F0F3FF;border:2px solid #3B5BFF;border-radius:20px;padding:18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#5A6AA8">[código]</div>
+          <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:2px">[Nome do produto]</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><span style="background:#fff;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700">Unidade {{unit}}</span><sc-for list="{{certOn}}" as="o" hint-placeholder-count="1"><span style="background:#DDF4EA;color:#0A6B45;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:800">{{o.label}}</span></sc-for></div>
+        </div>
+        <button class="pri" style="height:64px;border:0;border-radius:20px;background:#3B5BFF;color:#fff;font-size:18px;font-weight:800;box-shadow:0 10px 24px rgba(59,91,255,.34)">Salvar produto</button>
+        <button style="height:56px;border:0;border-radius:18px;background:#F3F4F8;color:#141A2B;font-size:16px;font-weight:700">Cancelar</button>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const unit = s.unit || 'KG';
+    const on = s.certs || { Halal: true };
+    const units = ['KG', 'UN', 'L'].map((u) => {
+      const a = unit === u;
+      return { label: u, bg: a ? '#fff' : 'transparent', fg: a ? '#3B5BFF' : '#4A5268', sh: a ? '0 2px 8px rgba(20,26,43,.12)' : 'none', press: () => this.setState({ unit: u }) };
+    });
+    const names = ['Halal', 'Kosher', 'NSF'];
+    const certs = names.map((n) => {
+      const a = !!on[n];
+      return { label: n, bg: a ? '#F0F3FF' : '#fff', fg: a ? '#3B5BFF' : '#141A2B', bd: a ? '#3B5BFF' : '#E1E4EE', dot: a ? '#3B5BFF' : '#D5D9E6', tick: a ? 1 : 0, press: () => { const cur = Object.assign({}, (this.state && this.state.certs) || { Halal: true }); cur[n] = !cur[n]; this.setState({ certs: cur }); } };
+    });
+    return { units, certs, unit, certOn: names.filter((n) => on[n]).map((n) => ({ label: n })) };
+  }
+}
+</script>
+</body>
+</html>
