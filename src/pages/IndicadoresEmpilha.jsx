@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BarChart2, Clock, User, OctagonX, AlertTriangle, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -10,9 +8,10 @@ import { createPageUrl } from "@/utils";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  PageHeader, SectionCard, EmptyState, MiniKPI, CORES_GRAFICO, EIXO, GRADE, TOOLTIP, LEGENDA, RAIO_BARRA,
+} from "@/components/fluxo";
 import FiltroPeriodoEmpilha from "../components/empilhadeira/FiltroperiodoEmpilha";
-
-const COLORS = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6", "#ec4899"];
 
 function minsFromHHMM(str) {
   if (!str) return 0;
@@ -20,15 +19,6 @@ function minsFromHHMM(str) {
   if (str.includes("min")) return parseInt(str) || 0;
   const [h, m] = str.split(":").map(Number);
   return (h || 0) * 60 + (m || 0);
-}
-
-function EmptyState({ label }) {
-  return (
-    <div className="text-center py-10 text-slate-400">
-      <BarChart2 className="w-10 h-10 mx-auto mb-2 opacity-30" />
-      <p className="text-sm">{label || "Sem dados no período selecionado"}</p>
-    </div>
-  );
 }
 
 export default function IndicadoresEmpilha() {
@@ -181,259 +171,302 @@ export default function IndicadoresEmpilha() {
   });
   const oeeMedio = oeeDias.length > 0 ? Math.round(oeeDias.reduce((a, d) => a + d.aproveitamento, 0) / oeeDias.length) : 0;
 
+  // Tokens dos graficos, lidos no render: trocar --marca troca todos os
+  // graficos da tela. Antes eram seis hexadecimais num array COLORS.
+  const cores = CORES_GRAFICO();
+  const eixo = EIXO();
+  const grade = GRADE();
+  const tooltip = TOOLTIP();
+  const legenda = LEGENDA();
   return (
     <div className="min-h-screen bg-fundo p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-4">
+        <PageHeader
+          migalha={[{ rotulo: "Empilhadeira" }, { rotulo: "Indicadores" }]}
+          titulo="Indicadores da empilhadeira"
+          legenda="Produção, operadores, paradas e aproveitamento"
+          acoes={
+            <Link to={createPageUrl("Empilhadeira")}>
+              <Button variant="outline" size="lg">
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Voltar
+              </Button>
+            </Link>
+          }
+        />
 
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link to={createPageUrl("Empilhadeira")}>
-            <Button variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-              <BarChart2 className="w-8 h-8 text-amber-600" />
-              Indicadores — Empilhadeira
-            </h1>
-          </div>
-        </div>
+        <FiltroPeriodoEmpilha
+          dataInicio={dataInicio}
+          dataFim={dataFim}
+          onChange={(i, f) => { setDataInicio(i); setDataFim(f); }}
+        />
 
-        {/* Filtro período */}
-        <FiltroPeriodoEmpilha dataInicio={dataInicio} dataFim={dataFim} onChange={(i, f) => { setDataInicio(i); setDataFim(f); }} />
+        {/* ── PRODUÇÃO ─────────────────────────────────────────────────── */}
+        <SectionCard titulo="Produção" legenda="Linhas movimentadas no período" icone={TrendingUp} atraso={0.05}>
+          {linhasFiltradas.length === 0 ? (
+            <EmptyState icone={BarChart2} titulo="Sem dados no período selecionado" />
+          ) : (
+            <div className="flex min-w-0 flex-col gap-5">
+              <div className="grid min-w-0 grid-cols-2 gap-2.5 md:grid-cols-4">
+                <MiniKPI rotulo="Normal" valor={totalNormal} />
+                <MiniKPI rotulo="Crítico" valor={totalCritico} tom="erro" />
+                <MiniKPI rotulo="Avulso" valor={totalAvulso} tom="atencao" />
+                <MiniKPI rotulo="Concluídas" valor={`${totalConcluidas}/${linhasFiltradas.length}`} tom="ok" />
+              </div>
 
-        {/* Bloco 1 — Produção */}
-        <Card className="border-slate-200 shadow-md">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-amber-600" /> Produção</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            {linhasFiltradas.length === 0 ? <EmptyState /> : (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-slate-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Normal</p>
-                    <p className="text-2xl font-bold text-slate-800">{totalNormal}</p>
-                  </div>
-                  <div className="bg-red-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Crítico</p>
-                    <p className="text-2xl font-bold text-red-700">{totalCritico}</p>
-                  </div>
-                  <div className="bg-amber-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Avulso</p>
-                    <p className="text-2xl font-bold text-amber-700">{totalAvulso}</p>
-                  </div>
-                  <div className="bg-green-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-500 mb-1">Concluídas</p>
-                    <p className="text-2xl font-bold text-green-700">{totalConcluidas}/{linhasFiltradas.length}</p>
-                  </div>
+              <div className="grid min-w-0 gap-5 md:grid-cols-2">
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold text-texto-fraco">Tempo médio por linha</p>
+                  <p className="num text-[38px] font-extrabold leading-none text-tinta">
+                    {tempoMedioGeral} <span className="text-xl text-texto-fraco">min</span>
+                  </p>
+                  <dl className="mt-2.5 space-y-1">
+                    {tempoMedioTipo.map((t) => (
+                      <div key={t.tipo} className="flex items-center gap-2 text-sm">
+                        <dt className="w-20 font-bold text-texto-fraco">{t.tipo}</dt>
+                        <dd className="num font-extrabold text-tinta">{t.media} min</dd>
+                        <dd className="text-xs font-semibold text-texto-apagado">
+                          ({t.count} linhas)
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
                 </div>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-600 mb-1">Tempo médio por linha</p>
-                    <p className="text-3xl font-bold text-amber-600">{tempoMedioGeral} min</p>
-                    <div className="mt-2 space-y-1">
-                      {tempoMedioTipo.map(t => (
-                        <div key={t.tipo} className="flex items-center gap-2 text-sm text-slate-600">
-                          <span className="w-16">{t.tipo}:</span>
-                          <span className="font-semibold">{t.media} min</span>
-                          <span className="text-slate-400">({t.count} linhas)</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-600 mb-2">Linhas por dia</p>
-                    {linhasPorDia.length > 1 ? (
-                      <ResponsiveContainer width="100%" height={160}>
-                        <BarChart data={linhasPorDia}>
-                          <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
-                          <YAxis tick={{ fontSize: 10 }} />
-                          <Tooltip />
-                          <Bar dataKey="Normal" stackId="a" fill="#64748b" />
-                          <Bar dataKey="Crítico" stackId="a" fill="#ef4444" />
-                          <Bar dataKey="Avulso" stackId="a" fill="#f59e0b" />
+
+                <div className="min-w-0">
+                  <p className="mb-2 text-[13px] font-bold text-texto-fraco">Linhas por dia</p>
+                  {linhasPorDia.length > 1 ? (
+                    <div style={{ height: 180 }} className="min-w-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={linhasPorDia} margin={{ top: 4, right: 8, left: -22, bottom: 0 }}>
+                          <CartesianGrid {...grade} />
+                          <XAxis dataKey="dia" {...eixo} />
+                          <YAxis {...eixo} />
+                          <Tooltip {...tooltip} />
+                          <Bar dataKey="Normal" stackId="a" fill={cores[5]} />
+                          <Bar dataKey="Crítico" stackId="a" fill={cores[3]} />
+                          <Bar dataKey="Avulso" stackId="a" fill={cores[2]} radius={RAIO_BARRA} />
                         </BarChart>
                       </ResponsiveContainer>
-                    ) : <p className="text-slate-400 text-sm">Selecione um período maior para ver o gráfico</p>}
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Bloco 2 — Operadores */}
-        <Card className="border-slate-200 shadow-md">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-marca" /> Operadores</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            {linhasFiltradas.length === 0 ? <EmptyState /> : (
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-semibold text-slate-600 mb-3">Empilhadores</p>
-                  {toRanking(rankingEmpilhador).length === 0 ? <p className="text-slate-400 text-sm">Sem dados</p> :
-                    toRanking(rankingEmpilhador).map((op, i) => (
-                      <div key={op.nome} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
-                        <span className="text-slate-400 text-sm w-5">{i + 1}.</span>
-                        <span className="font-medium text-slate-800 flex-1">{op.nome}</span>
-                        <Badge className="bg-slate-100 text-slate-700">{op.total} linhas</Badge>
-                        <span className="text-xs text-slate-500">{op.media} min/linha</span>
-                      </div>
-                    ))
-                  }
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-600 mb-3">Ajudantes</p>
-                  {toRanking(rankingAjudante).length === 0 ? <p className="text-slate-400 text-sm">Sem dados</p> :
-                    toRanking(rankingAjudante).map((op, i) => (
-                      <div key={op.nome} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
-                        <span className="text-slate-400 text-sm w-5">{i + 1}.</span>
-                        <span className="font-medium text-slate-800 flex-1">{op.nome}</span>
-                        <Badge className="bg-slate-100 text-slate-700">{op.total} linhas</Badge>
-                        <span className="text-xs text-slate-500">{op.media} min/linha</span>
-                      </div>
-                    ))
-                  }
+                    </div>
+                  ) : (
+                    <p className="text-sm font-semibold text-texto-apagado">
+                      Selecione um período maior para ver o gráfico
+                    </p>
+                  )}
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </SectionCard>
 
-        {/* Bloco 3 — Paradas */}
-        <Card className="border-slate-200 shadow-md">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="flex items-center gap-2"><OctagonX className="w-5 h-5 text-orange-600" /> Paradas</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            {paradasFiltradas.length === 0 ? <EmptyState label="Nenhuma parada registrada no período" /> : (
-              <>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-orange-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-500">Total paradas</p>
-                    <p className="text-2xl font-bold text-orange-700">{paradasFiltradas.length}</p>
-                  </div>
-                  <div className="bg-red-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-500">Tempo parado</p>
-                    <p className="text-2xl font-bold text-red-700">{totalTempoParado} min</p>
-                  </div>
-                  <div className="bg-slate-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-500">% turno perdido</p>
-                    <p className="text-2xl font-bold text-slate-700">{duracaoTurnoMins > 0 ? Math.round((totalTempoParado / duracaoTurnoMins) * 100) : 0}%</p>
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-600 mb-2">Tempo parado por tipo (min)</p>
-                    {paradaPorTipo.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={160}>
+        {/* ── OPERADORES ───────────────────────────────────────────────── */}
+        <SectionCard titulo="Operadores" legenda="Quem movimentou mais linhas" icone={User} atraso={0.1}>
+          {linhasFiltradas.length === 0 ? (
+            <EmptyState icone={BarChart2} titulo="Sem dados no período selecionado" />
+          ) : (
+            <div className="grid min-w-0 gap-5 md:grid-cols-2">
+              <Ranking titulo="Empilhadores" itens={toRanking(rankingEmpilhador)} />
+              <Ranking titulo="Ajudantes" itens={toRanking(rankingAjudante)} />
+            </div>
+          )}
+        </SectionCard>
+
+        {/* ── PARADAS ──────────────────────────────────────────────────── */}
+        <SectionCard titulo="Paradas" legenda="Tempo em que a empilhadeira ficou parada" icone={OctagonX} atraso={0.15}>
+          {paradasFiltradas.length === 0 ? (
+            <EmptyState icone={OctagonX} titulo="Nenhuma parada registrada no período"
+              legenda="Nada a relatar é um bom resultado." />
+          ) : (
+            <div className="flex min-w-0 flex-col gap-5">
+              <div className="grid min-w-0 grid-cols-3 gap-2.5">
+                <MiniKPI rotulo="Total de paradas" valor={paradasFiltradas.length} tom="atencao" />
+                <MiniKPI rotulo="Tempo parado" valor={`${totalTempoParado} min`} tom="erro" />
+                <MiniKPI
+                  rotulo="% do turno perdido"
+                  valor={`${duracaoTurnoMins > 0 ? Math.round((totalTempoParado / duracaoTurnoMins) * 100) : 0}%`}
+                />
+              </div>
+
+              <div className="grid min-w-0 gap-5 md:grid-cols-2">
+                <div className="min-w-0">
+                  <p className="mb-2 text-[13px] font-bold text-texto-fraco">Tempo parado por tipo</p>
+                  {paradaPorTipo.length > 0 && (
+                    <div style={{ height: 180 }} className="min-w-0">
+                      <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Pie data={paradaPorTipo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label={({ name, value }) => `${name}: ${value}min`}>
-                            {paradaPorTipo.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                          <Pie
+                            data={paradaPorTipo} dataKey="value" nameKey="name"
+                            cx="50%" cy="50%" outerRadius={64} paddingAngle={2}
+                          >
+                            {paradaPorTipo.map((_, i) => (
+                              <Cell key={i} fill={cores[i % cores.length]} />
+                            ))}
                           </Pie>
-                          <Tooltip />
+                          <Tooltip {...tooltip} formatter={(v) => [`${v} min`, ""]} />
+                          <Legend {...legenda} />
                         </PieChart>
                       </ResponsiveContainer>
-                    ) : null}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-600 mb-2">Paradas por dia</p>
-                    {paradasPorDia.length > 1 ? (
-                      <ResponsiveContainer width="100%" height={160}>
-                        <BarChart data={paradasPorDia}>
-                          <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
-                          <YAxis tick={{ fontSize: 10 }} />
-                          <Tooltip />
-                          <Bar dataKey="paradas" fill="#f97316" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <p className="mb-2 text-[13px] font-bold text-texto-fraco">Paradas por dia</p>
+                  {paradasPorDia.length > 1 ? (
+                    <div style={{ height: 180 }} className="min-w-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={paradasPorDia} margin={{ top: 4, right: 8, left: -22, bottom: 0 }}>
+                          <CartesianGrid {...grade} />
+                          <XAxis dataKey="dia" {...eixo} />
+                          <YAxis {...eixo} />
+                          <Tooltip {...tooltip} />
+                          <Bar dataKey="paradas" fill={cores[2]} radius={RAIO_BARRA} />
                         </BarChart>
                       </ResponsiveContainer>
-                    ) : <p className="text-slate-400 text-sm">Selecione um período maior para ver o gráfico</p>}
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Bloco 4 — Ocorrências */}
-        <Card className="border-slate-200 shadow-md">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-amber-600" /> Ocorrências</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            {ocorrenciasFiltradas.length === 0 ? <EmptyState label="Nenhuma ocorrência no período" /> : (
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-orange-50 rounded-lg p-3 text-center">
-                      <p className="text-xs text-slate-500">Total</p>
-                      <p className="text-xl font-bold text-orange-700">{ocorrenciasFiltradas.length}</p>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-3 text-center">
-                      <p className="text-xs text-slate-500">Resolvidas</p>
-                      <p className="text-xl font-bold text-green-700">{ocorrenciasFiltradas.filter(o => o.resolvido).length}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm font-semibold text-slate-600 mb-2">Quem mais registrou</p>
-                  {rankOcorrencias.slice(0, 5).map((op, i) => (
-                    <div key={op.nome} className="flex items-center gap-2 py-1.5 border-b border-slate-100 last:border-0 text-sm">
-                      <span className="text-slate-400 w-5">{i + 1}.</span>
-                      <span className="flex-1 text-slate-800">{op.nome}</span>
-                      <Badge className="bg-slate-100 text-slate-600">{op.total}</Badge>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-600 mb-2">Por tipo</p>
-                  {ocorrPorTipo.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={180}>
-                      <PieChart>
-                        <Pie data={ocorrPorTipo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={65} label={({ name, value }) => `${name}: ${value}`}>
-                          {ocorrPorTipo.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : null}
+                  ) : (
+                    <p className="text-sm font-semibold text-texto-apagado">
+                      Selecione um período maior para ver o gráfico
+                    </p>
+                  )}
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </SectionCard>
 
-        {/* Bloco 5 — OEE Simplificado */}
-        <Card className="border-slate-200 shadow-md">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-marca" /> OEE Simplificado
-              <Badge className="ml-2 bg-marca-suave text-marca">Turno: {empilhadeiraAtiva?.duracao_turno_horas || 8}h</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            {oeeDias.every(d => d.aproveitamento === 0) ? <EmptyState label="Sem dados de tempo concluído no período" /> : (
-              <>
-                <div className="bg-marca-suave rounded-lg p-4 text-center inline-block">
-                  <p className="text-xs text-slate-500 mb-1">Aproveitamento médio do período</p>
-                  <p className="text-4xl font-black text-marca">{oeeMedio}%</p>
+        {/* ── OCORRÊNCIAS ──────────────────────────────────────────────── */}
+        <SectionCard titulo="Ocorrências" legenda="Registradas no período" icone={AlertTriangle} atraso={0.2}>
+          {ocorrenciasFiltradas.length === 0 ? (
+            <EmptyState icone={AlertTriangle} titulo="Nenhuma ocorrência no período" />
+          ) : (
+            <div className="grid min-w-0 gap-5 md:grid-cols-2">
+              <div className="min-w-0">
+                <div className="mb-4 grid grid-cols-2 gap-2.5">
+                  <MiniKPI rotulo="Total" valor={ocorrenciasFiltradas.length} tom="atencao" />
+                  <MiniKPI
+                    rotulo="Resolvidas"
+                    valor={ocorrenciasFiltradas.filter((o) => o.resolvido).length}
+                    tom="ok"
+                  />
                 </div>
-                {oeeDias.length > 1 && (
-                  <ResponsiveContainer width="100%" height={180}>
-                    <LineChart data={oeeDias}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} unit="%" />
-                      <Tooltip formatter={(v) => `${v}%`} />
-                      <Line type="monotone" dataKey="aproveitamento" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} name="Aproveitamento %" />
+                <Ranking titulo="Quem mais registrou" itens={rankOcorrencias.slice(0, 5)} semMedia />
+              </div>
+
+              <div className="min-w-0">
+                <p className="mb-2 text-[13px] font-bold text-texto-fraco">Por tipo</p>
+                {ocorrPorTipo.length > 0 && (
+                  <div style={{ height: 200 }} className="min-w-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={ocorrPorTipo} dataKey="value" nameKey="name"
+                          cx="50%" cy="50%" outerRadius={70} paddingAngle={2}
+                        >
+                          {ocorrPorTipo.map((_, i) => (
+                            <Cell key={i} fill={cores[i % cores.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip {...tooltip} />
+                        <Legend {...legenda} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </SectionCard>
+
+        {/* ── OEE ──────────────────────────────────────────────────────── */}
+        <SectionCard
+          titulo="OEE simplificado"
+          legenda={`Turno de ${empilhadeiraAtiva?.duracao_turno_horas || 8}h`}
+          icone={Clock}
+          atraso={0.25}
+        >
+          {oeeDias.every((d) => d.aproveitamento === 0) ? (
+            <EmptyState icone={Clock} titulo="Sem dados de tempo concluído no período" />
+          ) : (
+            <div className="flex min-w-0 flex-col gap-4">
+              <div className="rounded-painel bg-marca-suave px-5 py-4">
+                <p className="text-[13px] font-bold text-marca-forte">
+                  Aproveitamento médio do período
+                </p>
+                <p className="num text-[60px] font-extrabold leading-none text-marca">{oeeMedio}%</p>
+              </div>
+
+              {oeeDias.length > 1 && (
+                <div style={{ height: 200 }} className="min-w-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={oeeDias} margin={{ top: 4, right: 8, left: -22, bottom: 0 }}>
+                      <CartesianGrid {...grade} />
+                      <XAxis dataKey="dia" {...eixo} />
+                      <YAxis domain={[0, 100]} unit="%" {...eixo} />
+                      <Tooltip {...tooltip} formatter={(v) => [`${v}%`, "Aproveitamento"]} />
+                      <Line
+                        type="monotone" dataKey="aproveitamento" name="Aproveitamento"
+                        stroke={cores[0]} strokeWidth={3}
+                        dot={{ r: 4, fill: cores[0] }} activeDot={{ r: 6 }}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
+                </div>
+              )}
+            </div>
+          )}
+        </SectionCard>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Ranking de pessoas — o mesmo bloco aparecia três vezes (empilhadores,
+ * ajudantes e quem registrou ocorrência), com `border-b border-slate-100` e um
+ * `<Badge>` cinza.
+ *
+ * A barra de proporção é nova: a lista ordenada já dizia a ordem, mas não a
+ * distância entre o primeiro e o segundo.
+ */
+function Ranking({ titulo, itens, semMedia = false }) {
+  const maior = Math.max(...itens.map((i) => i.total), 1);
+
+  return (
+    <div className="min-w-0">
+      <p className="mb-2.5 text-[13px] font-bold text-texto-fraco">{titulo}</p>
+      {itens.length === 0 ? (
+        <p className="text-sm font-semibold text-texto-apagado">Sem dados</p>
+      ) : (
+        <ol className="flex flex-col gap-1.5">
+          {itens.map((op, i) => (
+            <li key={op.nome} className="flex min-h-[48px] items-center gap-3 rounded-token bg-fundo px-3">
+              <span className="num w-5 flex-none text-sm font-bold text-texto-apagado">{i + 1}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-extrabold text-tinta">{op.nome}</span>
+                <span
+                  aria-hidden="true"
+                  className="mt-1 block h-1.5 overflow-hidden rounded-full bg-cartao"
+                >
+                  <span
+                    className="block h-full rounded-full bg-marca"
+                    style={{ width: `${Math.round((op.total / maior) * 100)}%` }}
+                  />
+                </span>
+              </span>
+              <span className="flex-none text-right">
+                <span className="num block text-sm font-extrabold text-tinta">{op.total}</span>
+                {!semMedia && op.media != null && (
+                  <span className="block text-[11px] font-semibold text-texto-apagado">
+                    {op.media} min/linha
+                  </span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }
