@@ -3,10 +3,27 @@ import { cva } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * `pointer-events-none` NO CONTEINER, `pointer-events-auto` em cada aviso.
+ *
+ * Sem isso, estes dois `<div>` fixos — um dentro do outro, ambos ancorados no
+ * canto inferior direito com `z-[100]`, 420px de largura e o `p-4` garantindo
+ * ~32px de altura mesmo VAZIOS — ficam por cima da tela e ENGOLEM O CLIQUE
+ * naquela faixa. Sem nenhum aviso aparecendo.
+ *
+ * Efeito medido em 15/10/2026: o botao "Salvar" do item de check-out, que no
+ * fim da pagina cai exatamente nessa faixa, era inclicavel —
+ * `document.elementFromPoint` no centro do botao devolvia este contêiner, e o
+ * PATCH nunca era disparado. Qualquer controle no canto inferior direito tinha
+ * o mesmo problema.
+ *
+ * O `pointer-events-auto` ja estava em `toastVariants`, no proprio aviso: e o
+ * par que faltava. Sem o `none` no pai, o `auto` no filho nao significa nada.
+ */
 const ToastProvider = React.forwardRef(({ ...props }, ref) => (
   <div
     ref={ref}
-    className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]"
+    className="pointer-events-none fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]"
     {...props}
   />
 ));
@@ -15,7 +32,7 @@ ToastProvider.displayName = "ToastProvider";
 const ToastViewport = React.forwardRef(({ ...props }, ref) => (
   <div
     ref={ref}
-    className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]"
+    className="pointer-events-none fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]"
     {...props}
   />
 ));
