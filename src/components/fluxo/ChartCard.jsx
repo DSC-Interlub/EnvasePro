@@ -62,6 +62,21 @@ export const TOOLTIP = () => ({
 });
 
 /** Barras com o topo arredondado, como no protótipo. */
+/**
+ * Legenda do Recharts. A legenda padrao usa a fonte do sistema em 14px e o
+ * quadradinho de cor colado no texto; aqui ela fala a tipografia da direcao.
+ */
+export const LEGENDA = () => ({
+  iconType: "circle",
+  iconSize: 9,
+  wrapperStyle: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: token("--texto-fraco"),
+    paddingTop: 6,
+  },
+});
+
 export const RAIO_BARRA = [10, 10, 4, 4];
 
 export default function ChartCard({
