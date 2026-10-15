@@ -89,6 +89,14 @@ async function main() {
   const { count: antes } = await svc
     .from('envase_records').select('*', { count: 'exact', head: true });
 
+  // Marco de tempo para a limpeza. Apagar so os ids conhecidos nao bastava: o
+  // autosave grava assim que HA PRODUTO, e este teste escolhe produto tres
+  // vezes (fluxo principal, "Usar" dos recentes e a copia Industrial). A
+  // terceira linha sobrava e ia falsear a contagem da proxima suite.
+  const { data: ultima } = await svc.from('envase_records')
+    .select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle();
+  const marco = ultima?.created_at || '1970-01-01T00:00:00Z';
+
   // ====================================================== NOVO REGISTRO ====
   console.log('\n[1] Novo registro — busca, teclado e autosave');
   await abrir(page, 'NovoRegistro');
@@ -176,7 +184,12 @@ async function main() {
       if (r.width <= 2 || r.height <= 2) continue;
       if (el.tagName === 'A' && el.closest('p')) continue;
       if (el.tagName === 'A' && el.querySelector('button')) continue;
-      if (r.height < 48 || r.width < 48) {
+      // Meio pixel de folga, e nao `< 48` cru: getBoundingClientRect devolve
+      // 47.99999999999999 para uma caixa de 48px, e o portao falhava relatando
+      // "48.0x48.0 esta abaixo de 48px" — uma falha que se contradiz na
+      // propria mensagem. Meio pixel nao muda nada para o dedo e elimina o
+      // ruido de ponto flutuante.
+      if (r.height < 47.5 || r.width < 47.5) {
         const rotulo = (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 24);
         ruins.push(`${el.tagName.toLowerCase()} "${rotulo}" ${Math.round(r.width)}x${Math.round(r.height)}`);
       }
@@ -301,14 +314,12 @@ async function main() {
   await print(page, 'registros-chips');
 
   // ============================================================== LIMPEZA ===
-  if (idIndustrial) await svc.from('envase_records').delete().eq('id', idIndustrial);
-  if (linha?.id) {
-    await svc.from('envase_records').delete().eq('id', linha.id);
-    const { count: depois } = await svc
-      .from('envase_records').select('*', { count: 'exact', head: true });
-    registrar('o registro de teste foi removido do banco local', depois === antes,
-      `${antes} antes, ${depois} depois`);
-  }
+  const { data: removidos } = await svc.from('envase_records')
+    .delete().gt('created_at', marco).select('id');
+  const { count: depois } = await svc
+    .from('envase_records').select('*', { count: 'exact', head: true });
+  registrar('o banco local volta ao estado anterior', depois === antes,
+    `${antes} antes, ${depois} depois, ${removidos?.length ?? 0} removido(s)`);
 
   const errosReais = erros.filter((e) => !/favicon|sourcemap/i.test(e));
   registrar('nenhum erro de console ou de rede', errosReais.length === 0,

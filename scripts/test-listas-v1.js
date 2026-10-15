@@ -233,8 +233,16 @@ for (const [nome, w, h] of LARGURAS) {
       const pequenos = {};
       for (const b of acoes) {
         const r = b.getBoundingClientRect();
-        if (r.width > 0 && (r.width < 48 || r.height < 48)) {
-          pequenos[`${b.getAttribute('aria-label')}`] = `${Math.round(r.width)}x${Math.round(r.height)}`;
+      // Meio pixel de folga, e nao `< 48` cru: getBoundingClientRect devolve
+      // 47.99999999999999 para uma caixa de 48px, e o portao falhava relatando
+      // "48.0x48.0 esta abaixo de 48px" — uma falha que se contradiz na
+      // propria mensagem. Meio pixel nao muda nada para o dedo e elimina o
+      // ruido de ponto flutuante.
+        if (r.width > 0 && (r.width < 47.5 || r.height < 47.5)) {
+          // Uma casa decimal: com Math.round, um alvo de 47,6px era impresso
+          // como "48" e a falha parecia contradizer a si mesma.
+          pequenos[`${b.getAttribute('aria-label')}`] =
+            `${r.width.toFixed(1)}x${r.height.toFixed(1)}`;
         }
       }
       return {

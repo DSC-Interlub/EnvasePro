@@ -36,10 +36,19 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
       )}
       {...props}>
       {children}
+      {/* 48px, como todo alvo de toque do sistema.
+          O padrao do shadcn desenha so o icone de 16px, e o alvo media 15px de
+          altura: o menor alvo de TODO o sistema, repetido em cada dialogo.
+          Medido em 15/10/2026 pelo scripts/test-leitor-codigo.js, que e o
+          primeiro a medir dentro de modal — o medir-alvos.mjs percorre telas e
+          nao abre dialogo, entao isto passou despercebido em 90 medicoes. */}
       <DialogPrimitive.Close
-        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
+        aria-label="Fechar"
+        className="press foco-fluxo absolute right-2.5 top-2.5 flex h-12 w-12 items-center
+                   justify-center rounded-token text-texto-fraco transition-colors
+                   hover:bg-fundo hover:text-tinta disabled:pointer-events-none">
+        <X className="h-5 w-5" aria-hidden="true" />
+        <span className="sr-only">Fechar</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>

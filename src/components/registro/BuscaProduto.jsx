@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
+import ModalLeitor from "./ModalLeitor";
 import { Search, ScanLine, Check, Package, ArrowRight, X } from "lucide-react";
 import { EmptyState } from "@/components/fluxo";
 
@@ -13,13 +14,16 @@ import { EmptyState } from "@/components/fluxo";
  * errasse um dígito, não aparecia nada e não havia mensagem dizendo por quê.
  * Buscar pelo nome do produto era impossível.
  *
- * O "LER CÓDIGO" NÃO É BOTÃO DE ENFEITE
+ * O "LER CÓDIGO" ABRE OS DOIS CAMINHOS NO MESMO LUGAR
  *
- * Leitor de código de barras USB se comporta como teclado: ele digita o código
- * no campo que está com foco e manda um Enter. Então focar o campo É a
- * implementação para o leitor USB, e é o que este botão faz hoje — por isso ele
- * já vem ligado, e não desabilitado "até a câmera chegar". A leitura pela
- * câmera entra depois e substitui só o `onClick`.
+ * O botão abre o `ModalLeitor`, que tenta a câmera e, ao mesmo tempo, deixa um
+ * campo com foco pronto para a rajada do leitor de mão (esse tipo de leitor se
+ * comporta como teclado: digita o código e manda um Enter). Um botão para cada
+ * caminho obrigaria o operador a saber qual aparelho a fábrica comprou.
+ *
+ * Este campo de busca também trata o Enter escolhendo o produto de código
+ * exato, então um leitor de mão disparado direto aqui, sem abrir o modal,
+ * funciona igual.
  *
  * "USADOS HÁ POUCO" vem do `localStorage` desta máquina, não do banco: é a
  * bancada que repete produto, e uma consulta a mais no banco a cada registro
@@ -59,6 +63,7 @@ export default function BuscaProduto({
   erro,
 }) {
   const [termo, setTermo] = useState("");
+  const [leitorAberto, setLeitorAberto] = useState(false);
   const campo = useRef(null);
 
   const resultados = useMemo(() => {
@@ -80,6 +85,21 @@ export default function BuscaProduto({
       .filter(Boolean)
       .filter((p) => p.codigo !== codigo);
   }, [products, codigo]);
+
+  /**
+   * Codigo que veio da camera ou do leitor de mao.
+   *
+   * Nao assume que o codigo esta no cadastro: se achar, escolhe o produto; se
+   * nao achar, joga no campo de busca para o operador ver o que foi lido. Um
+   * leitor que le errado e nao mostra nada e pior que um que nao le.
+   */
+  const receberCodigo = (codigo) => {
+    const exato = products.find(
+      (p) => p.codigo?.toLowerCase() === codigo.toLowerCase()
+    );
+    if (exato) escolher(exato);
+    else setTermo(codigo);
+  };
 
   const escolher = (produto) => {
     guardarRecente(produto.codigo);
@@ -122,7 +142,7 @@ export default function BuscaProduto({
         />
         <button
           type="button"
-          onClick={() => campo.current?.focus()}
+          onClick={() => setLeitorAberto(true)}
           className="press foco-fluxo flex h-12 flex-none items-center gap-2 rounded-token bg-cartao
                      px-4 text-sm font-bold text-tinta shadow-cartao"
         >
@@ -268,6 +288,12 @@ export default function BuscaProduto({
           Digite o nome ou o código acima, ou dispare o leitor.
         </p>
       )}
+
+      <ModalLeitor
+        aberto={leitorAberto}
+        aoFechar={() => setLeitorAberto(false)}
+        aoLer={receberCodigo}
+      />
 
       {/* Usados há pouco ---------------------------------------------------- */}
       {recentes.length > 0 && (
