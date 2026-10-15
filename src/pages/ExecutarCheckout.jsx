@@ -1,16 +1,14 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Package, CheckCircle, AlertCircle, Edit, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PageHeader, StatCard, SectionCard, StatusPill, EmptyState } from "@/components/fluxo";
 
 import CheckoutItemCard from "../components/checkout/CheckoutItemCard";
 import { formatarData } from '@/lib/datas';
@@ -186,16 +184,22 @@ export default function ExecutarCheckout() {
       addPedidosMutation.mutate(parsed);
     }
   };
-
   if (!programacaoId) {
     return (
       <div className="min-h-screen bg-fundo p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          <Card className="border-red-200">
-            <CardContent className="p-6">
-              <p className="text-red-600">Programação não encontrada</p>
-            </CardContent>
-          </Card>
+        <div className="mx-auto max-w-7xl">
+          <div className="cartao-fluxo">
+            <EmptyState
+              icone={AlertCircle}
+              titulo="Programação não encontrada"
+              legenda="O endereço não traz o identificador da programação."
+              acao={
+                <Link to={createPageUrl("Checkout")}>
+                  <Button>Voltar para as programações</Button>
+                </Link>
+              }
+            />
+          </div>
         </div>
       </div>
     );
@@ -204,13 +208,8 @@ export default function ExecutarCheckout() {
   if (loadingProgramacao || loadingItems) {
     return (
       <div className="min-h-screen bg-fundo p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          <Card className="border-slate-200">
-            <CardContent className="p-12 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-marca mx-auto mb-4"></div>
-              <p className="text-slate-600">Carregando programação...</p>
-            </CardContent>
-          </Card>
+        <div className="mx-auto max-w-7xl">
+          <div className="cartao-fluxo"><EmptyState carregando /></div>
         </div>
       </div>
     );
@@ -222,221 +221,157 @@ export default function ExecutarCheckout() {
 
   return (
     <div className="min-h-screen bg-fundo p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigate(createPageUrl("Checkout"))}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-slate-900">
-              Check-out - {programacao?.data_programada ? formatarData(programacao.data_programada, "dd/MM/yyyy") : ''}
-            </h1>
-            <p className="text-slate-600 mt-1">
-              {programacao?.data_programada ? formatarData(programacao.data_programada, "EEEE, d 'de' MMMM 'de' yyyy") : ''}
-            </p>
-          </div>
-          {programacao && (
-            <Badge className={
-              statusCalculado === "Pendente" ? "bg-yellow-100 text-yellow-800" :
-              statusCalculado === "Em Andamento" ? "bg-marca-suave text-marca" :
-              "bg-green-100 text-green-800"
-            }>
-              {statusCalculado}
-            </Badge>
+      <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-4">
+        <PageHeader
+          migalha={[{ rotulo: "Check-out", url: createPageUrl("Checkout") }, { rotulo: "Execução" }]}
+          titulo={`Check-out de ${programacao?.data_programada ? formatarData(programacao.data_programada, "dd/MM/yyyy") : ""}`}
+          legenda={programacao?.data_programada
+            ? formatarData(programacao.data_programada, "EEEE, d 'de' MMMM 'de' yyyy") : ""}
+          acoes={
+            <>
+              {programacao && <StatusPill estado={statusCalculado} />}
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => navigate(createPageUrl("Checkout"))}
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Voltar
+              </Button>
+            </>
+          }
+        />
+
+        <div className="grid min-w-0 gap-4 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+          <StatCard rotulo="Total" valor={items.length} icone={Package} destaque atraso={0.05} />
+          <StatCard
+            rotulo="Pendentes" valor={pendentes.length} icone={AlertCircle}
+            tom={pendentes.length > 0 ? "atencao" : "neutro"} atraso={0.1}
+          />
+          <StatCard
+            rotulo="Críticos" valor={criticos.length} icone={AlertCircle}
+            tom={criticos.length > 0 ? "erro" : "neutro"} atraso={0.15}
+          />
+          <StatCard
+            rotulo="Concluídos" valor={concluidos.length} icone={CheckCircle}
+            tom="ok" atraso={0.2}
+          />
+        </div>
+
+        <SectionCard
+          titulo="Observações da programação"
+          icone={Edit}
+          atraso={0.25}
+          acoes={!editingObservacoes && (
+            <Button variant="outline" size="lg" onClick={() => setEditingObservacoes(true)}>
+              <Edit className="h-4 w-4" aria-hidden="true" />
+              Editar
+            </Button>
           )}
-        </div>
-
-        {/* Observações da Programação */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg font-bold text-slate-900">
-                Observações da Programação
-              </CardTitle>
-              {!editingObservacoes && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingObservacoes(true)}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            {editingObservacoes ? (
-              <div className="space-y-4">
-                <Textarea
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  placeholder='Ex: "Check-out começou tarde pois estávamos sem rede"'
-                  rows={3}
-                />
-                <div className="flex justify-end gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditingObservacoes(false);
-                      setObservacoes(programacao?.observacoes || "");
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={() => updateObservacoesMutation.mutate(observacoes)}
-                    className="bg-marca hover:bg-marca-forte"
-                    disabled={updateObservacoesMutation.isPending}
-                  >
-                    {updateObservacoesMutation.isPending ? "Salvando..." : "Salvar"}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-slate-700 whitespace-pre-wrap">
-                {programacao?.observacoes || "Nenhuma observação adicionada"}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="border-slate-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-slate-500">Total</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-1">
-                    {items.length}
-                  </p>
-                </div>
-                <Package className="w-8 h-8 text-slate-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-slate-500">Pendentes</p>
-                  <p className="text-2xl font-bold text-yellow-600 mt-1">
-                    {pendentes.length}
-                  </p>
-                </div>
-                <AlertCircle className="w-8 h-8 text-yellow-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-slate-500">Críticos</p>
-                  <p className="text-2xl font-bold text-red-600 mt-1">
-                    {criticos.length}
-                  </p>
-                </div>
-                <AlertCircle className="w-8 h-8 text-red-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-slate-500">Concluídos</p>
-                  <p className="text-2xl font-bold text-green-600 mt-1">
-                    {concluidos.length}
-                  </p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-400" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Botão Adicionar Pedidos */}
-        <div className="flex justify-end">
-          <Button
-            onClick={() => setShowAddPedidos(!showAddPedidos)}
-            variant="outline"
-            className="bg-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Pedidos Críticos
-          </Button>
-        </div>
-
-        {/* Formulário para Adicionar Pedidos */}
-        {showAddPedidos && (
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="border-b border-slate-100">
-              <CardTitle className="text-lg font-bold text-slate-900">
-                Adicionar Pedidos à Programação
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
+        >
+          {editingObservacoes ? (
+            <div className="flex min-w-0 flex-col gap-4">
               <Textarea
-                value={pedidosText}
-                onChange={(e) => setPedidosText(e.target.value)}
-                placeholder="PV-20.235	22/10/2025	Cooperativa Pecuária Holambra Ltda
-PV-20.236	22/10/2025	Alvoar Lácteos S/A"
-                rows={6}
-                className="font-mono text-sm"
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                placeholder='Ex: "Check-out começou tarde pois estávamos sem rede"'
+                rows={3}
+                aria-label="Observações da programação"
               />
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-wrap justify-end gap-3">
                 <Button
                   variant="outline"
+                  size="lg"
                   onClick={() => {
-                    setShowAddPedidos(false);
-                    setPedidosText("");
+                    setEditingObservacoes(false);
+                    setObservacoes(programacao?.observacoes || "");
                   }}
                 >
                   Cancelar
                 </Button>
                 <Button
-                  onClick={handleAddPedidos}
-                  className="bg-marca hover:bg-marca-forte"
-                  disabled={!pedidosText.trim() || addPedidosMutation.isPending}
+                  size="lg"
+                  onClick={() => updateObservacoesMutation.mutate(observacoes)}
+                  disabled={updateObservacoesMutation.isPending}
                 >
-                  {addPedidosMutation.isPending ? "Adicionando..." : "Adicionar Pedidos"}
+                  {updateObservacoesMutation.isPending ? "Salvando…" : "Salvar"}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          ) : (
+            <p className={`whitespace-pre-wrap font-semibold ${programacao?.observacoes ? "text-tinta" : "text-texto-apagado"}`}>
+              {programacao?.observacoes || "Nenhuma observação adicionada"}
+            </p>
+          )}
+        </SectionCard>
 
-        {/* Lista de Pedidos */}
-        <div className="space-y-4">
-          {items.map((item) => (
-            <CheckoutItemCard
-              key={item.id}
-              item={item}
-              operators={operators}
+        {/* Adicionar pedidos. O botão abre e fecha o mesmo bloco; antes ele
+            ficava solto à direita, sem nada que indicasse o que abriria. */}
+        <SectionCard
+          titulo="Adicionar pedidos"
+          legenda="Cole as linhas copiadas do SAP: número, data e cliente, separados por tabulação"
+          icone={Plus}
+          atraso={0.3}
+          acoes={
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setShowAddPedidos(!showAddPedidos)}
+              aria-expanded={showAddPedidos}
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              {showAddPedidos ? "Fechar" : "Adicionar pedidos críticos"}
+            </Button>
+          }
+        >
+          {showAddPedidos ? (
+            <div className="flex min-w-0 flex-col gap-4">
+              <Textarea
+                value={pedidosText}
+                onChange={(e) => setPedidosText(e.target.value)}
+                aria-label="Pedidos a adicionar"
+                placeholder={"PV-20.235\t22/10/2025\tCooperativa Pecuária Holambra Ltda\nPV-20.236\t22/10/2025\tAlvoar Lácteos S/A"}
+                rows={6}
+                className="codigo text-sm"
+              />
+              <div className="flex flex-wrap justify-end gap-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => { setShowAddPedidos(false); setPedidosText(""); }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={handleAddPedidos}
+                  disabled={!pedidosText.trim() || addPedidosMutation.isPending}
+                >
+                  {addPedidosMutation.isPending ? "Adicionando…" : "Adicionar pedidos"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm font-semibold text-texto-apagado">
+              {items.length} pedido(s) nesta programação.
+            </p>
+          )}
+        </SectionCard>
+
+        {items.length === 0 ? (
+          <div className="cartao-fluxo">
+            <EmptyState
+              icone={Package}
+              titulo="Nenhum pedido nesta programação"
+              legenda="Use “Adicionar pedidos críticos” acima para colar a lista do SAP."
             />
-          ))}
-        </div>
-
-        {items.length === 0 && (
-          <Card className="border-slate-200">
-            <CardContent className="p-12 text-center">
-              <Package className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-              <p className="text-slate-500 mb-2">Nenhum pedido nesta programação</p>
-              <p className="text-sm text-slate-400">
-                Clique em "Adicionar Pedidos Críticos" para começar
-              </p>
-            </CardContent>
-          </Card>
+          </div>
+        ) : (
+          <div className="flex min-w-0 flex-col gap-4">
+            {items.map((item) => (
+              <CheckoutItemCard key={item.id} item={item} operators={operators} />
+            ))}
+          </div>
         )}
       </div>
     </div>
