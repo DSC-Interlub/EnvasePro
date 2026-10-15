@@ -27,7 +27,7 @@ function minsToHHMM(mins) {
 }
 
 const TIPO_BADGES = {
-  Crítico: "bg-red-600 text-white",
+  Crítico: "bg-erro text-white",
   Avulso: "bg-amber-500 text-white",
 };
 
@@ -206,28 +206,28 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
   };
 
   const statusColors = {
-    Pendente: "bg-slate-100 text-slate-700",
+    Pendente: "bg-fundo text-tinta-media",
     "Em Andamento": "bg-marca-suave text-marca",
-    Pausado: "bg-yellow-100 text-yellow-800",
-    Concluído: "bg-green-100 text-green-800",
+    Pausado: "bg-atencao-suave text-atencao",
+    Concluído: "bg-ok-suave text-ok",
   };
 
-  const tipoCor = linha.tipo_linha === "Crítico" ? "border-l-red-500 bg-red-50"
-    : linha.tipo_linha === "Avulso" ? "border-l-amber-400 bg-amber-50"
+  const tipoCor = linha.tipo_linha === "Crítico" ? "border-l-red-500 bg-erro-suave"
+    : linha.tipo_linha === "Avulso" ? "border-l-amber-400 bg-atencao-suave"
     : "border-l-slate-300";
 
   // Badge de assinatura para linhas concluídas
   const renderBadgeAssinatura = () => {
     if (linha.status !== "Concluído") return null;
     if (linha.status_assinatura === "Completo" || (linha.assinatura_operador && linha.assinatura_lider)) {
-      return <Badge className="bg-emerald-100 text-emerald-700 text-xs">✓ Assinado</Badge>;
+      return <Badge variant="ok">Assinado</Badge>;
     }
-    return <Badge className="bg-orange-100 text-orange-700 text-xs animate-pulse">⏳ Aguardando assinatura do líder</Badge>;
+    return <Badge className="bg-atencao-suave text-atencao text-xs animate-pulse">⏳ Aguardando assinatura do líder</Badge>;
   };
 
   return (
     <>
-      <Card className={`border-l-4 shadow-sm ${tipoCor} ${linha.status === "Concluído" ? "opacity-75" : ""}`}>
+      <Card className={`border-l-4 shadow-cartao ${tipoCor} ${linha.status === "Concluído" ? "opacity-75" : ""}`}>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div className="flex-1 space-y-1">
@@ -241,46 +241,46 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                 {renderBadgeAssinatura()}
               </div>
 
-              <p className="font-bold text-slate-900 text-base leading-tight">
+              <p className="font-bold text-tinta text-base leading-tight">
                 {linha.descricao_produto || "Sem descrição"}
               </p>
 
-              <div className="flex flex-wrap gap-3 text-sm text-slate-600">
-                {linha.numero_item && <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">{linha.numero_item}</span>}
+              <div className="flex flex-wrap gap-3 text-sm text-texto-fraco">
+                {linha.numero_item && <span className="font-mono text-xs bg-fundo px-2 py-0.5 rounded">{linha.numero_item}</span>}
                 {linha.deposito && <span className="flex items-center gap-1"><Package className="w-3 h-3" />{linha.deposito}</span>}
                 {linha.rua_torre && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{linha.rua_torre}</span>}
-                {linha.quantidade && <span className="font-semibold text-slate-800">{linha.quantidade} un.</span>}
+                {linha.quantidade && <span className="font-semibold text-tinta">{linha.quantidade} un.</span>}
               </div>
 
               {(linha.operador_empilhadeira || linha.operador_ajudante) && (
-                <div className="flex gap-3 text-xs text-slate-500 mt-1">
+                <div className="flex gap-3 text-xs text-texto-fraco mt-1">
                   {linha.operador_empilhadeira && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {linha.operador_empilhadeira}</span>}
-                  {linha.operador_ajudante && linha.operador_ajudante !== "nenhum" && <span className="flex items-center gap-1 text-slate-400"><User className="w-3 h-3" /> {linha.operador_ajudante} (ajudante)</span>}
+                  {linha.operador_ajudante && linha.operador_ajudante !== "nenhum" && <span className="flex items-center gap-1 text-texto-apagado"><User className="w-3 h-3" /> {linha.operador_ajudante} (ajudante)</span>}
                 </div>
               )}
 
               {linha.hora_inicio && (
-                <div className="flex gap-4 text-xs text-slate-400 mt-1">
+                <div className="flex gap-4 text-xs text-texto-apagado mt-1">
                   <span>Início: {linha.hora_inicio}</span>
                   {linha.hora_termino && <span>Fim: {linha.hora_termino}</span>}
-                  {linha.tempo_total && <span className="font-medium text-slate-600">Total: {linha.tempo_total}</span>}
-                  {linha.tempo_pausado && linha.tempo_pausado !== "0:00" && <span className="text-yellow-600">Pausa: {linha.tempo_pausado}</span>}
+                  {linha.tempo_total && <span className="font-medium text-texto-fraco">Total: {linha.tempo_total}</span>}
+                  {linha.tempo_pausado && linha.tempo_pausado !== "0:00" && <span className="text-atencao">Pausa: {linha.tempo_pausado}</span>}
                 </div>
               )}
             </div>
 
             <div className="flex gap-2 flex-wrap">
               {linha.status === "Pendente" && (
-                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setShowIniciarModal(true)}>
+                <Button size="sm" className="bg-ok hover:bg-ok" onClick={() => setShowIniciarModal(true)}>
                   <Play className="w-3 h-3 mr-1" /> Iniciar
                 </Button>
               )}
               {linha.status === "Em Andamento" && (
                 <>
-                  <Button size="sm" variant="outline" className="border-yellow-400 text-yellow-700 hover:bg-yellow-50" onClick={handlePausar} disabled={updateMutation.isPending}>
+                  <Button size="sm" variant="outline" className="border-yellow-400 text-atencao hover:bg-atencao-suave" onClick={handlePausar} disabled={updateMutation.isPending}>
                     <Pause className="w-3 h-3 mr-1" /> Pausar
                   </Button>
-                  <Button size="sm" variant="outline" className="border-orange-400 text-orange-700 hover:bg-orange-50" onClick={() => setShowOcorrenciaModal(true)}>
+                  <Button size="sm" variant="outline" className="border-orange-400 text-atencao hover:bg-atencao-suave" onClick={() => setShowOcorrenciaModal(true)}>
                     <AlertTriangle className="w-3 h-3 mr-1" /> Ocorrência
                   </Button>
                   <Button size="sm" className="bg-marca hover:bg-marca-forte" onClick={handleFinalizar} disabled={updateMutation.isPending}>
@@ -290,10 +290,10 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
               )}
               {linha.status === "Pausado" && (
                 <>
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={handleRetomar} disabled={updateMutation.isPending}>
+                  <Button size="sm" className="bg-ok hover:bg-ok" onClick={handleRetomar} disabled={updateMutation.isPending}>
                     <RotateCcw className="w-3 h-3 mr-1" /> Retomar
                   </Button>
-                  <Button size="sm" variant="outline" className="border-orange-400 text-orange-700 hover:bg-orange-50" onClick={() => setShowOcorrenciaModal(true)}>
+                  <Button size="sm" variant="outline" className="border-orange-400 text-atencao hover:bg-atencao-suave" onClick={() => setShowOcorrenciaModal(true)}>
                     <AlertTriangle className="w-3 h-3 mr-1" /> Ocorrência
                   </Button>
                 </>
@@ -354,7 +354,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowIniciarModal(false)}>Cancelar</Button>
-            <Button className="bg-green-600 hover:bg-green-700" onClick={handleIniciar} disabled={!empilhador}>
+            <Button className="bg-ok hover:bg-ok" onClick={handleIniciar} disabled={!empilhador}>
               <Play className="w-4 h-4 mr-1" /> Iniciar Agora
             </Button>
           </DialogFooter>
@@ -369,11 +369,11 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-green-600" /> Etapa 1 de {temAjudante ? "3" : "2"} — Assinatura do Operador
+                  <User className="w-5 h-5 text-ok" /> Etapa 1 de {temAjudante ? "3" : "2"} — Assinatura do Operador
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-2">
-                <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-700 space-y-1">
+                <div className="bg-fundo rounded-token p-3 text-sm text-tinta-media space-y-1">
                   <p><strong>Produto:</strong> {linha.descricao_produto || "—"}</p>
                   <p><strong>Quantidade:</strong> {linha.quantidade || "—"} un.</p>
                   <p><strong>Local:</strong> {linha.rua_torre || "—"}</p>
@@ -387,14 +387,14 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                     </SelectContent>
                   </Select>
                 </div>
-                <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-lg hover:bg-green-50 transition-colors">
+                <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-token hover:bg-ok-suave transition-colors">
                   <input type="checkbox" checked={checkOperador} onChange={e => setCheckOperador(e.target.checked)} className="w-5 h-5 mt-0.5" />
-                  <span className="text-sm font-medium text-slate-700">Confirmo que realizei esta movimentação</span>
+                  <span className="text-sm font-medium text-tinta-media">Confirmo que realizei esta movimentação</span>
                 </label>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowAssinaturaModal(false)}>Fechar</Button>
-                <Button className="bg-green-600 hover:bg-green-700" onClick={handleConfirmarEtapa1} disabled={!checkOperador || !nomeOperador || updateMutation.isPending}>
+                <Button className="bg-ok hover:bg-ok" onClick={handleConfirmarEtapa1} disabled={!checkOperador || !nomeOperador || updateMutation.isPending}>
                   Confirmar e continuar →
                 </Button>
               </DialogFooter>
@@ -419,9 +419,9 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                     </SelectContent>
                   </Select>
                 </div>
-                <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-lg hover:bg-marca-suave transition-colors">
+                <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-token hover:bg-marca-suave transition-colors">
                   <input type="checkbox" checked={checkAjudante} onChange={e => setCheckAjudante(e.target.checked)} className="w-5 h-5 mt-0.5" />
-                  <span className="text-sm font-medium text-slate-700">Confirmo que participei desta movimentação</span>
+                  <span className="text-sm font-medium text-tinta-media">Confirmo que participei desta movimentação</span>
                 </label>
               </div>
               <DialogFooter>
@@ -440,7 +440,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-amber-600" /> {isAdmin ? "Etapa Final — Assinatura do Líder" : "Aguardando Assinatura do Líder"}
+                  <Clock className="w-5 h-5 text-atencao" /> {isAdmin ? "Etapa Final — Assinatura do Líder" : "Aguardando Assinatura do Líder"}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-2">
@@ -457,24 +457,24 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                         </SelectContent>
                       </Select>
                     </div>
-                    <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-lg hover:bg-amber-50 transition-colors">
+                    <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-token hover:bg-atencao-suave transition-colors">
                       <input type="checkbox" checked={checkLider} onChange={e => setCheckLider(e.target.checked)} className="w-5 h-5 mt-0.5" />
-                      <span className="text-sm font-medium text-slate-700">Confirmo e assino como líder esta linha</span>
+                      <span className="text-sm font-medium text-tinta-media">Confirmo e assino como líder esta linha</span>
                     </label>
                   </>
                 ) : (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
-                    <Clock className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                    <p className="font-semibold text-orange-800">Linha concluída com sucesso!</p>
-                    <p className="text-sm text-orange-700 mt-1">A assinatura do líder é feita posteriormente por um administrador.</p>
-                    <p className="text-xs text-orange-500 mt-2">Esta assinatura requer login de administrador.</p>
+                  <div className="bg-atencao-suave border border-atencao rounded-token p-4 text-center">
+                    <Clock className="w-8 h-8 text-atencao mx-auto mb-2" />
+                    <p className="font-semibold text-atencao">Linha concluída com sucesso!</p>
+                    <p className="text-sm text-atencao mt-1">A assinatura do líder é feita posteriormente por um administrador.</p>
+                    <p className="text-xs text-atencao mt-2">Esta assinatura requer login de administrador.</p>
                   </div>
                 )}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowAssinaturaModal(false)}>Fechar</Button>
                 {isAdmin && (
-                  <Button className="bg-amber-600 hover:bg-amber-700" onClick={handleAssinarLider} disabled={!checkLider || !nomeLider || updateMutation.isPending}>
+                  <Button className="bg-atencao hover:bg-atencao" onClick={handleAssinarLider} disabled={!checkLider || !nomeLider || updateMutation.isPending}>
                     <PenLine className="w-4 h-4 mr-1" /> Assinar como Líder
                   </Button>
                 )}
@@ -527,7 +527,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowOcorrenciaModal(false)}>Cancelar</Button>
-            <Button className="bg-orange-600 hover:bg-orange-700" onClick={handleRegistrarOcorrencia} disabled={!ocorrenciaDesc || !ocorrenciaRegistradoPor || ocorrenciaMutation.isPending}>
+            <Button className="bg-atencao hover:bg-atencao" onClick={handleRegistrarOcorrencia} disabled={!ocorrenciaDesc || !ocorrenciaRegistradoPor || ocorrenciaMutation.isPending}>
               Registrar
             </Button>
           </DialogFooter>

@@ -22,7 +22,9 @@ import { format, differenceInDays, parseISO, addDays, eachDayOfInterval } from "
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/lib/AuthContext";
 import FiltroPeriodoEmpilha from "../components/empilhadeira/FiltroperiodoEmpilha";
+import BlocosIndicadores from "../components/empilhadeira/BlocosIndicadores";
 import PainelPendenciasAdmin from "../components/empilhadeira/PainelPendenciasAdmin";
+import { PageHeader, StatCard, SectionCard, StatusPill, SegmentoPeriodo, ChipsFiltro, MiniKPI, EmptyState as VazioFluxo, CORES_GRAFICO, EIXO, GRADE, TOOLTIP, LEGENDA, RAIO_BARRA } from "@/components/fluxo";
 
 const COLORS = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6", "#ec4899"];
 
@@ -35,7 +37,7 @@ function minsFromHHMM(str) {
 
 function EmptyState({ label }) {
   return (
-    <div className="text-center py-10 text-slate-400">
+    <div className="text-center py-10 text-texto-apagado">
       <BarChart2 className="w-10 h-10 mx-auto mb-2 opacity-30" />
       <p className="text-sm">{label || "Sem dados no período selecionado"}</p>
     </div>
@@ -56,6 +58,7 @@ export default function Empilhadeira() {
 
   // Config state
   const [showManutencaoModal, setShowManutencaoModal] = useState(false);
+  const [faixaOcorrencias, setFaixaOcorrencias] = useState("pendentes");
   const [editMode, setEditMode] = useState(false);
   const [manutencaoForm, setManutencaoForm] = useState({ tipo: "Preventiva", descricao: "", responsavel: "", data_manutencao: format(new Date(), "yyyy-MM-dd") });
   const [configForm, setConfigForm] = useState(null);
@@ -159,9 +162,9 @@ export default function Empilhadeira() {
   const alertaManutencao = diasParaManutencao !== null && diasParaManutencao <= 7;
 
   const getStatusColor = (status) => {
-    if (status === "Concluído") return "bg-green-100 text-green-800";
+    if (status === "Concluído") return "bg-ok-suave text-ok";
     if (status === "Em Andamento") return "bg-marca-suave text-marca";
-    return "bg-yellow-100 text-yellow-800";
+    return "bg-atencao-suave text-atencao";
   };
 
   // ── Indicadores ────────────────────────────────────────────────────────────
@@ -254,29 +257,36 @@ export default function Empilhadeira() {
       <div className="max-w-7xl mx-auto space-y-6">
 
         {acessoRestrito && (
-          <Alert className="border-red-300 bg-red-50">
-            <ShieldAlert className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800 font-medium">Acesso restrito a administradores.</AlertDescription>
+          <Alert variant="destructive">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertDescription>Acesso restrito a administradores.</AlertDescription>
           </Alert>
         )}
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 flex items-center gap-3">
-            <Warehouse className="w-9 h-9 text-amber-600" /> Controle da Empilhadeira
-          </h1>
-          {isAdmin && abaAtiva === "operacoes" && (
-            <Link to={createPageUrl("NovaEmpilhaProgramacao")}>
-              <Button className="bg-amber-600 hover:bg-amber-700">
-                <Plus className="w-4 h-4 mr-2" /> Nova Programação
-              </Button>
-            </Link>
-          )}
-          {isAdmin && abaAtiva === "configuracoes" && empilhadeira && (
-            <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => setShowManutencaoModal(true)}>
-              <Wrench className="w-4 h-4 mr-2" /> Registrar Manutenção
-            </Button>
-          )}
-        </div>
+        <PageHeader
+          aoVivo
+          migalha={[{ rotulo: "Operação" }, { rotulo: "Empilhadeira" }]}
+          titulo="Empilhadeira"
+          legenda="Linhas, paradas e manutenção"
+          acoes={
+            <>
+              {isAdmin && abaAtiva === "operacoes" && (
+                <Link to={createPageUrl("NovaEmpilhaProgramacao")}>
+                  <Button size="lg">
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Nova programação
+                  </Button>
+                </Link>
+              )}
+              {isAdmin && abaAtiva === "configuracoes" && empilhadeira && (
+                <Button size="lg" onClick={() => setShowManutencaoModal(true)}>
+                  <Wrench className="h-4 w-4" aria-hidden="true" />
+                  Registrar manutenção
+                </Button>
+              )}
+            </>
+          }
+        />
 
         {isAdmin && (
           <PainelPendenciasAdmin
@@ -290,9 +300,9 @@ export default function Empilhadeira() {
         )}
 
         {alertaManutencao && (
-          <Alert className="border-orange-300 bg-orange-50">
-            <Wrench className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800 font-medium">
+          <Alert className="border-atencao bg-atencao-suave">
+            <Wrench className="h-4 w-4 text-atencao" />
+            <AlertDescription className="text-atencao font-medium">
               {diasParaManutencao < 0
                 ? `⚠️ Manutenção ATRASADA há ${Math.abs(diasParaManutencao)} dias!`
                 : `⚠️ Manutenção prevista em ${diasParaManutencao} dia(s).`}
@@ -301,477 +311,499 @@ export default function Empilhadeira() {
           </Alert>
         )}
 
-        {/* Abas principais */}
+        {/* As três áreas do módulo. Eram TabsTrigger de 36px de altura;
+            agora são alvos de 48px, como o resto do sistema. */}
+        <SegmentoPeriodo
+          rotulo="Área do módulo"
+          opcoes={[
+            { valor: "operacoes", rotulo: "Operações" },
+            ...(isAdmin ? [{ valor: "indicadores", rotulo: "Indicadores" }] : []),
+            ...(isAdmin ? [{ valor: "configuracoes", rotulo: "Configurações" }] : []),
+          ]}
+          valor={abaAtiva}
+          aoEscolher={setAbaAtiva}
+          className="self-start"
+        />
+
         <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-          <TabsList className="mb-2">
-            <TabsTrigger value="operacoes" className="flex items-center gap-2">
-              <ListTodo className="w-4 h-4" /> Operações
-            </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger value="indicadores" className="flex items-center gap-2">
-                <BarChart2 className="w-4 h-4" /> Indicadores
-              </TabsTrigger>
-            )}
-            {isAdmin && (
-              <TabsTrigger value="configuracoes" className="flex items-center gap-2">
-                <Settings className="w-4 h-4" /> Configurações
-              </TabsTrigger>
-            )}
-          </TabsList>
 
           {/* ── ABA: OPERAÇÕES ─────────────────────────────────────────── */}
           <TabsContent value="operacoes" className="space-y-6">
             <FiltroPeriodoEmpilha dataInicio={dataInicio} dataFim={dataFim} onChange={handlePeriodo} />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="border-slate-200 shadow-sm"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-slate-500">Total Linhas</p><p className="text-3xl font-bold text-slate-900 mt-1">{totalLinhas}</p></div><ListTodo className="w-8 h-8 text-slate-400" /></div></CardContent></Card>
-              <Card className="border-green-200 shadow-sm"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-slate-500">Concluídas</p><p className="text-3xl font-bold text-green-700 mt-1">{concluidas}</p></div><CheckCircle className="w-8 h-8 text-green-500" /></div></CardContent></Card>
-              <Card className="border-marca-suave-2 shadow-sm"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-slate-500">Em Andamento</p><p className="text-3xl font-bold text-marca mt-1">{emAndamento}</p></div><Clock className="w-8 h-8 text-marca" /></div></CardContent></Card>
-              <Card className="border-red-200 shadow-sm"><CardContent className="p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-medium text-slate-500">Críticos Pend.</p><p className="text-3xl font-bold text-red-700 mt-1">{criticos}</p></div><AlertCircle className="w-8 h-8 text-red-500" /></div></CardContent></Card>
+              {/* Eram quatro cartões escritos numa linha só cada, de 380
+                  caracteres, com uma cor de borda diferente por cartão. */}
+              <StatCard rotulo="Total de linhas" valor={totalLinhas} icone={ListTodo} destaque atraso={0.05} />
+              <StatCard rotulo="Concluídas" valor={concluidas} icone={CheckCircle} tom="ok" atraso={0.1} />
+              <StatCard rotulo="Em andamento" valor={emAndamento} icone={Clock} tom="info" atraso={0.15} />
+              <StatCard
+                rotulo="Críticos pendentes" valor={criticos} icone={AlertCircle}
+                tom={criticos > 0 ? "erro" : "neutro"} atraso={0.2}
+              />
             </div>
 
             {paradasNoPeriodo.length > 0 && (
-              <Card className="border-orange-200 bg-orange-50 shadow-sm">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3">
-                    <OctagonX className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="font-bold text-orange-800">Paradas no período</p>
-                      <p className="text-sm text-orange-700">{paradasNoPeriodo.length} parada(s) · {tempoTotalParado} min parado{pctParado > 0 && ` · ${pctParado}% do turno`}</p>
-                    </div>
-                    <Button size="sm" variant="outline" className="border-orange-300 text-orange-700" onClick={() => setAbaAtiva("indicadores")}>Ver detalhes</Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="flex flex-wrap items-center gap-3 rounded-painel bg-atencao-suave px-5 py-4">
+                <OctagonX className="h-6 w-6 flex-none text-atencao" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-extrabold text-atencao">Paradas no período</p>
+                  <p className="text-sm font-semibold text-atencao">
+                    {paradasNoPeriodo.length} parada(s) · <span className="num">{tempoTotalParado}</span> min parado
+                    {pctParado > 0 && ` · ${pctParado}% do turno`}
+                  </p>
+                </div>
+                <Button
+                  variant="outline" size="lg" className="flex-none"
+                  onClick={() => setAbaAtiva("indicadores")}
+                >
+                  Ver detalhes
+                </Button>
+              </div>
             )}
 
-            <Card className="border-slate-200 shadow-lg">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="text-xl font-bold text-slate-900">Programações ({progNoPeriodo.length})</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                {progNoPeriodo.length === 0 ? (
-                  <div className="text-center py-10">
-                    <Warehouse className="w-14 h-14 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500 mb-4">Nenhuma programação neste período</p>
+            <SectionCard
+              titulo="Programações"
+              legenda={`${progNoPeriodo.length} no período`}
+              icone={Warehouse}
+              atraso={0.25}
+            >
+              {progNoPeriodo.length === 0 ? (
+                <VazioFluxo
+                  icone={Warehouse}
+                  titulo="Nenhuma programação neste período"
+                  legenda="Ajuste o período acima ou crie uma programação."
+                  acao={
                     <Link to={createPageUrl("NovaEmpilhaProgramacao")}>
-                      <Button className="bg-amber-600 hover:bg-amber-700"><Plus className="w-4 h-4 mr-2" /> Criar Programação</Button>
+                      <Button><Plus className="h-4 w-4" aria-hidden="true" />Criar programação</Button>
                     </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {progNoPeriodo.map(prog => {
-                      const progLinhas = linhas.filter(l => l.programacao_id === prog.id);
-                      const progConcluidas = progLinhas.filter(l => l.status === "Concluído").length;
-                      const emp = empilhadeiras.find(e => e.id === prog.empilhadeira_id);
-                      return (
-                        <Link key={prog.id} to={createPageUrl(`ExecutarEmpilha?id=${prog.id}`)}>
-                          <Card className="border-slate-200 hover:shadow-md transition-shadow cursor-pointer">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Warehouse className="w-4 h-4 text-amber-600" />
-                                    <span className="font-bold text-slate-900">{format(new Date(prog.data_programada + "T00:00:00"), "dd/MM/yyyy")}</span>
-                                    {emp && <Badge className="bg-amber-100 text-amber-800 text-xs">{emp.nome}</Badge>}
-                                    {prog.criado_por && <span className="text-xs text-slate-400">por {prog.criado_por}</span>}
-                                  </div>
-                                  <p className="text-sm text-slate-600">{progConcluidas}/{progLinhas.length} linhas concluídas</p>
-                                  {prog.observacoes && <p className="text-xs text-slate-400 italic mt-1">"{prog.observacoes}"</p>}
-                                </div>
-                                <Badge className={getStatusColor(prog.status)}>{prog.status}</Badge>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  }
+                />
+              ) : (
+                <ul className="flex min-w-0 flex-col gap-2.5">
+                  {progNoPeriodo.map(prog => {
+                    const progLinhas = linhas.filter(l => l.programacao_id === prog.id);
+                    const progConcluidas = progLinhas.filter(l => l.status === "Concluído").length;
+                    const emp = empilhadeiras.find(e => e.id === prog.empilhadeira_id);
+                    const pct = progLinhas.length > 0
+                      ? Math.round((progConcluidas / progLinhas.length) * 100) : 0;
 
-            <Card className="border-slate-200 shadow-lg">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-orange-500" /> Histórico de Ocorrências
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <Tabs defaultValue="pendentes">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="pendentes">
-                      Pendentes
-                      {ocorrenciasNaoResolvidas.length > 0 && <span className="ml-2 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5">{ocorrenciasNaoResolvidas.length}</span>}
-                    </TabsTrigger>
-                    <TabsTrigger value="todas">Todas ({ocorrencias.length})</TabsTrigger>
-                  </TabsList>
-                  {["pendentes", "todas"].map(tab => {
-                    const lista = tab === "pendentes" ? ocorrenciasNaoResolvidas : ocorrencias;
                     return (
-                      <TabsContent key={tab} value={tab}>
-                        {lista.length === 0 ? (
-                          <div className="text-center py-8 text-slate-400">
-                            <CheckCheck className="w-10 h-10 mx-auto mb-2 text-green-400" />
-                            <p>{tab === "pendentes" ? "Nenhuma ocorrência pendente" : "Nenhuma ocorrência registrada"}</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {lista.map(o => (
-                              <div key={o.id} className={`flex items-start gap-3 p-3 rounded-lg border ${o.resolvido ? "bg-green-50 border-green-200" : "bg-orange-50 border-orange-200"}`}>
-                                {o.resolvido ? <CheckCheck className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <Badge className={o.resolvido ? "bg-green-100 text-green-700 text-xs" : "bg-orange-100 text-orange-700 text-xs"}>{o.tipo}</Badge>
-                                    <span className="text-xs text-slate-500">{o.data} {o.hora} — {o.registrado_por}</span>
-                                    {o.notificado_lider && <Badge className="bg-marca-suave text-marca text-xs">Líder notificado</Badge>}
-                                  </div>
-                                  <p className="text-sm text-slate-700 mt-1">{o.descricao}</p>
-                                  {o.resolvido && o.resolucao && <p className="text-xs text-green-700 mt-1 italic">↳ {o.resolucao}</p>}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </TabsContent>
+                      <li key={prog.id}>
+                        <Link
+                          to={createPageUrl(`ExecutarEmpilha?id=${prog.id}`)}
+                          className="press foco-fluxo flex min-w-0 items-center justify-between gap-3
+                                     rounded-painel bg-fundo p-4 hover:bg-marca-suave"
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="flex min-w-0 flex-wrap items-center gap-2">
+                              <span className="num text-lg font-extrabold text-tinta">
+                                {format(new Date(prog.data_programada + "T00:00:00"), "dd/MM/yyyy")}
+                              </span>
+                              {emp && (
+                                <span className="rounded-full bg-cartao px-2.5 py-0.5 text-[11px] font-extrabold text-texto-fraco">
+                                  {emp.nome}
+                                </span>
+                              )}
+                              {prog.criado_por && (
+                                <span className="text-xs font-semibold text-texto-apagado">
+                                  por {prog.criado_por}
+                                </span>
+                              )}
+                            </span>
+
+                            <span className="mt-1 block text-sm font-semibold text-texto-fraco">
+                              <span className="num font-bold text-tinta">{progConcluidas}</span>
+                              /{progLinhas.length} linhas concluídas
+                            </span>
+
+                            {/* A barra mostra o andamento sem exigir a conta
+                                mental de "7 de 12". */}
+                            {progLinhas.length > 0 && (
+                              <span
+                                className="mt-2 block h-1.5 max-w-sm overflow-hidden rounded-full bg-cartao"
+                                role="img"
+                                aria-label={`${pct}% concluído`}
+                              >
+                                <span
+                                  className={`block h-full rounded-full ${pct === 100 ? "bg-ok" : "bg-marca"}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </span>
+                            )}
+
+                            {prog.observacoes && (
+                              <span className="mt-1.5 block text-xs font-semibold italic text-texto-apagado">
+                                “{prog.observacoes}”
+                              </span>
+                            )}
+                          </span>
+
+                          <StatusPill estado={prog.status} />
+                        </Link>
+                      </li>
                     );
                   })}
-                </Tabs>
-              </CardContent>
-            </Card>
+                </ul>
+              )}
+            </SectionCard>
+
+            <SectionCard
+              titulo="Histórico de ocorrências"
+              legenda={`${ocorrenciasNaoResolvidas.length} pendente(s) de ${ocorrencias.length}`}
+              icone={AlertTriangle}
+              atraso={0.3}
+            >
+              {/* Eram duas abas renderizando a MESMA lista com arrays
+                  diferentes. Viraram chips com contagem, e a lista é uma só.
+                  O contador de pendentes era uma bolinha laranja sem rótulo
+                  acessível ao lado do texto da aba. */}
+              <div className="mb-4">
+                <ChipsFiltro
+                  rotulo="Filtrar ocorrências"
+                  opcoes={[
+                    { valor: "pendentes", rotulo: "Pendentes", contagem: ocorrenciasNaoResolvidas.length },
+                    { valor: "todas", rotulo: "Todas", contagem: ocorrencias.length },
+                  ]}
+                  valor={faixaOcorrencias}
+                  aoEscolher={setFaixaOcorrencias}
+                />
+              </div>
+
+              {(() => {
+                const lista = faixaOcorrencias === "pendentes" ? ocorrenciasNaoResolvidas : ocorrencias;
+                if (lista.length === 0) {
+                  return (
+                    <VazioFluxo
+                      icone={CheckCheck}
+                      titulo={faixaOcorrencias === "pendentes"
+                        ? "Nenhuma ocorrência pendente"
+                        : "Nenhuma ocorrência registrada"}
+                      legenda="Nada a relatar é um bom resultado."
+                    />
+                  );
+                }
+                return (
+                  <ul className="flex min-w-0 flex-col gap-2">
+                    {lista.map(o => (
+                      <li
+                        key={o.id}
+                        className={`flex min-w-0 items-start gap-3 rounded-token px-4 py-3
+                                    ${o.resolvido ? "bg-ok-suave" : "bg-atencao-suave"}`}
+                      >
+                        {o.resolvido
+                          ? <CheckCheck className="mt-0.5 h-4 w-4 flex-none text-ok" aria-hidden="true" />
+                          : <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-atencao" aria-hidden="true" />}
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <span className={`rounded-full bg-cartao px-2.5 py-0.5 text-[11px] font-extrabold
+                                              ${o.resolvido ? "text-ok" : "text-atencao"}`}>
+                              {o.tipo}
+                            </span>
+                            <span className="text-xs font-semibold text-texto-fraco">
+                              <span className="num">{o.data} {o.hora}</span> — {o.registrado_por}
+                            </span>
+                            {o.notificado_lider && (
+                              <span className="rounded-full bg-marca-suave px-2.5 py-0.5 text-[11px] font-extrabold text-marca">
+                                líder notificado
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-sm font-semibold text-tinta">{o.descricao}</p>
+                          {o.resolvido && o.resolucao && (
+                            <p className="mt-1 text-xs font-semibold italic text-ok">↳ {o.resolucao}</p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
+            </SectionCard>
           </TabsContent>
 
           {/* ── ABA: INDICADORES ───────────────────────────────────────── */}
-          <TabsContent value="indicadores" className="space-y-6">
+          <TabsContent value="indicadores" className="space-y-4">
             <FiltroPeriodoEmpilha dataInicio={dataInicio} dataFim={dataFim} onChange={handlePeriodo} />
 
-            {/* Produção */}
-            <Card className="border-slate-200 shadow-md">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-amber-600" /> Produção</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                {linhasFiltradas.length === 0 ? <EmptyState /> : (
-                  <>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-slate-50 rounded-lg p-4 text-center"><p className="text-xs text-slate-500 mb-1">Normal</p><p className="text-2xl font-bold text-slate-800">{totalNormal}</p></div>
-                      <div className="bg-red-50 rounded-lg p-4 text-center"><p className="text-xs text-slate-500 mb-1">Crítico</p><p className="text-2xl font-bold text-red-700">{totalCritico}</p></div>
-                      <div className="bg-amber-50 rounded-lg p-4 text-center"><p className="text-xs text-slate-500 mb-1">Avulso</p><p className="text-2xl font-bold text-amber-700">{totalAvulso}</p></div>
-                      <div className="bg-green-50 rounded-lg p-4 text-center"><p className="text-xs text-slate-500 mb-1">Concluídas</p><p className="text-2xl font-bold text-green-700">{totalConcluidas}/{linhasFiltradas.length}</p></div>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-600 mb-1">Tempo médio por linha</p>
-                        <p className="text-3xl font-bold text-amber-600">{tempoMedioGeral} min</p>
-                        <div className="mt-2 space-y-1">
-                          {tempoMedioTipo.map(t => (
-                            <div key={t.tipo} className="flex items-center gap-2 text-sm text-slate-600">
-                              <span className="w-16">{t.tipo}:</span>
-                              <span className="font-semibold">{t.media} min</span>
-                              <span className="text-slate-400">({t.count} linhas)</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-600 mb-2">Linhas por dia</p>
-                        {linhasPorDia.length > 1 ? (
-                          <ResponsiveContainer width="100%" height={160}>
-                            <BarChart data={linhasPorDia}>
-                              <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
-                              <YAxis tick={{ fontSize: 10 }} />
-                              <Tooltip />
-                              <Bar dataKey="Normal" stackId="a" fill="#64748b" />
-                              <Bar dataKey="Crítico" stackId="a" fill="#ef4444" />
-                              <Bar dataKey="Avulso" stackId="a" fill="#f59e0b" />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        ) : <p className="text-slate-400 text-sm">Selecione um período maior para ver o gráfico</p>}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Operadores */}
-            <Card className="border-slate-200 shadow-md">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-marca" /> Operadores</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                {linhasFiltradas.length === 0 ? <EmptyState /> : (
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-600 mb-3">Empilhadores</p>
-                      {toRanking(rankingEmpilhador).length === 0 ? <p className="text-slate-400 text-sm">Sem dados</p> :
-                        toRanking(rankingEmpilhador).map((op, i) => (
-                          <div key={op.nome} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
-                            <span className="text-slate-400 text-sm w-5">{i + 1}.</span>
-                            <span className="font-medium text-slate-800 flex-1">{op.nome}</span>
-                            <Badge className="bg-slate-100 text-slate-700">{op.total} linhas</Badge>
-                            <span className="text-xs text-slate-500">{op.media} min/linha</span>
-                          </div>
-                        ))
-                      }
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-600 mb-3">Ajudantes</p>
-                      {toRanking(rankingAjudante).length === 0 ? <p className="text-slate-400 text-sm">Sem dados</p> :
-                        toRanking(rankingAjudante).map((op, i) => (
-                          <div key={op.nome} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
-                            <span className="text-slate-400 text-sm w-5">{i + 1}.</span>
-                            <span className="font-medium text-slate-800 flex-1">{op.nome}</span>
-                            <Badge className="bg-slate-100 text-slate-700">{op.total} linhas</Badge>
-                            <span className="text-xs text-slate-500">{op.media} min/linha</span>
-                          </div>
-                        ))
-                      }
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Paradas */}
-            <Card className="border-slate-200 shadow-md">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="flex items-center gap-2"><OctagonX className="w-5 h-5 text-orange-600" /> Paradas</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                {paradasFiltradas.length === 0 ? <EmptyState label="Nenhuma parada registrada no período" /> : (
-                  <>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-orange-50 rounded-lg p-4 text-center"><p className="text-xs text-slate-500">Total paradas</p><p className="text-2xl font-bold text-orange-700">{paradasFiltradas.length}</p></div>
-                      <div className="bg-red-50 rounded-lg p-4 text-center"><p className="text-xs text-slate-500">Tempo parado</p><p className="text-2xl font-bold text-red-700">{totalTempoParadoInd} min</p></div>
-                      <div className="bg-slate-50 rounded-lg p-4 text-center"><p className="text-xs text-slate-500">% turno perdido</p><p className="text-2xl font-bold text-slate-700">{duracaoTurnoMins > 0 ? Math.round((totalTempoParadoInd / duracaoTurnoMins) * 100) : 0}%</p></div>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-600 mb-2">Tempo parado por tipo (min)</p>
-                        {paradaPorTipo.length > 0 ? (
-                          <ResponsiveContainer width="100%" height={160}>
-                            <PieChart>
-                              <Pie data={paradaPorTipo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label={({ name, value }) => `${name}: ${value}min`}>
-                                {paradaPorTipo.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                              </Pie>
-                              <Tooltip />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        ) : null}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-600 mb-2">Paradas por dia</p>
-                        {paradasPorDia.length > 1 ? (
-                          <ResponsiveContainer width="100%" height={160}>
-                            <BarChart data={paradasPorDia}>
-                              <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
-                              <YAxis tick={{ fontSize: 10 }} />
-                              <Tooltip />
-                              <Bar dataKey="paradas" fill="#f97316" />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        ) : <p className="text-slate-400 text-sm">Selecione um período maior para ver o gráfico</p>}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Ocorrências */}
-            <Card className="border-slate-200 shadow-md">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-amber-600" /> Ocorrências</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                {ocorrenciasFiltradas.length === 0 ? <EmptyState label="Nenhuma ocorrência no período" /> : (
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="bg-orange-50 rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Total</p><p className="text-xl font-bold text-orange-700">{ocorrenciasFiltradas.length}</p></div>
-                        <div className="bg-green-50 rounded-lg p-3 text-center"><p className="text-xs text-slate-500">Resolvidas</p><p className="text-xl font-bold text-green-700">{ocorrenciasFiltradas.filter(o => o.resolvido).length}</p></div>
-                      </div>
-                      <p className="text-sm font-semibold text-slate-600 mb-2">Quem mais registrou</p>
-                      {rankOcorrencias.slice(0, 5).map((op, i) => (
-                        <div key={op.nome} className="flex items-center gap-2 py-1.5 border-b border-slate-100 last:border-0 text-sm">
-                          <span className="text-slate-400 w-5">{i + 1}.</span>
-                          <span className="flex-1 text-slate-800">{op.nome}</span>
-                          <Badge className="bg-slate-100 text-slate-600">{op.total}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-600 mb-2">Por tipo</p>
-                      {ocorrPorTipo.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={180}>
-                          <PieChart>
-                            <Pie data={ocorrPorTipo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={65} label={({ name, value }) => `${name}: ${value}`}>
-                              {ocorrPorTipo.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      ) : null}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* OEE */}
-            <Card className="border-slate-200 shadow-md">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-marca" /> OEE Simplificado
-                  <Badge className="ml-2 bg-marca-suave text-marca">Turno: {empilhadeiraAtiva?.duracao_turno_horas || 8}h</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                {oeeDias.every(d => d.aproveitamento === 0) ? <EmptyState label="Sem dados de tempo concluído no período" /> : (
-                  <>
-                    <div className="bg-marca-suave rounded-lg p-4 text-center inline-block">
-                      <p className="text-xs text-slate-500 mb-1">Aproveitamento médio do período</p>
-                      <p className="text-4xl font-black text-marca">{oeeMedio}%</p>
-                    </div>
-                    {oeeDias.length > 1 && (
-                      <ResponsiveContainer width="100%" height={180}>
-                        <LineChart data={oeeDias}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
-                          <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} unit="%" />
-                          <Tooltip formatter={(v) => `${v}%`} />
-                          <Line type="monotone" dataKey="aproveitamento" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} name="Aproveitamento %" />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
+            {/* Os mesmos cinco blocos da pagina IndicadoresEmpilha, agora de um
+                componente so: eram ~210 linhas copiadas nos dois arquivos, e as
+                duas copias ja divergiam numa variavel. */}
+            <BlocosIndicadores
+              linhasFiltradas={linhasFiltradas}
+              paradasFiltradas={paradasFiltradas}
+              ocorrenciasFiltradas={ocorrenciasFiltradas}
+              programacoes={programacoes}
+              linhas={linhas}
+              empilhadeiraAtiva={empilhadeira}
+              dataInicio={dataInicio}
+              dataFim={dataFim}
+            />
           </TabsContent>
+          <TabsContent value="configuracoes" className="space-y-4">
 
-          {/* ── ABA: CONFIGURAÇÕES ─────────────────────────────────────── */}
-          <TabsContent value="configuracoes" className="space-y-6">
-
-            {/* Status manutenção */}
+            {/* Situação da manutenção.
+                A borda de 2px em três cores diferentes saiu: a cor do fundo e o
+                ícone já dizem o estado, e `border-erro bg-erro-suave` repetia a
+                mesma informação num terceiro lugar. */}
             {empilhadeira && diasParaManutConfig !== null && (
-              <Card className={`border-2 shadow-lg ${diasParaManutConfig < 0 ? "border-red-400 bg-red-50" : diasParaManutConfig <= 7 ? "border-orange-400 bg-orange-50" : "border-green-300 bg-green-50"}`}>
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-4">
+              <div
+                className={`flex min-w-0 items-center gap-4 rounded-painel px-5 py-5
+                            ${diasParaManutConfig < 0 ? "bg-erro-suave"
+                              : diasParaManutConfig <= 7 ? "bg-atencao-suave"
+                              : "bg-ok-suave"}`}
+              >
+                {diasParaManutConfig < 0 ? (
+                  <AlertCircle className="h-10 w-10 flex-none text-erro" aria-hidden="true" />
+                ) : diasParaManutConfig <= 7 ? (
+                  <AlertCircle className="h-10 w-10 flex-none text-atencao" aria-hidden="true" />
+                ) : (
+                  <CheckCircle className="h-10 w-10 flex-none text-ok" aria-hidden="true" />
+                )}
+
+                <div className="min-w-0">
+                  <p className={`text-lg font-extrabold
+                                 ${diasParaManutConfig < 0 ? "text-erro"
+                                   : diasParaManutConfig <= 7 ? "text-atencao" : "text-ok"}`}>
                     {diasParaManutConfig < 0
-                      ? <AlertCircle className="w-10 h-10 text-red-600 flex-shrink-0" />
-                      : diasParaManutConfig <= 7
-                      ? <AlertCircle className="w-10 h-10 text-orange-600 flex-shrink-0" />
-                      : <CheckCircle className="w-10 h-10 text-green-600 flex-shrink-0" />}
-                    <div>
-                      <p className="font-bold text-lg text-slate-900">
-                        {diasParaManutConfig < 0
-                          ? `Manutenção atrasada há ${Math.abs(diasParaManutConfig)} dias`
-                          : diasParaManutConfig === 0
-                          ? "Manutenção prevista para HOJE"
-                          : `Próxima manutenção em ${diasParaManutConfig} dias`}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        Prevista para: {empilhadeira.data_proxima_manutencao ? format(parseISO(empilhadeira.data_proxima_manutencao), "dd/MM/yyyy") : "Não definida"}
-                        {empilhadeira.data_ultima_manutencao && ` · Última: ${format(parseISO(empilhadeira.data_ultima_manutencao), "dd/MM/yyyy")}`}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                      ? `Manutenção atrasada há ${Math.abs(diasParaManutConfig)} dia(s)`
+                      : diasParaManutConfig === 0
+                        ? "Manutenção prevista para hoje"
+                        : `Próxima manutenção em ${diasParaManutConfig} dia(s)`}
+                  </p>
+                  <p className="text-sm font-semibold text-tinta-media">
+                    Prevista para{" "}
+                    <span className="num">
+                      {empilhadeira.data_proxima_manutencao
+                        ? format(parseISO(empilhadeira.data_proxima_manutencao), "dd/MM/yyyy")
+                        : "não definida"}
+                    </span>
+                    {empilhadeira.data_ultima_manutencao && (
+                      <> · última em <span className="num">
+                        {format(parseISO(empilhadeira.data_ultima_manutencao), "dd/MM/yyyy")}
+                      </span></>
+                    )}
+                  </p>
+                </div>
+              </div>
             )}
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setConfigForm(empilhadeira || { nome: "", marca: "", modelo: "", numero_serie: "", ativa: true, intervalo_manutencao_dias: 90, observacoes: "" }); setEditMode(true); }}>
-                {empilhadeira ? "Editar" : "Cadastrar Empilhadeira"}
+            <div className="flex flex-wrap justify-end gap-2.5">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  setConfigForm(empilhadeira || {
+                    nome: "", marca: "", modelo: "", numero_serie: "",
+                    ativa: true, intervalo_manutencao_dias: 90, observacoes: "",
+                  });
+                  setEditMode(true);
+                }}
+              >
+                {empilhadeira ? "Editar" : "Cadastrar empilhadeira"}
               </Button>
               {empilhadeira && (
-                <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => setShowManutencaoModal(true)}>
-                  <Wrench className="w-4 h-4 mr-2" /> Registrar Manutenção
+                <Button size="lg" onClick={() => setShowManutencaoModal(true)}>
+                  <Wrench className="h-4 w-4" aria-hidden="true" />
+                  Registrar manutenção
                 </Button>
               )}
             </div>
 
             {empilhadeira && !editMode && (
-              <Card className="border-slate-200 shadow-lg">
-                <CardHeader className="border-b border-slate-100">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Wrench className="w-5 h-5 text-amber-600" /> {empilhadeira.nome}
-                    <Badge className={empilhadeira.ativa ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>{empilhadeira.ativa ? "Ativa" : "Inativa"}</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    {empilhadeira.marca && <div><p className="text-slate-500">Marca</p><p className="font-medium">{empilhadeira.marca}</p></div>}
-                    {empilhadeira.modelo && <div><p className="text-slate-500">Modelo</p><p className="font-medium">{empilhadeira.modelo}</p></div>}
-                    {empilhadeira.numero_serie && <div><p className="text-slate-500">Nº Série</p><p className="font-medium font-mono">{empilhadeira.numero_serie}</p></div>}
-                    <div><p className="text-slate-500">Intervalo de Manutenção</p><p className="font-medium">{empilhadeira.intervalo_manutencao_dias} dias</p></div>
+              <SectionCard
+                titulo={empilhadeira.nome}
+                icone={Wrench}
+                atraso={0.05}
+                acoes={
+                  <span className={`rounded-full px-3 py-1 text-xs font-extrabold
+                                    ${empilhadeira.ativa ? "bg-ok-suave text-ok" : "bg-erro-suave text-erro"}`}>
+                    {empilhadeira.ativa ? "Ativa" : "Inativa"}
+                  </span>
+                }
+              >
+                <dl className="grid min-w-0 gap-4 text-sm md:grid-cols-3">
+                  {empilhadeira.marca && (
+                    <div className="min-w-0">
+                      <dt className="font-bold text-texto-fraco">Marca</dt>
+                      <dd className="font-extrabold text-tinta">{empilhadeira.marca}</dd>
+                    </div>
+                  )}
+                  {empilhadeira.modelo && (
+                    <div className="min-w-0">
+                      <dt className="font-bold text-texto-fraco">Modelo</dt>
+                      <dd className="font-extrabold text-tinta">{empilhadeira.modelo}</dd>
+                    </div>
+                  )}
+                  {empilhadeira.numero_serie && (
+                    <div className="min-w-0">
+                      <dt className="font-bold text-texto-fraco">Nº de série</dt>
+                      <dd className="codigo font-extrabold text-tinta">{empilhadeira.numero_serie}</dd>
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <dt className="font-bold text-texto-fraco">Intervalo de manutenção</dt>
+                    <dd className="num font-extrabold text-tinta">
+                      {empilhadeira.intervalo_manutencao_dias} dias
+                    </dd>
                   </div>
-                  {empilhadeira.observacoes && <p className="text-sm text-slate-500 mt-3 italic">"{empilhadeira.observacoes}"</p>}
-                </CardContent>
-              </Card>
+                </dl>
+                {empilhadeira.observacoes && (
+                  <p className="mt-3 text-sm font-semibold italic text-texto-fraco">
+                    “{empilhadeira.observacoes}”
+                  </p>
+                )}
+              </SectionCard>
             )}
 
             {editMode && configForm && (
-              <Card className="border-slate-200 shadow-lg">
-                <CardHeader className="border-b border-slate-100"><CardTitle>Dados da Empilhadeira</CardTitle></CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Nome *</Label><Input value={configForm.nome} onChange={e => setConfigForm(p => ({ ...p, nome: e.target.value }))} placeholder="Empilhadeira 01" /></div>
-                    <div className="space-y-2"><Label>Intervalo de Manutenção (dias) *</Label><Input type="number" value={configForm.intervalo_manutencao_dias} onChange={e => setConfigForm(p => ({ ...p, intervalo_manutencao_dias: parseInt(e.target.value) || 90 }))} /></div>
-                    <div className="space-y-2"><Label>Marca</Label><Input value={configForm.marca || ""} onChange={e => setConfigForm(p => ({ ...p, marca: e.target.value }))} /></div>
-                    <div className="space-y-2"><Label>Modelo</Label><Input value={configForm.modelo || ""} onChange={e => setConfigForm(p => ({ ...p, modelo: e.target.value }))} /></div>
-                    <div className="space-y-2"><Label>Número de Série</Label><Input value={configForm.numero_serie || ""} onChange={e => setConfigForm(p => ({ ...p, numero_serie: e.target.value }))} /></div>
-                    <div className="space-y-2">
-                      <Label>Status</Label>
-                      <Select value={configForm.ativa ? "ativa" : "inativa"} onValueChange={v => setConfigForm(p => ({ ...p, ativa: v === "ativa" }))}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent><SelectItem value="ativa">Ativa</SelectItem><SelectItem value="inativa">Inativa</SelectItem></SelectContent>
+              <SectionCard titulo="Dados da empilhadeira" icone={Wrench} atraso={0.05}>
+                <div className="flex min-w-0 flex-col gap-5">
+                  <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                    <div className="min-w-0 space-y-2">
+                      <Label htmlFor="emp-nome">Nome *</Label>
+                      <Input
+                        id="emp-nome"
+                        value={configForm.nome}
+                        onChange={e => setConfigForm(p => ({ ...p, nome: e.target.value }))}
+                        placeholder="Empilhadeira 01"
+                      />
+                    </div>
+                    <div className="min-w-0 space-y-2">
+                      <Label htmlFor="emp-intervalo">Intervalo de manutenção (dias) *</Label>
+                      <Input
+                        id="emp-intervalo"
+                        type="number"
+                        value={configForm.intervalo_manutencao_dias}
+                        onChange={e => setConfigForm(p => ({ ...p, intervalo_manutencao_dias: parseInt(e.target.value) || 90 }))}
+                      />
+                    </div>
+                    <div className="min-w-0 space-y-2">
+                      <Label htmlFor="emp-marca">Marca</Label>
+                      <Input
+                        id="emp-marca"
+                        value={configForm.marca || ""}
+                        onChange={e => setConfigForm(p => ({ ...p, marca: e.target.value }))}
+                      />
+                    </div>
+                    <div className="min-w-0 space-y-2">
+                      <Label htmlFor="emp-modelo">Modelo</Label>
+                      <Input
+                        id="emp-modelo"
+                        value={configForm.modelo || ""}
+                        onChange={e => setConfigForm(p => ({ ...p, modelo: e.target.value }))}
+                      />
+                    </div>
+                    <div className="min-w-0 space-y-2">
+                      <Label htmlFor="emp-serie">Número de série</Label>
+                      <Input
+                        id="emp-serie"
+                        value={configForm.numero_serie || ""}
+                        onChange={e => setConfigForm(p => ({ ...p, numero_serie: e.target.value }))}
+                      />
+                    </div>
+                    <div className="min-w-0 space-y-2">
+                      <Label htmlFor="emp-status">Situação</Label>
+                      <Select
+                        value={configForm.ativa ? "ativa" : "inativa"}
+                        onValueChange={v => setConfigForm(p => ({ ...p, ativa: v === "ativa" }))}
+                      >
+                        <SelectTrigger id="emp-status"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ativa">Ativa</SelectItem>
+                          <SelectItem value="inativa">Inativa</SelectItem>
+                        </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2"><Label>Data da Última Manutenção</Label><Input type="date" value={configForm.data_ultima_manutencao || ""} onChange={e => setConfigForm(p => ({ ...p, data_ultima_manutencao: e.target.value }))} /></div>
-                    <div className="space-y-2"><Label>Data da Próxima Manutenção</Label><Input type="date" value={configForm.data_proxima_manutencao || ""} onChange={e => setConfigForm(p => ({ ...p, data_proxima_manutencao: e.target.value }))} /></div>
+                    <div className="min-w-0 space-y-2">
+                      <Label htmlFor="emp-ultima">Data da última manutenção</Label>
+                      <Input
+                        id="emp-ultima"
+                        type="date"
+                        value={configForm.data_ultima_manutencao || ""}
+                        onChange={e => setConfigForm(p => ({ ...p, data_ultima_manutencao: e.target.value }))}
+                      />
+                    </div>
+                    <div className="min-w-0 space-y-2">
+                      <Label htmlFor="emp-proxima">Data da próxima manutenção</Label>
+                      <Input
+                        id="emp-proxima"
+                        type="date"
+                        value={configForm.data_proxima_manutencao || ""}
+                        onChange={e => setConfigForm(p => ({ ...p, data_proxima_manutencao: e.target.value }))}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2"><Label>Observações</Label><Textarea value={configForm.observacoes || ""} onChange={e => setConfigForm(p => ({ ...p, observacoes: e.target.value }))} rows={2} /></div>
-                  <div className="flex gap-3 justify-end">
-                    <Button variant="outline" onClick={() => setEditMode(false)}>Cancelar</Button>
-                    <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => salvarConfigMutation.mutate(configForm)} disabled={!configForm.nome || salvarConfigMutation.isPending}>
-                      {salvarConfigMutation.isPending ? "Salvando..." : "Salvar"}
+
+                  <div className="min-w-0 space-y-2">
+                    <Label htmlFor="emp-obs">Observações</Label>
+                    <Textarea
+                      id="emp-obs"
+                      value={configForm.observacoes || ""}
+                      onChange={e => setConfigForm(p => ({ ...p, observacoes: e.target.value }))}
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap justify-end gap-3">
+                    <Button variant="outline" size="lg" onClick={() => setEditMode(false)}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      size="lg"
+                      onClick={() => salvarConfigMutation.mutate(configForm)}
+                      disabled={!configForm.nome || salvarConfigMutation.isPending}
+                    >
+                      {salvarConfigMutation.isPending ? "Salvando…" : "Salvar"}
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </SectionCard>
             )}
 
-            <Card className="border-slate-200 shadow-lg">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="text-lg">Histórico de Manutenções ({manutencoes.length})</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                {manutencoes.length === 0 ? (
-                  <p className="text-slate-400 text-center py-6">Nenhuma manutenção registrada</p>
-                ) : (
-                  <div className="space-y-3">
-                    {manutencoes.map(m => (
-                      <div key={m.id} className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Wrench className="w-5 h-5 text-amber-700" />
+            <SectionCard
+              titulo="Histórico de manutenções"
+              legenda={`${manutencoes.length} registro(s)`}
+              icone={Wrench}
+              atraso={0.1}
+            >
+              {manutencoes.length === 0 ? (
+                <VazioFluxo icone={Wrench} titulo="Nenhuma manutenção registrada" />
+              ) : (
+                <ul className="flex min-w-0 flex-col gap-2.5">
+                  {manutencoes.map(m => (
+                    <li key={m.id} className="flex min-w-0 items-start gap-4 rounded-token bg-fundo p-4">
+                      <span
+                        aria-hidden="true"
+                        className="flex h-10 w-10 flex-none items-center justify-center
+                                   rounded-token bg-marca-suave text-marca"
+                      >
+                        <Wrench className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-cartao px-2.5 py-0.5 text-[11px] font-extrabold text-texto-fraco">
+                            {m.tipo}
+                          </span>
+                          <span className="num text-sm font-extrabold text-tinta">
+                            {format(parseISO(m.data_manutencao), "dd/MM/yyyy")}
+                          </span>
+                          {m.responsavel && (
+                            <span className="text-xs font-semibold text-texto-apagado">
+                              por {m.responsavel}
+                            </span>
+                          )}
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge className="bg-amber-100 text-amber-800 text-xs">{m.tipo}</Badge>
-                            <span className="text-sm font-medium text-slate-700">{format(parseISO(m.data_manutencao), "dd/MM/yyyy")}</span>
-                            {m.responsavel && <span className="text-xs text-slate-400">por {m.responsavel}</span>}
-                          </div>
-                          {m.descricao && <p className="text-sm text-slate-600">{m.descricao}</p>}
-                        </div>
+                        {m.descricao && (
+                          <p className="mt-1 text-sm font-semibold text-tinta-media">{m.descricao}</p>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
           </TabsContent>
         </Tabs>
       </div>
@@ -794,7 +826,7 @@ export default function Empilhadeira() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowManutencaoModal(false)}>Cancelar</Button>
-            <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => registrarManutencaoMutation.mutate(manutencaoForm)} disabled={registrarManutencaoMutation.isPending}>
+            <Button className="bg-atencao hover:bg-atencao" onClick={() => registrarManutencaoMutation.mutate(manutencaoForm)} disabled={registrarManutencaoMutation.isPending}>
               {registrarManutencaoMutation.isPending ? "Registrando..." : "Registrar"}
             </Button>
           </DialogFooter>

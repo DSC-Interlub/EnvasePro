@@ -30,7 +30,7 @@ export default function RotaProtegidaAdmin({ children }) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div
-          className="w-8 h-8 border-4 border-slate-200 border-t-amber-600 rounded-full animate-spin"
+          className="w-8 h-8 border-4 border-borda border-t-amber-600 rounded-full animate-spin"
           role="status"
           aria-label="Verificando permissão"
         ></div>
