@@ -79,11 +79,11 @@ export default function ModalParada({ open, onClose, empilhadeiraId, programacao
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Hora Início *</Label>
-              <Input type="time" value={form.hora_inicio} onChange={e => setForm(p => ({ ...p, hora_inicio: e.target.value }))} />
+              <Input aria-label="Hora Início" type="time" value={form.hora_inicio} onChange={e => setForm(p => ({ ...p, hora_inicio: e.target.value }))} />
             </div>
             <div className="space-y-2">
               <Label>Hora Fim (opcional)</Label>
-              <Input type="time" value={form.hora_fim} onChange={e => setForm(p => ({ ...p, hora_fim: e.target.value }))} />
+              <Input aria-label="Hora Fim (opcional)" type="time" value={form.hora_fim} onChange={e => setForm(p => ({ ...p, hora_fim: e.target.value }))} />
             </div>
           </div>
           <div className="space-y-2">

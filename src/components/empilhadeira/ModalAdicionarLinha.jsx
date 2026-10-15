@@ -105,7 +105,7 @@ export default function ModalAdicionarLinha({ open, onClose, programacaoId }) {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Quantidade</Label>
-                <Input type="number" value={form.quantidade} onChange={e => setForm(p => ({ ...p, quantidade: parseFloat(e.target.value) || 0 }))} />
+                <Input aria-label="Quantidade" type="number" value={form.quantidade} onChange={e => setForm(p => ({ ...p, quantidade: parseFloat(e.target.value) || 0 }))} />
               </div>
               <div className="space-y-1 col-span-2">
                 <Label className="text-xs">Descrição do Produto *</Label>
@@ -113,7 +113,7 @@ export default function ModalAdicionarLinha({ open, onClose, programacaoId }) {
               </div>
               <div className="space-y-1 col-span-2">
                 <Label className="text-xs">Observações</Label>
-                <Textarea value={form.observacoes} onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))} rows={2} />
+                <Textarea aria-label="Observações" value={form.observacoes} onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))} rows={2} />
               </div>
             </div>
             <DialogFooter>
@@ -168,7 +168,7 @@ export default function ModalAdicionarLinha({ open, onClose, programacaoId }) {
                       <span className="font-medium">{l.descricao_produto || l.numero_item}</span>
                       <span className="text-texto-apagado">{l.rua_torre}</span>
                       <span className="ml-auto text-texto-fraco">{l.quantidade} un.</span>
-                      <Button variant="ghost" size="icon" className="w-5 h-5" onClick={() => setImportPreview(p => p.filter((_, j) => j !== i))}>
+                      <Button aria-label="Excluir" variant="ghost" size="icon" className="w-5 h-5" onClick={() => setImportPreview(p => p.filter((_, j) => j !== i))}>
                         <Trash2 className="w-3 h-3 text-erro" />
                       </Button>
                     </div>

@@ -174,19 +174,19 @@ export default function EmpilhadeiraConfigPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Intervalo de Manutenção (dias) *</Label>
-                  <Input type="number" value={configForm.intervalo_manutencao_dias} onChange={e => setConfigForm(p => ({ ...p, intervalo_manutencao_dias: parseInt(e.target.value) || 90 }))} />
+                  <Input aria-label="Intervalo de Manutenção (dias)" type="number" value={configForm.intervalo_manutencao_dias} onChange={e => setConfigForm(p => ({ ...p, intervalo_manutencao_dias: parseInt(e.target.value) || 90 }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Marca</Label>
-                  <Input value={configForm.marca || ""} onChange={e => setConfigForm(p => ({ ...p, marca: e.target.value }))} />
+                  <Input aria-label="Marca" value={configForm.marca || ""} onChange={e => setConfigForm(p => ({ ...p, marca: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Modelo</Label>
-                  <Input value={configForm.modelo || ""} onChange={e => setConfigForm(p => ({ ...p, modelo: e.target.value }))} />
+                  <Input aria-label="Modelo" value={configForm.modelo || ""} onChange={e => setConfigForm(p => ({ ...p, modelo: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Número de Série</Label>
-                  <Input value={configForm.numero_serie || ""} onChange={e => setConfigForm(p => ({ ...p, numero_serie: e.target.value }))} />
+                  <Input aria-label="Número de Série" value={configForm.numero_serie || ""} onChange={e => setConfigForm(p => ({ ...p, numero_serie: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
@@ -200,16 +200,16 @@ export default function EmpilhadeiraConfigPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Data da Última Manutenção</Label>
-                  <Input type="date" value={configForm.data_ultima_manutencao || ""} onChange={e => setConfigForm(p => ({ ...p, data_ultima_manutencao: e.target.value }))} />
+                  <Input aria-label="Data da Última Manutenção" type="date" value={configForm.data_ultima_manutencao || ""} onChange={e => setConfigForm(p => ({ ...p, data_ultima_manutencao: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Data da Próxima Manutenção</Label>
-                  <Input type="date" value={configForm.data_proxima_manutencao || ""} onChange={e => setConfigForm(p => ({ ...p, data_proxima_manutencao: e.target.value }))} />
+                  <Input aria-label="Data da Próxima Manutenção" type="date" value={configForm.data_proxima_manutencao || ""} onChange={e => setConfigForm(p => ({ ...p, data_proxima_manutencao: e.target.value }))} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Observações</Label>
-                <Textarea value={configForm.observacoes || ""} onChange={e => setConfigForm(p => ({ ...p, observacoes: e.target.value }))} rows={2} />
+                <Textarea aria-label="Observações" value={configForm.observacoes || ""} onChange={e => setConfigForm(p => ({ ...p, observacoes: e.target.value }))} rows={2} />
               </div>
               <div className="flex gap-3 justify-end">
                 <Button variant="outline" onClick={() => setEditMode(false)}>Cancelar</Button>
@@ -266,7 +266,7 @@ export default function EmpilhadeiraConfigPage() {
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Data da Manutenção *</Label>
-              <Input type="date" value={manutencaoForm.data_manutencao} onChange={e => setManutencaoForm(p => ({ ...p, data_manutencao: e.target.value }))} />
+              <Input aria-label="Data da Manutenção" type="date" value={manutencaoForm.data_manutencao} onChange={e => setManutencaoForm(p => ({ ...p, data_manutencao: e.target.value }))} />
             </div>
             <div className="space-y-2">
               <Label>Tipo *</Label>

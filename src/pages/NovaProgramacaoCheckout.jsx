@@ -234,7 +234,7 @@ export default function NovaProgramacaoCheckout() {
               explicado em lugar nenhum: quem colava a lista e clicava direto em
               "Criar" encontrava um botão morto sem saber por quê. */}
           <div className="flex min-w-0 flex-col gap-2">
-            <Button
+            <Button aria-label="Salvar"
               type="submit"
               size="lg"
               className="h-16 w-full rounded-painel text-base"

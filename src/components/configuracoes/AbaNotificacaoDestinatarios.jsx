@@ -208,6 +208,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                   {isAdmin && (
                     <div className="flex items-center gap-2">
                       <Button
+                        aria-label={d.ativo ? "Desativar o destinatário" : "Ativar o destinatário"}
                         variant="outline"
                         size="sm"
                         onClick={() => toggleAtivoMutation.mutate({ id: d.id, ativo: !d.ativo })}
@@ -218,7 +219,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                         <Power className={`w-3.5 h-3.5 ${d.ativo ? "text-amber-600" : "text-emerald-600"}`} />
                         {d.ativo ? "Desativar" : "Ativar"}
                       </Button>
-                      <Button
+                      <Button aria-label="Excluir"
                         variant="ghost"
                         size="sm"
                         onClick={() => {

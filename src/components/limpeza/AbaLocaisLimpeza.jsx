@@ -98,7 +98,7 @@ export default function AbaLocaisLimpeza() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button size="sm" variant="ghost" onClick={() => handleEditar(local)}>
+                    <Button aria-label="Editar" size="sm" variant="ghost" onClick={() => handleEditar(local)}>
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
                     <Switch

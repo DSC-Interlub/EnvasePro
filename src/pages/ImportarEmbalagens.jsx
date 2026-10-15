@@ -86,7 +86,7 @@ export default function ImportarEmbalagens() {
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button
+          <Button aria-label="Voltar"
             variant="outline"
             size="icon"
             onClick={() => navigate(createPageUrl("Embalagens"))}
@@ -225,7 +225,7 @@ EMB003	Bisnaga 0,5L	0,5	Bisnaga	Pequena"
                         <p className="font-mono text-slate-700">{embalagem.ultimos_4_digitos}</p>
                       </div>
                     </div>
-                    <Button
+                    <Button aria-label="Excluir"
                       type="button"
                       variant="ghost"
                       size="icon"

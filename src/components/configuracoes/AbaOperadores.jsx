@@ -77,10 +77,10 @@ export default function AbaOperadores() {
                     <TableCell><Badge variant={op.ativo ? "default" : "outline"}>{op.ativo ? "Ativo" : "Inativo"}</Badge></TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingOperator(op); setShowForm(true); }}>
+                        <Button aria-label={`Editar o operador ${op.nome}`} variant="ghost" size="icon" onClick={() => { setEditingOperator(op); setShowForm(true); }}>
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => confirm("Excluir operador?") && deleteMutation.mutate(op.id)}>
+                        <Button aria-label={`Excluir o operador ${op.nome}`} variant="ghost" size="icon" onClick={() => confirm("Excluir operador?") && deleteMutation.mutate(op.id)}>
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
                       </div>

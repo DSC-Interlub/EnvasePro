@@ -118,7 +118,7 @@ export default function ImportarCategorias() {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
           <Link to={createPageUrl("Produtos")}>
-            <Button variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
+            <Button aria-label="Voltar" variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Importar Categorias em Massa</h1>

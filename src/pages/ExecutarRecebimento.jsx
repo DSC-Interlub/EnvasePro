@@ -94,7 +94,7 @@ export default function ExecutarRecebimento() {
 
   if (!recebimento) return (
     <div className="p-6 flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-slate-200 border-t-marca rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-borda border-t-marca rounded-full animate-spin" />
     </div>
   );
 
@@ -103,29 +103,29 @@ export default function ExecutarRecebimento() {
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
       {/* Header */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+      <div className="bg-cartao border border-borda rounded-painel p-4 shadow-cartao">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/Recebimento")}><ChevronLeft className="w-4 h-4" /></Button>
+            <Button aria-label="Voltar" variant="ghost" size="sm" onClick={() => navigate("/Recebimento")}><ChevronLeft className="w-4 h-4" /></Button>
             <div>
-              <h1 className="text-lg font-bold text-slate-900">{recebimento.numero_documento}</h1>
+              <h1 className="text-lg font-bold text-tinta">{recebimento.numero_documento}</h1>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 <Badge className="text-xs bg-marca-suave text-marca">{recebimento.tipo}</Badge>
-                <Badge className={`text-xs ${recebimento.status === "Em andamento" ? "bg-marca text-white" : recebimento.status === "Concluído" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
+                <Badge className={`text-xs ${recebimento.status === "Em andamento" ? "bg-marca text-white" : recebimento.status === "Concluído" ? "bg-ok-suave text-ok" : "bg-fundo text-tinta-media"}`}>
                   {recebimento.status}
                 </Badge>
                 {recebimento.prioridade !== "Normal" && (
-                  <Badge className={`text-xs ${recebimento.prioridade === "Urgente" ? "bg-red-600 text-white" : "bg-orange-500 text-white"}`}>
+                  <Badge className={`text-xs ${recebimento.prioridade === "Urgente" ? "bg-erro text-white" : "bg-atencao text-white"}`}>
                     {recebimento.prioridade}
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-texto-fraco mt-1">
                 {recebimento.fornecedor_nome && <>{recebimento.fornecedor_nome} · </>}
                 {participantes.length > 0 && <>{participantes.map(p => p.operator_nome).join(", ")}</>}
               </p>
               {recebimento.descricao && (
-                <p className="text-xs text-slate-600 mt-1 bg-slate-50 rounded p-2">{recebimento.descricao}</p>
+                <p className="text-xs text-texto-fraco mt-1 bg-fundo rounded p-2">{recebimento.descricao}</p>
               )}
             </div>
           </div>
@@ -136,10 +136,10 @@ export default function ExecutarRecebimento() {
             <div className="flex gap-2 flex-wrap">
               {recebimento.status === "Em andamento" && (
                 <>
-                  <Button size="sm" variant="outline" className="gap-1 border-yellow-400 text-yellow-700" onClick={handlePausar} disabled={mutRec.isPending}>
+                  <Button size="sm" variant="outline" className="gap-1 border-yellow-400 text-atencao" onClick={handlePausar} disabled={mutRec.isPending}>
                     <Pause className="w-3 h-3" /> Pausar
                   </Button>
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700 gap-1" onClick={handleFinalizar} disabled={mutRec.isPending}>
+                  <Button size="sm" className="bg-ok hover:bg-ok gap-1" onClick={handleFinalizar} disabled={mutRec.isPending}>
                     <CheckCircle className="w-3 h-3" /> Finalizar
                   </Button>
                 </>
@@ -150,12 +150,12 @@ export default function ExecutarRecebimento() {
                 </Button>
               )}
               {recebimento.status === "Concluído" && !recebimento.assinatura_lider && isAdmin && (
-                <Button size="sm" variant="outline" className="gap-1 border-orange-300 text-orange-700" onClick={() => setModalAssinatura(true)}>
+                <Button size="sm" variant="outline" className="gap-1 border-atencao text-atencao" onClick={() => setModalAssinatura(true)}>
                   <CheckCircle className="w-3 h-3" /> Assinaturas
                 </Button>
               )}
               {recebimento.status !== "Concluído" && (
-                <Button size="sm" variant="outline" className="gap-1 border-red-300 text-red-600" onClick={() => setModalOcorrencia(true)}>
+                <Button size="sm" variant="outline" className="gap-1 border-erro text-erro" onClick={() => setModalOcorrencia(true)}>
                   <AlertTriangle className="w-3 h-3" /> Ocorrência
                 </Button>
               )}
@@ -165,41 +165,41 @@ export default function ExecutarRecebimento() {
       </div>
 
       {/* Ocorrências */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-cartao border border-borda rounded-painel overflow-hidden">
         <button
-          className="w-full flex items-center justify-between p-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="w-full flex items-center justify-between p-4 text-sm font-medium text-tinta-media hover:bg-fundo"
           onClick={() => setOcorrenciasOpen(o => !o)}>
           <span className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-orange-500" />
+            <AlertTriangle className="w-4 h-4 text-atencao" />
             Ocorrências
             {ocorrenciasAbertas > 0 && (
-              <Badge className="bg-red-100 text-red-700 text-xs">{ocorrenciasAbertas} aberta{ocorrenciasAbertas > 1 ? "s" : ""}</Badge>
+              <Badge className="bg-erro-suave text-erro text-xs">{ocorrenciasAbertas} aberta{ocorrenciasAbertas > 1 ? "s" : ""}</Badge>
             )}
           </span>
           {ocorrenciasOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronDown className="w-4 h-4 rotate-180" />}
         </button>
 
         {ocorrenciasOpen && (
-          <div className="p-4 border-t border-slate-100 space-y-2">
+          <div className="p-4 border-t border-borda space-y-2">
             {ocorrencias.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-2">Nenhuma ocorrência registrada</p>
+              <p className="text-xs text-texto-apagado text-center py-2">Nenhuma ocorrência registrada</p>
             ) : (
               ocorrencias.map(o => (
-                <div key={o.id} className={`p-3 rounded-lg border text-sm ${o.resolvido ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                <div key={o.id} className={`p-3 rounded-token border text-sm ${o.resolvido ? "bg-ok-suave border-ok" : "bg-erro-suave border-erro"}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge className={`text-xs ${o.resolvido ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                        <Badge className={`text-xs ${o.resolvido ? "bg-ok-suave text-ok" : "bg-erro-suave text-erro"}`}>
                           {o.resolvido ? "Resolvida" : "Aberta"}
                         </Badge>
-                        {o.tipo && <span className="text-xs font-medium text-slate-600">{o.tipo}</span>}
+                        {o.tipo && <span className="text-xs font-medium text-texto-fraco">{o.tipo}</span>}
                       </div>
-                      <p className="text-slate-700">{o.descricao}</p>
-                      <p className="text-xs text-slate-400 mt-1">{o.registrado_por} · {o.datetime_registro ? format(new Date(o.datetime_registro), "dd/MM HH:mm") : ""}</p>
-                      {o.resolucao && <p className="text-xs text-green-700 mt-1">✓ {o.resolucao}</p>}
+                      <p className="text-tinta-media">{o.descricao}</p>
+                      <p className="text-xs text-texto-apagado mt-1">{o.registrado_por} · {o.datetime_registro ? format(new Date(o.datetime_registro), "dd/MM HH:mm") : ""}</p>
+                      {o.resolucao && <p className="text-xs text-ok mt-1">✓ {o.resolucao}</p>}
                     </div>
                     {!o.resolvido && isAdmin && (
-                      <Button size="sm" variant="outline" className="h-12 text-xs border-green-300 text-green-700 shrink-0"
+                      <Button size="sm" variant="outline" className="h-12 text-xs border-ok text-ok shrink-0"
                         onClick={() => {
                           const resolucao = prompt("Descreva a resolução:");
                           if (resolucao) mutOcorrencia.mutate({ id: o.id, data: { resolvido: true, resolucao } });
@@ -212,7 +212,7 @@ export default function ExecutarRecebimento() {
               ))
             )}
             {recebimento.status !== "Concluído" && (
-              <Button size="sm" variant="outline" className="w-full text-xs gap-1 border-red-300 text-red-600" onClick={() => setModalOcorrencia(true)}>
+              <Button size="sm" variant="outline" className="w-full text-xs gap-1 border-erro text-erro" onClick={() => setModalOcorrencia(true)}>
                 <AlertTriangle className="w-3 h-3" /> Registrar ocorrência
               </Button>
             )}

@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { corTexto, corCaixa, rotulo } from "@/lib/checklist";
+import { PageHeader } from "@/components/fluxo";
 
 const CHECKLIST_CAMPOS = [
   { key: "quantidade_conforme_nf", label: "A Quantidade Recebida Está Conforme Com a Nota Fiscal?", opcoes: ["Sim", "Não"] },
@@ -205,16 +206,26 @@ export default function NovoChecklist() {
   const errorKeys = Object.keys(errors);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Button type="button" variant="ghost" size="icon" onClick={() => navigate("/ChecklistRecebimento")}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Novo Checklist de Recebimento</h1>
-          <p className="text-xs text-slate-500">Preencha todos os campos obrigatórios com validação automática</p>
-        </div>
-      </div>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="mx-auto flex min-h-screen min-w-0 max-w-3xl flex-col gap-4 bg-fundo p-4 md:p-8"
+    >
+      <PageHeader
+        migalha={[{ rotulo: "Checklist" }, { rotulo: "Novo" }]}
+        titulo="Novo checklist"
+        legenda="Todos os campos obrigatórios são conferidos ao salvar"
+        acoes={
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={() => navigate("/ChecklistRecebimento")}
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Voltar
+          </Button>
+        }
+      />
 
       {/* SEÇÃO 1 — Identificação */}
       <Card>
@@ -230,15 +241,15 @@ export default function NovoChecklist() {
                   <button type="button" key={op} onClick={() => set("pedido_disponivel_etapa5", op)}
                     role="radio" aria-checked={marcado}
                     aria-label={`O Pedido de Compras Está Disponível na Etapa 5?: ${op}`}
-                    className={`min-h-[48px] min-w-[64px] px-4 rounded-xl border-2 text-sm font-semibold transition-colors ${marcado
-                      ? op === "Sim" ? "bg-green-600 text-white border-green-600" : "bg-red-600 text-white border-red-600"
-                      : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"}`}>
+                    className={`min-h-[48px] min-w-[64px] px-4 rounded-painel border-2 text-sm font-semibold transition-colors ${marcado
+                      ? op === "Sim" ? "bg-ok text-white border-green-600" : "bg-erro text-white border-red-600"
+                      : "bg-cartao text-tinta-media border-borda hover:bg-fundo"}`}>
                     {op}
                   </button>
                 );
               })}
             </div>
-            {errors.pedido_disponivel_etapa5 && <p className="text-xs text-red-500 mt-1">{errors.pedido_disponivel_etapa5.message}</p>}
+            {errors.pedido_disponivel_etapa5 && <p className="text-xs text-erro mt-1">{errors.pedido_disponivel_etapa5.message}</p>}
           </div>
 
           {/* Número do pedido + busca SAP */}
@@ -255,14 +266,14 @@ export default function NovoChecklist() {
                 placeholder="Ex: 4500012345"
                 className="flex-1"
               />
-              <Button type="button" variant="outline" size="sm" onClick={handleBuscarSAP} disabled={sapBuscando}>
-                <Search className="w-4 h-4" />
+              <Button type="button" variant="outline" aria-label="Buscar o pedido no SAP" onClick={handleBuscarSAP} disabled={sapBuscando}>
+                <Search className="w-4 h-4" aria-hidden="true" />
               </Button>
             </div>
-            {errors.numero_pedido_compras && <p className="text-xs text-red-500 mt-1">{errors.numero_pedido_compras.message}</p>}
-            {sapBuscando && <p className="text-xs text-slate-500 mt-1">Buscando no SAP...</p>}
-            {sapStatus === "found" && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Pedido encontrado — campos preenchidos automaticamente</p>}
-            {sapStatus === "not_found" && <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />Pedido não encontrado na base SAP — preencha manualmente</p>}
+            {errors.numero_pedido_compras && <p className="text-xs text-erro mt-1">{errors.numero_pedido_compras.message}</p>}
+            {sapBuscando && <p className="text-xs text-texto-fraco mt-1">Buscando no SAP...</p>}
+            {sapStatus === "found" && <p className="text-xs text-ok mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />Pedido encontrado — campos preenchidos automaticamente</p>}
+            {sapStatus === "not_found" && <p className="text-xs text-atencao mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />Pedido não encontrado na base SAP — preencha manualmente</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -274,7 +285,7 @@ export default function NovoChecklist() {
                 className="mt-1.5"
                 placeholder="Nome do fornecedor"
               />
-              {errors.nome_fornecedor && <p className="text-xs text-red-500 mt-1">{errors.nome_fornecedor.message}</p>}
+              {errors.nome_fornecedor && <p className="text-xs text-erro mt-1">{errors.nome_fornecedor.message}</p>}
             </div>
             <div>
               <Label className="text-sm font-medium">Código do Fornecedor</Label>
@@ -295,13 +306,13 @@ export default function NovoChecklist() {
               rows={2}
               placeholder="Descreva o material recebido"
             />
-            {errors.descricao_material && <p className="text-xs text-red-500 mt-1">{errors.descricao_material.message}</p>}
+            {errors.descricao_material && <p className="text-xs text-erro mt-1">{errors.descricao_material.message}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="text-sm font-medium">Data Prevista do Material</Label>
-              <Input
+              <Input aria-label="Data Prevista do Material"
                 type="date"
                 {...register("data_prevista_material")}
                 disabled={sapReadOnly}
@@ -310,12 +321,12 @@ export default function NovoChecklist() {
             </div>
             <div>
               <Label className="text-sm font-medium">Data de Entrega *</Label>
-              <Input
+              <Input aria-label="Data de Entrega"
                 type="date"
                 {...register("data_entrega")}
                 className="mt-1.5"
               />
-              {errors.data_entrega && <p className="text-xs text-red-500 mt-1">{errors.data_entrega.message}</p>}
+              {errors.data_entrega && <p className="text-xs text-erro mt-1">{errors.data_entrega.message}</p>}
             </div>
           </div>
 
@@ -328,15 +339,15 @@ export default function NovoChecklist() {
                   <button type="button" key={op} onClick={() => set("entrega_conforme_prevista", op)}
                     role="radio" aria-checked={marcado}
                     aria-label={`A Data de Entrega Está Conforme Com a Data Prevista?: ${op}`}
-                    className={`min-h-[48px] min-w-[64px] px-4 rounded-xl border-2 text-sm font-semibold transition-colors ${marcado
-                      ? op === "Sim" ? "bg-green-600 text-white border-green-600" : "bg-red-600 text-white border-red-600"
-                      : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"}`}>
+                    className={`min-h-[48px] min-w-[64px] px-4 rounded-painel border-2 text-sm font-semibold transition-colors ${marcado
+                      ? op === "Sim" ? "bg-ok text-white border-green-600" : "bg-erro text-white border-red-600"
+                      : "bg-cartao text-tinta-media border-borda hover:bg-fundo"}`}>
                     {op}
                   </button>
                 );
               })}
             </div>
-            {errors.entrega_conforme_prevista && <p className="text-xs text-red-500 mt-1">{errors.entrega_conforme_prevista.message}</p>}
+            {errors.entrega_conforme_prevista && <p className="text-xs text-erro mt-1">{errors.entrega_conforme_prevista.message}</p>}
           </div>
 
           {/* Inspetores */}
@@ -347,16 +358,16 @@ export default function NovoChecklist() {
                 const sel = (formValues.inspecionado_por || []).includes(op.nome);
                 return (
                   <button type="button" key={op.id} onClick={() => toggleInspetor(op.nome)}
-                    className={`flex min-h-[48px] items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${sel ? "bg-marca text-white border-marca" : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}>
+                    className={`flex min-h-[48px] items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${sel ? "bg-marca text-white border-marca" : "bg-cartao text-texto-fraco border-borda hover:bg-fundo"}`}>
                     <User className="w-3 h-3" />{op.nome}
                   </button>
                 );
               })}
             </div>
             {(formValues.inspecionado_por || []).length > 0 && (
-              <p className="text-xs text-slate-500 mt-1">Selecionados: {formValues.inspecionado_por.join(", ")}</p>
+              <p className="text-xs text-texto-fraco mt-1">Selecionados: {formValues.inspecionado_por.join(", ")}</p>
             )}
-            {errors.inspecionado_por && <p className="text-xs text-red-500 mt-1">{errors.inspecionado_por.message}</p>}
+            {errors.inspecionado_por && <p className="text-xs text-erro mt-1">{errors.inspecionado_por.message}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -367,7 +378,7 @@ export default function NovoChecklist() {
                 className="mt-1.5"
                 placeholder="Nº NF"
               />
-              {errors.numero_nota_fiscal && <p className="text-xs text-red-500 mt-1">{errors.numero_nota_fiscal.message}</p>}
+              {errors.numero_nota_fiscal && <p className="text-xs text-erro mt-1">{errors.numero_nota_fiscal.message}</p>}
             </div>
             <div>
               <Label className="text-sm font-medium">Material de Recebimento *</Label>
@@ -379,7 +390,7 @@ export default function NovoChecklist() {
                   ))}
                 </SelectContent>
               </Select>
-              {errors.material_recebimento && <p className="text-xs text-red-500 mt-1">{errors.material_recebimento.message}</p>}
+              {errors.material_recebimento && <p className="text-xs text-erro mt-1">{errors.material_recebimento.message}</p>}
             </div>
           </div>
 
@@ -393,7 +404,7 @@ export default function NovoChecklist() {
                 className="mt-1.5"
                 placeholder="0"
               />
-              {errors.quantidade_recebida && <p className="text-xs text-red-500 mt-1">{errors.quantidade_recebida.message}</p>}
+              {errors.quantidade_recebida && <p className="text-xs text-erro mt-1">{errors.quantidade_recebida.message}</p>}
             </div>
             <div>
               <Label className="text-sm font-medium">Unidade de Medida *</Label>
@@ -403,7 +414,7 @@ export default function NovoChecklist() {
                   {["KG", "LT", "PC", "UN", "MILHEIRO", "M³"].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {errors.unidade_medida && <p className="text-xs text-red-500 mt-1">{errors.unidade_medida.message}</p>}
+              {errors.unidade_medida && <p className="text-xs text-erro mt-1">{errors.unidade_medida.message}</p>}
             </div>
             <div>
               <Label className="text-sm font-medium">Número de Lote *</Label>
@@ -412,7 +423,7 @@ export default function NovoChecklist() {
                 className="mt-1.5"
                 placeholder="Lote"
               />
-              {errors.numero_lote && <p className="text-xs text-red-500 mt-1">{errors.numero_lote.message}</p>}
+              {errors.numero_lote && <p className="text-xs text-erro mt-1">{errors.numero_lote.message}</p>}
             </div>
           </div>
 
@@ -442,8 +453,8 @@ export default function NovoChecklist() {
             return (
               <div key={campo.key} className="space-y-1">
                 <div
-                  className={`flex items-start justify-between gap-3 p-3 rounded-lg border transition-colors ${isSprayField && isSpray ? "bg-marca-suave border-marca-suave-2" : "bg-slate-50 border-slate-200"}`}>
-                  <span className={`text-sm flex-1 ${isSprayField && isSpray ? "text-marca font-medium" : "text-slate-700"}`}>
+                  className={`flex items-start justify-between gap-3 p-3 rounded-token border transition-colors ${isSprayField && isSpray ? "bg-marca-suave border-marca-suave-2" : "bg-fundo border-borda"}`}>
+                  <span className={`text-sm flex-1 ${isSprayField && isSpray ? "text-marca font-medium" : "text-tinta-media"}`}>
                     {campo.label}
                     {isSprayField && isSpray && <Badge className="ml-2 bg-marca-suave-2 text-marca text-[10px]">Spray</Badge>}
                   </span>
@@ -454,10 +465,10 @@ export default function NovoChecklist() {
                       // chão de fábrica, muitas vezes de luva. Os botões eram
                       // px-3 py-1 com texto xs — perto de 24 px de altura.
                       const cor = marcado
-                        ? op === "Sim" ? "bg-green-600 text-white border-green-600"
-                          : op === "Não" ? "bg-red-600 text-white border-red-600"
+                        ? op === "Sim" ? "bg-ok text-white border-green-600"
+                          : op === "Não" ? "bg-erro text-white border-red-600"
                           : "bg-slate-500 text-white border-slate-500"
-                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100";
+                        : "bg-cartao text-tinta-media border-borda hover:bg-fundo";
                       return (
                         <button
                           type="button"
@@ -466,7 +477,7 @@ export default function NovoChecklist() {
                           role="radio"
                           aria-checked={marcado}
                           aria-label={`${campo.label}: ${op}`}
-                          className={`min-h-[48px] min-w-[64px] px-4 rounded-xl border-2 text-sm font-semibold transition-colors ${cor}`}
+                          className={`min-h-[48px] min-w-[64px] px-4 rounded-painel border-2 text-sm font-semibold transition-colors ${cor}`}
                         >
                           {op}
                         </button>
@@ -474,19 +485,19 @@ export default function NovoChecklist() {
                     })}
                   </div>
                 </div>
-                {errors[campo.key] && <p className="text-xs text-red-500 px-1">{errors[campo.key].message}</p>}
+                {errors[campo.key] && <p className="text-xs text-erro px-1">{errors[campo.key].message}</p>}
               </div>
             );
           })}
 
           {/* Rodapé da seção */}
-          <div className="flex flex-wrap gap-4 pt-2 border-t border-slate-200">
-            <span className="text-sm text-slate-600">Sim: <strong className="text-green-700">{total_sim}</strong></span>
-            <span className="text-sm text-slate-600">Não: <strong className="text-red-700">{total_nao}</strong></span>
-            <span className="text-sm text-slate-600">N/A: <strong className="text-slate-500">
+          <div className="flex flex-wrap gap-4 pt-2 border-t border-borda">
+            <span className="text-sm text-texto-fraco">Sim: <strong className="text-ok">{total_sim}</strong></span>
+            <span className="text-sm text-texto-fraco">Não: <strong className="text-erro">{total_nao}</strong></span>
+            <span className="text-sm text-texto-fraco">N/A: <strong className="text-texto-fraco">
               {CHECKLIST_CAMPOS.filter(c => formValues[c.key] === "N/A").length}
             </strong></span>
-            <span className="text-sm font-semibold text-slate-700">
+            <span className="text-sm font-semibold text-tinta-media">
               Nota parcial: <span className={notaColor}>{soma_sim + soma_nao > 0 ? "+" : ""}{soma_sim + soma_nao}</span>
             </span>
           </div>
@@ -505,21 +516,21 @@ export default function NovoChecklist() {
               rows={3}
               placeholder="Registre aqui qualquer observação relevante..."
             />
-            {errors.observacoes && <p className="text-xs text-red-500 mt-1">{errors.observacoes.message}</p>}
+            {errors.observacoes && <p className="text-xs text-erro mt-1">{errors.observacoes.message}</p>}
           </div>
 
           {/* Preview nota final */}
-          <div className={`p-4 rounded-xl border-2 text-center ${corCaixa(nota_final)}`}>
-            <p className="text-xs text-slate-500 mb-1">Nota Final</p>
+          <div className={`p-4 rounded-painel border-2 text-center ${corCaixa(nota_final)}`}>
+            <p className="text-xs text-texto-fraco mb-1">Nota Final</p>
             <p className={`text-4xl font-bold ${notaColor}`}>{nota_final}</p>
             <p className={`text-sm font-semibold mt-1 ${notaColor}`}>{notaLabel}</p>
-            <p className="text-xs text-slate-500 mt-2">Sim ({total_sim} × +10) + Não ({total_nao} × -10)</p>
+            <p className="text-xs text-texto-fraco mt-2">Sim ({total_sim} × +10) + Não ({total_nao} × -10)</p>
           </div>
 
           {errorKeys.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
-              <p className="text-sm font-semibold text-red-700 flex items-center gap-1"><AlertTriangle className="w-4 h-4" />Campos com pendência:</p>
-              <ul className="list-disc list-inside text-xs text-red-600 space-y-0.5">
+            <div className="bg-erro-suave border border-erro rounded-token p-3 space-y-1">
+              <p className="text-sm font-semibold text-erro flex items-center gap-1"><AlertTriangle className="w-4 h-4" />Campos com pendência:</p>
+              <ul className="list-disc list-inside text-xs text-erro space-y-0.5">
                 {errorKeys.map((k) => <li key={k}>{errors[k]?.message}</li>)}
               </ul>
             </div>

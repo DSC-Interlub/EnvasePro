@@ -87,14 +87,14 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
 
         {etapa === "participantes" && (
           <div className="space-y-3 py-2">
-            <p className="text-sm text-slate-500">Cada participante deve assinar individualmente.</p>
+            <p className="text-sm text-texto-fraco">Cada participante deve assinar individualmente.</p>
 
             {assinados.map(p => (
-              <div key={p.id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+              <div key={p.id} className="flex items-center gap-3 p-3 bg-ok-suave rounded-token border border-ok">
+                <CheckCircle className="w-4 h-4 text-ok shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-green-800">{p.operator_nome} <span className="text-xs text-green-600">({p.funcao})</span></p>
-                  <p className="text-xs text-green-600 flex items-center gap-1">
+                  <p className="text-sm font-medium text-ok">{p.operator_nome} <span className="text-xs text-ok">({p.funcao})</span></p>
+                  <p className="text-xs text-ok flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {p.assinatura_datetime ? format(new Date(p.assinatura_datetime), "dd/MM HH:mm") : ""}
                   </p>
@@ -103,11 +103,11 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
             ))}
 
             {pendentes.map(p => (
-              <div key={p.id} className="border border-slate-200 rounded-lg overflow-hidden">
-                <div className="flex items-center justify-between p-3 bg-slate-50">
+              <div key={p.id} className="border border-borda rounded-token overflow-hidden">
+                <div className="flex items-center justify-between p-3 bg-fundo">
                   <div>
-                    <span className="text-sm font-medium text-slate-700">{p.operator_nome}</span>
-                    <span className="text-xs text-slate-400 ml-2">({p.funcao})</span>
+                    <span className="text-sm font-medium text-tinta-media">{p.operator_nome}</span>
+                    <span className="text-xs text-texto-apagado ml-2">({p.funcao})</span>
                   </div>
                   {assinandoId !== p.id && (
                     <Button size="sm" variant="outline" className="h-12 text-xs"
@@ -117,8 +117,8 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
                   )}
                 </div>
                 {assinandoId === p.id && (
-                  <div className="p-3 space-y-3 border-t border-slate-200">
-                    <div className="flex items-center gap-3 p-3 bg-marca-suave rounded-lg border border-marca-suave-2">
+                  <div className="p-3 space-y-3 border-t border-borda">
+                    <div className="flex items-center gap-3 p-3 bg-marca-suave rounded-token border border-marca-suave-2">
                       <Checkbox id={`cf-${p.id}`} checked={confirmado} onCheckedChange={setConfirmado} />
                       <label htmlFor={`cf-${p.id}`} className="text-sm text-marca cursor-pointer">
                         Confirmo minha participação neste recebimento.
@@ -145,26 +145,26 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
 
         {etapa === "lider" && (
           <div className="space-y-4 py-2">
-            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="p-3 bg-ok-suave rounded-token border border-ok">
               <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <p className="text-sm font-medium text-green-800">Todos os participantes assinaram</p>
+                <CheckCircle className="w-4 h-4 text-ok" />
+                <p className="text-sm font-medium text-ok">Todos os participantes assinaram</p>
               </div>
               {assinados.map(p => (
-                <p key={p.id} className="text-xs text-green-600 ml-6">
+                <p key={p.id} className="text-xs text-ok ml-6">
                   {p.operator_nome} ({p.funcao}) — {p.assinatura_datetime ? format(new Date(p.assinatura_datetime), "dd/MM HH:mm") : ""}
                 </p>
               ))}
             </div>
 
-            <p className="text-sm text-slate-600">Assinatura do líder (somente admin)</p>
+            <p className="text-sm text-texto-fraco">Assinatura do líder (somente admin)</p>
 
             {recebimento.assinatura_lider ? (
-              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                <CheckCircle className="w-4 h-4 text-green-600" />
+              <div className="flex items-center gap-3 p-3 bg-ok-suave rounded-token border border-ok">
+                <CheckCircle className="w-4 h-4 text-ok" />
                 <div>
-                  <p className="text-sm font-medium text-green-800">Líder já assinou</p>
-                  <p className="text-xs text-green-600">
+                  <p className="text-sm font-medium text-ok">Líder já assinou</p>
+                  <p className="text-xs text-ok">
                     {recebimento.assinatura_lider_nome} — {recebimento.assinatura_lider_datetime ? format(new Date(recebimento.assinatura_lider_datetime), "dd/MM HH:mm") : ""}
                   </p>
                 </div>
@@ -173,11 +173,11 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
               <>
                 <div>
                   <Label>Nome do líder</Label>
-                  <Input value={nomeLider} onChange={e => setNomeLider(e.target.value)} />
+                  <Input aria-label="Nome do líder" value={nomeLider} onChange={e => setNomeLider(e.target.value)} />
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={onClose}>Fechar</Button>
-                  <Button className="bg-green-600 hover:bg-green-700" onClick={handleAssinarLider}
+                  <Button className="bg-ok hover:bg-ok" onClick={handleAssinarLider}
                     disabled={!nomeLider || mutRecebimento.isPending}>
                     Assinar como Líder
                   </Button>
@@ -185,8 +185,8 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
               </>
             ) : (
               <>
-                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                  <p className="text-sm text-amber-700">Aguardando assinatura do líder.</p>
+                <div className="p-3 bg-atencao-suave rounded-token border border-atencao">
+                  <p className="text-sm text-atencao">Aguardando assinatura do líder.</p>
                 </div>
                 <DialogFooter><Button variant="outline" onClick={onClose}>Fechar</Button></DialogFooter>
               </>

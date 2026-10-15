@@ -140,7 +140,7 @@ export default function ExecutarEmpilha() {
 
         {/* Header */}
         <div className="flex items-center gap-4 flex-wrap">
-          <Button variant="outline" size="icon" onClick={() => navigate(createPageUrl("Empilhadeira"))}>
+          <Button aria-label="Voltar" variant="outline" size="icon" onClick={() => navigate(createPageUrl("Empilhadeira"))}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex-1">

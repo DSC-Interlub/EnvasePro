@@ -84,7 +84,7 @@ export default function ModalOcorrenciaRecebimento({ open, onClose, recebimentoI
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button className="bg-red-600 hover:bg-red-700" onClick={handleSalvar}
+          <Button className="bg-erro hover:bg-erro" onClick={handleSalvar}
             disabled={!form.descricao || !form.registrado_por || mutation.isPending}>
             {mutation.isPending ? "Salvando..." : "Registrar"}
           </Button>

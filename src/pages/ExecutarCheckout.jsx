@@ -313,7 +313,7 @@ export default function ExecutarCheckout() {
           icone={Plus}
           atraso={0.3}
           acoes={
-            <Button
+            <Button aria-label="Adicionar"
               variant="outline"
               size="lg"
               onClick={() => setShowAddPedidos(!showAddPedidos)}

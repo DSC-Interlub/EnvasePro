@@ -111,8 +111,8 @@ export default function AbaProdutos() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(p); setShowForm(true); }}><Edit className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => confirm("Excluir produto?") && deleteMutation.mutate(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                        <Button aria-label={`Editar o produto ${p.codigo}`} variant="ghost" size="icon" onClick={() => { setEditingProduct(p); setShowForm(true); }}><Edit className="w-4 h-4" /></Button>
+                        <Button aria-label={`Excluir o produto ${p.codigo}`} variant="ghost" size="icon" onClick={() => confirm("Excluir produto?") && deleteMutation.mutate(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>

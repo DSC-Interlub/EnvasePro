@@ -97,7 +97,7 @@ export default function NovaEmpilhaProgramacao() {
       <div className="max-w-5xl mx-auto space-y-6">
 
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate(createPageUrl("Empilhadeira"))}>
+          <Button aria-label="Voltar" variant="outline" size="icon" onClick={() => navigate(createPageUrl("Empilhadeira"))}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
@@ -131,7 +131,7 @@ export default function NovaEmpilhaProgramacao() {
               </div>
               <div className="space-y-2">
                 <Label>Data Programada *</Label>
-                <Input type="date" value={dataProgramada} onChange={e => setDataProgramada(e.target.value)} />
+                <Input aria-label="Data Programada" type="date" value={dataProgramada} onChange={e => setDataProgramada(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>Criado por (Líder/Supervisor)</Label>
@@ -203,7 +203,7 @@ export default function NovaEmpilhaProgramacao() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Quantidade</Label>
-                <Input type="number" value={novaLinha.quantidade} onChange={e => setNovaLinha(p => ({ ...p, quantidade: parseFloat(e.target.value) || 0 }))} />
+                <Input aria-label="Quantidade" type="number" value={novaLinha.quantidade} onChange={e => setNovaLinha(p => ({ ...p, quantidade: parseFloat(e.target.value) || 0 }))} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Tipo</Label>
@@ -261,7 +261,7 @@ export default function NovaEmpilhaProgramacao() {
                         <td className="p-3 text-slate-600">{l.rua_torre || "—"}</td>
                         <td className="p-3">{l.quantidade}</td>
                         <td className="p-3">
-                          <Button variant="ghost" size="icon" onClick={() => handleRemoverLinha(i)}>
+                          <Button aria-label="Excluir" variant="ghost" size="icon" onClick={() => handleRemoverLinha(i)}>
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
                         </td>
