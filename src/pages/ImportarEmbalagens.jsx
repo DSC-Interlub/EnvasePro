@@ -94,8 +94,8 @@ export default function ImportarEmbalagens() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Importar Embalagens</h1>
-            <p className="text-slate-600 mt-1">Cole a lista de embalagens do Excel</p>
+            <h1 className="text-3xl font-bold text-tinta">Importar Embalagens</h1>
+            <p className="text-texto-fraco mt-1">Cole a lista de embalagens do Excel</p>
           </div>
         </div>
 
@@ -107,9 +107,9 @@ export default function ImportarEmbalagens() {
         )}
 
         {createEmbalagensMutation.isSuccess && (
-          <Alert className="bg-green-50 border-green-200">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
+          <Alert className="bg-ok-suave border-ok">
+            <CheckCircle className="h-4 w-4 text-ok" />
+            <AlertDescription className="text-ok">
               <strong>{embalagensParsed.length} embalagens</strong> importadas com sucesso! Redirecionando...
             </AlertDescription>
           </Alert>
@@ -124,7 +124,7 @@ export default function ImportarEmbalagens() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-sm text-slate-700">
+            <div className="space-y-2 text-sm text-tinta-media">
               <p className="font-semibold">Copie as colunas do Excel e cole no campo abaixo:</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li><strong>Coluna A:</strong> Código da Embalagem</li>
@@ -133,15 +133,15 @@ export default function ImportarEmbalagens() {
                 <li><strong>Coluna D:</strong> Tipo</li>
                 <li><strong>Coluna E:</strong> Conteúdo Externo (opcional)</li>
               </ul>
-              <p className="mt-3 text-slate-600">
+              <p className="mt-3 text-texto-fraco">
                 <strong>Exemplo do que colar:</strong><br />
-                <code className="text-xs bg-white px-2 py-1 rounded">
+                <code className="text-xs bg-cartao px-2 py-1 rounded">
                   EMB001	Pote 500ml	500	Pote	Info adicional<br />
                   EMB002	Frasco 1L	1000	Frasco	<br />
                   EMB003	Bisnaga 0,5L	0,5	Bisnaga	Pequena
                 </code>
               </p>
-              <p className="mt-2 text-amber-700 font-medium">
+              <p className="mt-2 text-atencao font-medium">
                 <strong>Importante:</strong> Use vírgula (,) ou ponto (.) para números decimais. Ex: 0,5 ou 0.5
               </p>
             </div>
@@ -149,8 +149,8 @@ export default function ImportarEmbalagens() {
         </Card>
 
         {/* Campo para colar */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <CardTitle>Cole a lista de embalagens</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -166,7 +166,7 @@ EMB003	Bisnaga 0,5L	0,5	Bisnaga	Pequena"
                 rows={10}
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-texto-fraco">
                 Cole os dados copiados do Excel. As colunas devem estar separadas por TAB.
               </p>
             </div>
@@ -186,9 +186,9 @@ EMB003	Bisnaga 0,5L	0,5	Bisnaga	Pequena"
 
         {/* Lista de Embalagens Processadas */}
         {embalagensParsed.length > 0 && (
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="border-b border-slate-100">
-              <CardTitle className="text-xl font-bold text-slate-900">
+          <Card className="border-borda shadow-cartao">
+            <CardHeader className="border-b border-borda">
+              <CardTitle className="text-xl font-bold text-tinta">
                 Embalagens Importadas ({embalagensParsed.length})
               </CardTitle>
             </CardHeader>
@@ -197,32 +197,32 @@ EMB003	Bisnaga 0,5L	0,5	Bisnaga	Pequena"
                 {embalagensParsed.map((embalagem, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200"
+                    className="flex items-center justify-between p-4 bg-fundo rounded-token border border-borda"
                   >
                     <div className="flex-1 grid grid-cols-2 md:grid-cols-6 gap-4">
                       <div>
-                        <p className="text-xs text-slate-500">Código</p>
-                        <p className="font-mono font-semibold text-slate-900">{embalagem.codigo}</p>
+                        <p className="text-xs text-texto-fraco">Código</p>
+                        <p className="font-mono font-semibold text-tinta">{embalagem.codigo}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Descrição</p>
-                        <p className="font-semibold text-slate-900">{embalagem.descricao}</p>
+                        <p className="text-xs text-texto-fraco">Descrição</p>
+                        <p className="font-semibold text-tinta">{embalagem.descricao}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Conteúdo</p>
-                        <p className="text-slate-700">{embalagem.conteudo}</p>
+                        <p className="text-xs text-texto-fraco">Conteúdo</p>
+                        <p className="text-tinta-media">{embalagem.conteudo}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Tipo</p>
-                        <p className="text-slate-700">{embalagem.tipo}</p>
+                        <p className="text-xs text-texto-fraco">Tipo</p>
+                        <p className="text-tinta-media">{embalagem.tipo}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Conteúdo Ext</p>
-                        <p className="text-slate-700">{embalagem.conteudo_ext || "-"}</p>
+                        <p className="text-xs text-texto-fraco">Conteúdo Ext</p>
+                        <p className="text-tinta-media">{embalagem.conteudo_ext || "-"}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">4 Dígitos</p>
-                        <p className="font-mono text-slate-700">{embalagem.ultimos_4_digitos}</p>
+                        <p className="text-xs text-texto-fraco">4 Dígitos</p>
+                        <p className="font-mono text-tinta-media">{embalagem.ultimos_4_digitos}</p>
                       </div>
                     </div>
                     <Button aria-label="Excluir"
@@ -230,7 +230,7 @@ EMB003	Bisnaga 0,5L	0,5	Bisnaga	Pequena"
                       variant="ghost"
                       size="icon"
                       onClick={() => removeEmbalagem(index)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-erro hover:text-erro hover:bg-erro-suave"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

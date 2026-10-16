@@ -55,7 +55,7 @@ export default function AcoesDaLinha({
           aria-label={`Excluir ${nomeDoItem}`}
           /* ml-6: o afastamento do excluir em relação ao editar é a trava
              contra o toque errado, por isso vive aqui e não no gap do grupo. */
-          className="h-12 min-w-[48px] px-3 ml-6 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+          className="h-12 min-w-[48px] px-3 ml-6 border-erro text-erro hover:bg-erro-suave hover:text-erro"
         >
           <Trash2 className="w-5 h-5" />
           <span className="ml-2 hidden sm:inline">Excluir</span>
@@ -73,7 +73,7 @@ export default function AcoesDaLinha({
           <AlertDialogFooter>
             <AlertDialogCancel className="h-12">Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="h-12 bg-red-600 hover:bg-red-700"
+              className="h-12 bg-erro hover:bg-erro"
               onClick={() => { setAberto(false); onExcluir(); }}
             >
               Excluir

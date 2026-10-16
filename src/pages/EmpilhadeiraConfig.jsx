@@ -109,7 +109,7 @@ export default function EmpilhadeiraConfigPage() {
 
         {/* Status da manutenção */}
         {empilhadeira && diasParaManutencao !== null && (
-          <Card className={`border-2 shadow-cartao ${diasParaManutencao < 0 ? "border-erro bg-erro-suave" : diasParaManutencao <= 7 ? "border-orange-400 bg-atencao-suave" : "border-ok bg-ok-suave"}`}>
+          <Card className={`border-2 shadow-cartao ${diasParaManutencao < 0 ? "border-erro bg-erro-suave" : diasParaManutencao <= 7 ? "border-atencao bg-atencao-suave" : "border-ok bg-ok-suave"}`}>
             <CardContent className="p-5">
               <div className="flex items-center gap-4">
                 {diasParaManutencao < 0

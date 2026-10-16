@@ -535,49 +535,49 @@ export default function Dashboard() {
           <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="border-slate-200 shadow-lg">
+              <Card className="border-borda shadow-cartao">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-500">Total de Programações</p>
-                      <p className="text-3xl font-bold text-slate-900 mt-2">
+                      <p className="text-sm font-medium text-texto-fraco">Total de Programações</p>
+                      <p className="text-3xl font-bold text-tinta mt-2">
                         {filteredProgramacoes.length}
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-marca-suave rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-marca-suave rounded-painel flex items-center justify-center">
                       <Calendar className="w-6 h-6 text-marca" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-slate-200 shadow-lg">
+              <Card className="border-borda shadow-cartao">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-500">Pedidos Críticos</p>
-                      <p className="text-3xl font-bold text-red-600 mt-2">
+                      <p className="text-sm font-medium text-texto-fraco">Pedidos Críticos</p>
+                      <p className="text-3xl font-bold text-erro mt-2">
                         {filteredCheckoutItems.filter(i => i.critico).length}
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                      <AlertCircle className="w-6 h-6 text-red-600" />
+                    <div className="w-12 h-12 bg-erro-suave rounded-painel flex items-center justify-center">
+                      <AlertCircle className="w-6 h-6 text-erro" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-slate-200 shadow-lg">
+              <Card className="border-borda shadow-cartao">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-500">Concluídas</p>
-                      <p className="text-3xl font-bold text-green-600 mt-2">
+                      <p className="text-sm font-medium text-texto-fraco">Concluídas</p>
+                      <p className="text-3xl font-bold text-ok mt-2">
                         {filteredProgramacoes.filter(p => p.status === "Concluído").length}
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                      <CheckCircle className="w-6 h-6 text-green-600" />
+                    <div className="w-12 h-12 bg-ok-suave rounded-painel flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-ok" />
                     </div>
                   </div>
                 </CardContent>
@@ -599,12 +599,12 @@ export default function Dashboard() {
             <DialogTitle>Exportar Relatório</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-texto-fraco">
               Selecione o período para exportação (deixe em branco para exportar todos os registros):
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="exportStartDate" className="text-sm text-slate-600 mb-1 block">
+                <Label htmlFor="exportStartDate" className="text-sm text-texto-fraco mb-1 block">
                   Data Inicial
                 </Label>
                 <Input
@@ -616,7 +616,7 @@ export default function Dashboard() {
                 />
               </div>
               <div>
-                <Label htmlFor="exportEndDate" className="text-sm text-slate-600 mb-1 block">
+                <Label htmlFor="exportEndDate" className="text-sm text-texto-fraco mb-1 block">
                   Data Final
                 </Label>
                 <Input
@@ -629,7 +629,7 @@ export default function Dashboard() {
               </div>
             </div>
             {(exportStartDate || exportEndDate) && (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-texto-fraco">
                 {exportStartDate && exportEndDate ? (
                   <>Exportando registros de {formatarData(exportStartDate, "dd/MM/yyyy")} até {formatarData(exportEndDate, "dd/MM/yyyy")}</>
                 ) : exportStartDate ? (

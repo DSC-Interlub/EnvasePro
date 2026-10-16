@@ -2,7 +2,8 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
 import { ClipboardCheck } from "lucide-react";
-import { contarPorFaixa, corTexto } from "@/lib/checklist";
+import { contarPorFaixa, corTexto } from "@/lib/checklist";
+import { CORES_GRAFICO } from "@/components/fluxo";
 
 const CAMPOS_LABELS = {
   pedido_disponivel_etapa5: "Pedido Etapa 5",
@@ -17,7 +18,7 @@ const CAMPOS_LABELS = {
 };
 
 const CAMPOS = Object.keys(CAMPOS_LABELS);
-const PIE_COLORS = ["#22c55e", "#eab308", "#ef4444"];
+/** Aprovado, atencao e reprovado — nesta ordem, lidos dos tokens no render. */
 
 export default function IndicadoresChecklist({ checklists }) {
   if (!checklists || checklists.length === 0) {
@@ -104,6 +105,10 @@ export default function IndicadoresChecklist({ checklists }) {
   ).map(([nome, v]) => ({ nome, count: v.count, media: Math.round(v.soma / v.count) }))
     .sort((a, b) => b.count - a.count).slice(0, 8);
 
+  // Lidos no render: trocar o token troca o grafico.
+  const cores = CORES_GRAFICO();
+  const coresNota = [cores[1], cores[2], cores[3]];   // ok, atencao, erro
+
   return (
     <div className="space-y-6">
       {/* Bloco 1 — Visão geral */}
@@ -129,7 +134,7 @@ export default function IndicadoresChecklist({ checklists }) {
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie data={pieData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
-                    {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+                    {pieData.map((_, i) => <Cell key={i} fill={coresNota[i]} />)}
                   </Pie>
                   <Tooltip />
                 </PieChart>
@@ -143,7 +148,7 @@ export default function IndicadoresChecklist({ checklists }) {
                   <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="media" stroke="#2563eb" strokeWidth={2} dot={false} name="Nota média" />
+                  <Line type="monotone" dataKey="media" stroke={cores[0]} strokeWidth={2} dot={false} name="Nota média" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -162,7 +167,7 @@ export default function IndicadoresChecklist({ checklists }) {
                 <XAxis type="number" tick={{ fontSize: 10 }} domain={['auto', 'auto']} />
                 <YAxis dataKey="nome" type="category" tick={{ fontSize: 10 }} width={140} />
                 <Tooltip formatter={(v) => [`${v}`, "Nota média"]} />
-                <Bar dataKey="media" fill="#2563eb" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="media" fill={cores[0]} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -170,7 +175,7 @@ export default function IndicadoresChecklist({ checklists }) {
             <p className="text-xs font-semibold text-texto-fraco mb-2">Fornecedores com mais checklists reprovados</p>
             <div className="space-y-1">
               {porFornecedor.filter(f => f.reprovados > 0).sort((a, b) => b.reprovados - a.reprovados).map(f => (
-                <div key={f.nome} className="flex justify-between items-center text-sm px-3 py-1.5 bg-erro-suave border border-red-100 rounded">
+                <div key={f.nome} className="flex justify-between items-center text-sm px-3 py-1.5 bg-erro-suave border border-erro rounded">
                   <span className="text-tinta-media">{f.nome}</span>
                   <span className="text-erro font-bold">{f.reprovados} reprovados</span>
                 </div>
@@ -200,7 +205,7 @@ export default function IndicadoresChecklist({ checklists }) {
                 <div className="flex h-2 rounded-full overflow-hidden bg-fundo">
                   <div className="bg-ok" style={{ width: `${c.sim}%` }} />
                   <div className="bg-erro" style={{ width: `${c.nao}%` }} />
-                  <div className="bg-slate-300" style={{ width: `${c.na}%` }} />
+                  <div className="bg-trilha" style={{ width: `${c.na}%` }} />
                 </div>
               </div>
             ))}

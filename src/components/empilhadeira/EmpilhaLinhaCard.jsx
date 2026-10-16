@@ -28,7 +28,7 @@ function minsToHHMM(mins) {
 
 const TIPO_BADGES = {
   Crítico: "bg-erro text-white",
-  Avulso: "bg-amber-500 text-white",
+  Avulso: "bg-atencao text-white",
 };
 
 // Etapas do modal de assinatura
@@ -277,10 +277,10 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
               )}
               {linha.status === "Em Andamento" && (
                 <>
-                  <Button size="sm" variant="outline" className="border-yellow-400 text-atencao hover:bg-atencao-suave" onClick={handlePausar} disabled={updateMutation.isPending}>
+                  <Button size="sm" variant="outline" className="border-atencao text-atencao hover:bg-atencao-suave" onClick={handlePausar} disabled={updateMutation.isPending}>
                     <Pause className="w-3 h-3 mr-1" /> Pausar
                   </Button>
-                  <Button size="sm" variant="outline" className="border-orange-400 text-atencao hover:bg-atencao-suave" onClick={() => setShowOcorrenciaModal(true)}>
+                  <Button size="sm" variant="outline" className="border-atencao text-atencao hover:bg-atencao-suave" onClick={() => setShowOcorrenciaModal(true)}>
                     <AlertTriangle className="w-3 h-3 mr-1" /> Ocorrência
                   </Button>
                   <Button size="sm" className="bg-marca hover:bg-marca-forte" onClick={handleFinalizar} disabled={updateMutation.isPending}>
@@ -293,7 +293,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                   <Button size="sm" className="bg-ok hover:bg-ok" onClick={handleRetomar} disabled={updateMutation.isPending}>
                     <RotateCcw className="w-3 h-3 mr-1" /> Retomar
                   </Button>
-                  <Button size="sm" variant="outline" className="border-orange-400 text-atencao hover:bg-atencao-suave" onClick={() => setShowOcorrenciaModal(true)}>
+                  <Button size="sm" variant="outline" className="border-atencao text-atencao hover:bg-atencao-suave" onClick={() => setShowOcorrenciaModal(true)}>
                     <AlertTriangle className="w-3 h-3 mr-1" /> Ocorrência
                   </Button>
                 </>

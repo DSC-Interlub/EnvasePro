@@ -103,8 +103,8 @@ export default function ImportarProdutos() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Importar Produtos</h1>
-            <p className="text-slate-600 mt-1">Cole a lista de produtos do Excel</p>
+            <h1 className="text-3xl font-bold text-tinta">Importar Produtos</h1>
+            <p className="text-texto-fraco mt-1">Cole a lista de produtos do Excel</p>
           </div>
         </div>
 
@@ -116,9 +116,9 @@ export default function ImportarProdutos() {
         )}
 
         {createProdutosMutation.isSuccess && (
-          <Alert className="bg-green-50 border-green-200">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
+          <Alert className="bg-ok-suave border-ok">
+            <CheckCircle className="h-4 w-4 text-ok" />
+            <AlertDescription className="text-ok">
               <strong>{produtosParsed.length} produtos</strong> importados com sucesso! Redirecionando...
             </AlertDescription>
           </Alert>
@@ -133,7 +133,7 @@ export default function ImportarProdutos() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-sm text-slate-700">
+            <div className="space-y-2 text-sm text-tinta-media">
               <p className="font-semibold">Copie as colunas do Excel e cole no campo abaixo:</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li><strong>Coluna A:</strong> Código do Item</li>
@@ -146,9 +146,9 @@ export default function ImportarProdutos() {
                 <li><strong>Coluna H:</strong> KOSHER (X se tiver, vazio se não)</li>
                 <li><strong>Coluna I:</strong> Categoria (Graxa, Óleo ou Pasta — opcional)</li>
               </ul>
-              <p className="mt-3 text-slate-600">
+              <p className="mt-3 text-texto-fraco">
                 <strong>Exemplo do que colar:</strong><br />
-                <code className="text-xs bg-white px-2 py-1 rounded block mt-1">
+                <code className="text-xs bg-cartao px-2 py-1 rounded block mt-1">
                   ALIPLEX 0	ALIPLEX 0	L	2		X	X	X<br />
                   BIO CLEANER	BIO CLEANER	L	2	X	X	X	X
                 </code>
@@ -158,8 +158,8 @@ export default function ImportarProdutos() {
         </Card>
 
         {/* Campo para colar */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <CardTitle>Cole a lista de produtos</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -174,7 +174,7 @@ BIO CLEANER	BIO CLEANER	L	2	X	X	X	X"
                 rows={10}
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-texto-fraco">
                 Cole os dados copiados do Excel. As colunas devem estar separadas por TAB.
               </p>
             </div>
@@ -194,9 +194,9 @@ BIO CLEANER	BIO CLEANER	L	2	X	X	X	X"
 
         {/* Lista de Produtos Processados */}
         {produtosParsed.length > 0 && (
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="border-b border-slate-100">
-              <CardTitle className="text-xl font-bold text-slate-900">
+          <Card className="border-borda shadow-cartao">
+            <CardHeader className="border-b border-borda">
+              <CardTitle className="text-xl font-bold text-tinta">
                 Produtos Importados ({produtosParsed.length})
               </CardTitle>
             </CardHeader>
@@ -205,46 +205,46 @@ BIO CLEANER	BIO CLEANER	L	2	X	X	X	X"
                 {produtosParsed.map((produto, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200"
+                    className="flex items-center justify-between p-4 bg-fundo rounded-token border border-borda"
                   >
                     <div className="flex-1 space-y-2">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                          <p className="text-xs text-slate-500">Código</p>
-                          <p className="font-mono font-semibold text-slate-900">{produto.codigo}</p>
+                          <p className="text-xs text-texto-fraco">Código</p>
+                          <p className="font-mono font-semibold text-tinta">{produto.codigo}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-slate-500">Nome</p>
-                          <p className="font-semibold text-slate-900">{produto.nome}</p>
+                          <p className="text-xs text-texto-fraco">Nome</p>
+                          <p className="font-semibold text-tinta">{produto.nome}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-slate-500">Unidade</p>
-                          <p className="text-slate-700">{produto.unidade_medida}</p>
+                          <p className="text-xs text-texto-fraco">Unidade</p>
+                          <p className="text-tinta-media">{produto.unidade_medida}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-slate-500">Consistência</p>
-                          <p className="text-slate-700">{produto.consistencia}</p>
+                          <p className="text-xs text-texto-fraco">Consistência</p>
+                          <p className="text-tinta-media">{produto.consistencia}</p>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {produto.categoria && (
                           <Badge className={
-                            produto.categoria === 'Graxa' ? 'bg-amber-100 text-amber-800 text-xs font-medium' :
+                            produto.categoria === 'Graxa' ? 'bg-atencao-suave text-atencao text-xs font-medium' :
                             produto.categoria === 'Óleo' ? 'bg-marca-suave text-marca text-xs font-medium' :
-                            'bg-green-100 text-green-800 text-xs font-medium'
+                            'bg-ok-suave text-ok text-xs font-medium'
                           }>{produto.categoria}</Badge>
                         )}
                         {produto.nsf_3h && (
                           <Badge className="bg-marca-suave text-marca text-xs font-medium">NSF 3H</Badge>
                         )}
                         {produto.nsf_h1 && (
-                          <Badge className="bg-green-100 text-green-800 text-xs font-medium">NSF H1</Badge>
+                          <Badge className="bg-ok-suave text-ok text-xs font-medium">NSF H1</Badge>
                         )}
                         {produto.halal && (
                           <Badge className="bg-purple-100 text-purple-800 text-xs font-medium">HALAL</Badge>
                         )}
                         {produto.kosher && (
-                          <Badge className="bg-slate-100 text-slate-800 text-xs font-medium">KOSHER</Badge>
+                          <Badge className="bg-fundo text-tinta text-xs font-medium">KOSHER</Badge>
                         )}
                       </div>
                     </div>
@@ -253,7 +253,7 @@ BIO CLEANER	BIO CLEANER	L	2	X	X	X	X"
                       variant="ghost"
                       size="icon"
                       onClick={() => removeProduto(index)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-erro hover:text-erro hover:bg-erro-suave"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

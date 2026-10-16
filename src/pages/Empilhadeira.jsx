@@ -26,7 +26,6 @@ import BlocosIndicadores from "../components/empilhadeira/BlocosIndicadores";
 import PainelPendenciasAdmin from "../components/empilhadeira/PainelPendenciasAdmin";
 import { PageHeader, StatCard, SectionCard, StatusPill, SegmentoPeriodo, ChipsFiltro, MiniKPI, EmptyState as VazioFluxo, CORES_GRAFICO, EIXO, GRADE, TOOLTIP, LEGENDA, RAIO_BARRA } from "@/components/fluxo";
 
-const COLORS = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6", "#ec4899"];
 
 function minsFromHHMM(str) {
   if (!str) return 0;

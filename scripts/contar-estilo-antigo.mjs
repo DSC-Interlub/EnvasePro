@@ -163,7 +163,19 @@ for (const f of arquivos) {
   porModulo[mod] = porModulo[mod] || { antigo: 0, novo: 0, arquivos: 0 };
   porModulo[mod].arquivos += 1;
 
-  const texto = fs.readFileSync(f, 'utf8');
+  // Comentário JSX (`{/* ... */}`) sai ANTES de contar.
+  //
+  // O `ehComentario` só pula linha que COMEÇA com `*`, `//` ou `/*`; o corpo de
+  // um comentário JSX de várias linhas começa com texto comum e passava direto.
+  // Como os comentários desta reconstrução citam de propósito as classes que
+  // foram REMOVIDAS ("o gradiente roxo-para-azul saiu", "era bg-amber-500"), o
+  // contador estava contando as próprias explicações como dívida — e o número
+  // que eu vinha relatando saía MAIOR que a realidade.
+  //
+  // Os espaços preservam a contagem de linhas, para o número da linha nas
+  // ocorrências continuar certo.
+  const texto = fs.readFileSync(f, 'utf8')
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, (bloco) => bloco.replace(/[^\n]/g, ' '));
   const linhas = texto.split('\n');
 
   for (const [i, linha] of linhas.entries()) {

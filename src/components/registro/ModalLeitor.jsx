@@ -132,7 +132,10 @@ export default function ModalLeitor({ aberto, aoFechar, aoLer, titulo = "Ler có
               aria-label="Imagem da câmera"
               className="aspect-[4/3] w-full object-cover"
             />
-            {/* Mira: o operador precisa saber ONDE encostar o codigo. */}
+            {/* Mira: o operador precisa saber ONDE encostar o código.
+                A cor preta com 35% dentro de uma sombra gigante é proposital e
+                não vira token: é o truque que escurece TUDO fora do quadro da
+                mira com um elemento só. Não é cor de interface — é máscara. */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 flex items-center justify-center"

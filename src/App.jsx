@@ -101,8 +101,8 @@ const AuthenticatedApp = () => {
   // Spinner enquanto carrega a sessão, inclusive nas telas de TV.
   if (isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
-        <div className="w-10 h-10 border-4 border-slate-200 border-t-marca rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-fundo">
+        <div className="w-10 h-10 border-4 border-borda border-t-marca rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -110,19 +110,19 @@ const AuthenticatedApp = () => {
   // Sem sessão, exibe a tela de login — inclusive nas rotas de TV.
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-marca-suave flex items-center justify-center p-4">
+      <div className="min-h-screen bg-fundo">
         <LoginModal />
         <div className="text-center space-y-4 max-w-sm">
-          <div className="w-16 h-16 bg-marca text-white rounded-2xl mx-auto flex items-center justify-center shadow-lg font-bold text-2xl">
+          <div className="w-16 h-16 bg-marca text-white rounded-painel mx-auto flex items-center justify-center shadow-cartao font-bold text-2xl">
             EP
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">EnvasePro Interlub</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="text-2xl font-bold text-tinta">EnvasePro Interlub</h1>
+          <p className="text-sm text-texto-fraco">
             Sistema de Controle de Produção, Empilhadeira e Recebimento.
           </p>
           <button
             onClick={() => setLoginModalAberto(true)}
-            className="w-full py-2.5 px-4 bg-marca hover:bg-marca-forte text-white font-semibold rounded-lg shadow transition"
+            className="w-full py-2.5 px-4 bg-marca hover:bg-marca-forte text-white font-semibold rounded-token shadow transition"
           >
             Fazer Login no Sistema
           </button>

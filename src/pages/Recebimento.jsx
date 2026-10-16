@@ -15,7 +15,7 @@ import { format, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { PageHeader, StatCard, SegmentoPeriodo, EmptyState } from "@/components/fluxo";
+import { PageHeader, StatCard, SegmentoPeriodo, EmptyState, CORES_GRAFICO } from "@/components/fluxo";
 import RecebimentoCard from "@/components/recebimento/RecebimentoCard";
 import AbaFornecedoresRecebimento from "@/components/recebimento/AbaFornecedoresRecebimento";
 
@@ -44,8 +44,12 @@ const FORM_INICIAL = {
   equipe: [],
 };
 
-const TIPO_COLORS = { "Importação": "#7c3aed", "Nacional": "#2563eb", "Devolução": "#ea580c", "Material auxiliar": "#0d9488", "Outro": "#64748b" };
-const PIE_COLORS = ["#7c3aed", "#2563eb", "#ea580c", "#0d9488", "#64748b"];
+/**
+ * As cores do grafico vem dos tokens, lidas no render.
+ *
+ * Eram cinco hexadecimais fixos, um por tipo de recebimento — e nenhum deles
+ * existia na paleta do sistema. Trocar --marca nao os alcancava.
+ */
 
 function minToHM(min) {
   if (!min && min !== 0) return "—";
@@ -341,6 +345,8 @@ export default function Recebimento() {
     );
   }
 
+  const coresGrafico = CORES_GRAFICO();
+
   return (
     <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="mx-auto flex min-w-0 max-w-[1200px] flex-col gap-4">
@@ -484,7 +490,7 @@ export default function Recebimento() {
                   <ResponsiveContainer width="100%" height={160}>
                     <PieChart>
                       <Pie data={porTipo} cx="50%" cy="50%" outerRadius={60} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
-                        {porTipo.map((entry, i) => <Cell key={i} fill={TIPO_COLORS[entry.name] || PIE_COLORS[i % PIE_COLORS.length]} />)}
+                        {porTipo.map((entry, i) => <Cell key={i} fill={coresGrafico[i % coresGrafico.length]} />)}
                       </Pie>
                       <Tooltip />
                     </PieChart>
@@ -497,7 +503,7 @@ export default function Recebimento() {
                       <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
                       <YAxis tick={{ fontSize: 10 }} />
                       <Tooltip />
-                      <Bar dataKey="total" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="total" fill={coresGrafico[0]} radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -529,7 +535,7 @@ export default function Recebimento() {
                     <XAxis dataKey="tipo" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip formatter={(v) => minToHM(v)} />
-                    <Bar dataKey="media" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="media" fill={coresGrafico[4]} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -581,7 +587,7 @@ export default function Recebimento() {
                     <XAxis type="number" tick={{ fontSize: 10 }} />
                     <YAxis dataKey="nome" type="category" tick={{ fontSize: 11 }} width={120} />
                     <Tooltip />
-                    <Bar dataKey="total" fill="#0d9488" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="total" fill={coresGrafico[1]} radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}

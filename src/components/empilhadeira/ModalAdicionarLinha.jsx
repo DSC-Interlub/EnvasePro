@@ -119,7 +119,7 @@ export default function ModalAdicionarLinha({ open, onClose, programacaoId }) {
             <DialogFooter>
               <Button variant="outline" onClick={onClose}>Cancelar</Button>
               <Button
-                className={form.tipo_linha === "Crítico" ? "bg-erro hover:bg-erro" : "bg-amber-500 hover:bg-atencao"}
+                className={form.tipo_linha === "Crítico" ? "bg-erro hover:bg-erro" : "bg-atencao hover:bg-atencao"}
                 onClick={handleManual}
                 disabled={(!form.descricao_produto && !form.numero_item) || addMutation.isPending}
               >
@@ -162,7 +162,7 @@ export default function ModalAdicionarLinha({ open, onClose, programacaoId }) {
                 <div className="max-h-40 overflow-y-auto">
                   {importPreview.map((l, i) => (
                     <div key={i} className="flex items-center gap-2 px-3 py-1.5 border-t text-xs">
-                      <Badge className={l.tipo_linha === "Crítico" ? "bg-erro text-white" : "bg-amber-500 text-white"}>
+                      <Badge className={l.tipo_linha === "Crítico" ? "bg-erro text-white" : "bg-atencao text-white"}>
                         {l.tipo_linha}
                       </Badge>
                       <span className="font-medium">{l.descricao_produto || l.numero_item}</span>

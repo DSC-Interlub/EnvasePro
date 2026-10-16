@@ -242,7 +242,7 @@ export default function NovoChecklist() {
                     role="radio" aria-checked={marcado}
                     aria-label={`O Pedido de Compras Está Disponível na Etapa 5?: ${op}`}
                     className={`min-h-[48px] min-w-[64px] px-4 rounded-painel border-2 text-sm font-semibold transition-colors ${marcado
-                      ? op === "Sim" ? "bg-ok text-white border-green-600" : "bg-erro text-white border-red-600"
+                      ? op === "Sim" ? "bg-ok text-white border-ok" : "bg-erro text-white border-erro"
                       : "bg-cartao text-tinta-media border-borda hover:bg-fundo"}`}>
                     {op}
                   </button>
@@ -340,7 +340,7 @@ export default function NovoChecklist() {
                     role="radio" aria-checked={marcado}
                     aria-label={`A Data de Entrega Está Conforme Com a Data Prevista?: ${op}`}
                     className={`min-h-[48px] min-w-[64px] px-4 rounded-painel border-2 text-sm font-semibold transition-colors ${marcado
-                      ? op === "Sim" ? "bg-ok text-white border-green-600" : "bg-erro text-white border-red-600"
+                      ? op === "Sim" ? "bg-ok text-white border-ok" : "bg-erro text-white border-erro"
                       : "bg-cartao text-tinta-media border-borda hover:bg-fundo"}`}>
                     {op}
                   </button>
@@ -465,9 +465,9 @@ export default function NovoChecklist() {
                       // chão de fábrica, muitas vezes de luva. Os botões eram
                       // px-3 py-1 com texto xs — perto de 24 px de altura.
                       const cor = marcado
-                        ? op === "Sim" ? "bg-ok text-white border-green-600"
-                          : op === "Não" ? "bg-erro text-white border-red-600"
-                          : "bg-slate-500 text-white border-slate-500"
+                        ? op === "Sim" ? "bg-ok text-white border-ok"
+                          : op === "Não" ? "bg-erro text-white border-erro"
+                          : "bg-texto-fraco text-white border-texto-fraco"
                         : "bg-cartao text-tinta-media border-borda hover:bg-fundo";
                       return (
                         <button

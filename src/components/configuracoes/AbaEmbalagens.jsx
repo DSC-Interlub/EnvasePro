@@ -46,12 +46,12 @@ export default function AbaEmbalagens() {
         <EmbalagemForm embalagem={editingEmbalagem} onClose={() => { setShowForm(false); setEditingEmbalagem(null); }} />
       )}
 
-      <Card className="border-slate-200 shadow-md">
-        <CardHeader className="border-b border-slate-100">
+      <Card className="border-borda shadow-cartao">
+        <CardHeader className="border-b border-borda">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Embalagens ({embalagens.length})</CardTitle>
             <div className="relative w-56">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-texto-apagado w-4 h-4" />
               <Input placeholder="Buscar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
           </div>
@@ -60,7 +60,7 @@ export default function AbaEmbalagens() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-fundo">
                   <TableHead>Código</TableHead><TableHead>Descrição</TableHead>
                   <TableHead>Conteúdo</TableHead><TableHead>Tipo</TableHead>
                   <TableHead>4 Dígitos</TableHead><TableHead className="text-right">Ações</TableHead>
@@ -77,7 +77,7 @@ export default function AbaEmbalagens() {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button aria-label={`Editar a embalagem ${e.codigo}`} variant="ghost" size="icon" onClick={() => { setEditingEmbalagem(e); setShowForm(true); }}><Edit className="w-4 h-4" /></Button>
-                        <Button aria-label={`Excluir a embalagem ${e.codigo}`} variant="ghost" size="icon" onClick={() => confirm("Excluir embalagem?") && deleteMutation.mutate(e.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                        <Button aria-label={`Excluir a embalagem ${e.codigo}`} variant="ghost" size="icon" onClick={() => confirm("Excluir embalagem?") && deleteMutation.mutate(e.id)}><Trash2 className="w-4 h-4 text-erro" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>

@@ -478,8 +478,8 @@ export default function Televisao() {
             type="button"
             onClick={() => setAutoPlay((a) => !a)}
             aria-label={autoPlay ? 'Pausar rotação' : 'Retomar rotação'}
-            className="press rounded-token border border-white/15 bg-white/5 px-3 py-2
-                       text-sm font-bold text-texto-fraco hover:bg-white/10 hover:text-tinta"
+            className="press rounded-token border border-white/15 bg-cartao/5 px-3 py-2
+                       text-sm font-bold text-texto-fraco hover:bg-cartao/10 hover:text-tinta"
           >
             {autoPlay ? 'Pausar' : 'Retomar'}
           </button>
@@ -493,7 +493,7 @@ export default function Televisao() {
                 aria-label={pnl.modulo}
                 onClick={() => resetAutoPlay(i)}
                 className={`press h-3 rounded-full transition-all ${
-                  i === slideIndex ? 'w-8 bg-marca' : 'w-3 bg-white/25 hover:bg-white/40'}`}
+                  i === slideIndex ? 'w-8 bg-marca' : 'w-3 bg-cartao/25 hover:bg-cartao/40'}`}
               />
             ))}
           </div>
