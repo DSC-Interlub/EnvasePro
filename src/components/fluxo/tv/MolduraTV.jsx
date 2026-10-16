@@ -54,7 +54,7 @@ export default function MolduraTV({
           <span
             aria-hidden="true"
             className="flex flex-none items-center justify-center rounded-[26px] bg-white
-                       font-extrabold text-[#0A0F1F]"
+                       font-extrabold text-[rgb(var(--fundo))]"
             style={{ width: "clamp(52px, 4.4vw, 84px)", height: "clamp(52px, 4.4vw, 84px)",
                      fontSize: "clamp(20px, 1.7vw, 32px)" }}
           >

@@ -101,14 +101,14 @@ export default function NovaEmpilhaProgramacao() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Nova Programação de Empilhadeira</h1>
-            <p className="text-slate-500 text-sm">Configure a empilhadeira, data e importe as linhas</p>
+            <h1 className="text-2xl font-bold text-tinta">Nova Programação de Empilhadeira</h1>
+            <p className="text-texto-fraco text-sm">Configure a empilhadeira, data e importe as linhas</p>
           </div>
         </div>
 
         {/* Dados da programação */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <CardTitle>Dados da Programação</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -126,7 +126,7 @@ export default function NovaEmpilhaProgramacao() {
                   </SelectContent>
                 </Select>
                 {ativas.length === 0 && (
-                  <p className="text-xs text-red-500">Nenhuma empilhadeira ativa cadastrada. Cadastre em Config. Empilhadeira.</p>
+                  <p className="text-xs text-erro">Nenhuma empilhadeira ativa cadastrada. Cadastre em Config. Empilhadeira.</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -153,13 +153,13 @@ export default function NovaEmpilhaProgramacao() {
         </Card>
 
         {/* Importação Excel */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <CardTitle className="text-lg">Importar via Excel (colar dados)</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
-            <p className="text-sm text-slate-500">
-              Formato: <code className="bg-slate-100 px-1 rounded">Data picking | Nº Item | Descrição | Lote | Depósito | Rua/Torre | Quantidade | Operador | Líder</code>
+            <p className="text-sm text-texto-fraco">
+              Formato: <code className="bg-fundo px-1 rounded">Data picking | Nº Item | Descrição | Lote | Depósito | Rua/Torre | Quantidade | Operador | Líder</code>
             </p>
             <Textarea
               value={rawText}
@@ -175,8 +175,8 @@ export default function NovaEmpilhaProgramacao() {
         </Card>
 
         {/* Adicionar linha manual */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <CardTitle className="text-lg">Adicionar Linha Manualmente</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -225,44 +225,44 @@ export default function NovaEmpilhaProgramacao() {
 
         {/* Preview */}
         {linhas.length > 0 && (
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="border-b border-slate-100">
+          <Card className="border-borda shadow-cartao">
+            <CardHeader className="border-b border-borda">
               <CardTitle className="text-lg">Preview — {linhas.length} linhas</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto max-h-80 overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 sticky top-0">
+                  <thead className="bg-fundo sticky top-0">
                     <tr>
-                      <th className="text-left p-3 font-medium text-slate-600">#</th>
-                      <th className="text-left p-3 font-medium text-slate-600">Tipo</th>
-                      <th className="text-left p-3 font-medium text-slate-600">Item</th>
-                      <th className="text-left p-3 font-medium text-slate-600">Descrição</th>
-                      <th className="text-left p-3 font-medium text-slate-600">Depósito</th>
-                      <th className="text-left p-3 font-medium text-slate-600">Rua/Torre</th>
-                      <th className="text-left p-3 font-medium text-slate-600">Qtd</th>
+                      <th className="text-left p-3 font-medium text-texto-fraco">#</th>
+                      <th className="text-left p-3 font-medium text-texto-fraco">Tipo</th>
+                      <th className="text-left p-3 font-medium text-texto-fraco">Item</th>
+                      <th className="text-left p-3 font-medium text-texto-fraco">Descrição</th>
+                      <th className="text-left p-3 font-medium text-texto-fraco">Depósito</th>
+                      <th className="text-left p-3 font-medium text-texto-fraco">Rua/Torre</th>
+                      <th className="text-left p-3 font-medium text-texto-fraco">Qtd</th>
                       <th className="p-3"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {linhas.map((l, i) => (
-                      <tr key={i} className={`border-t border-slate-100 ${l.tipo_linha === "Crítico" ? "bg-red-50" : l.tipo_linha === "Avulso" ? "bg-amber-50" : ""}`}>
-                        <td className="p-3 text-slate-400 text-xs">{i + 1}</td>
+                      <tr key={i} className={`border-t border-borda ${l.tipo_linha === "Crítico" ? "bg-erro-suave" : l.tipo_linha === "Avulso" ? "bg-atencao-suave" : ""}`}>
+                        <td className="p-3 text-texto-apagado text-xs">{i + 1}</td>
                         <td className="p-3">
                           {l.tipo_linha !== "Normal" && (
-                            <Badge className={l.tipo_linha === "Crítico" ? "bg-red-100 text-red-700 text-xs" : "bg-amber-100 text-amber-700 text-xs"}>
+                            <Badge className={l.tipo_linha === "Crítico" ? "bg-erro-suave text-erro text-xs" : "bg-atencao-suave text-atencao text-xs"}>
                               {l.tipo_linha}
                             </Badge>
                           )}
                         </td>
                         <td className="p-3 font-mono text-xs">{l.numero_item || "—"}</td>
                         <td className="p-3 font-medium">{l.descricao_produto || "—"}</td>
-                        <td className="p-3 text-slate-600">{l.deposito || "—"}</td>
-                        <td className="p-3 text-slate-600">{l.rua_torre || "—"}</td>
+                        <td className="p-3 text-texto-fraco">{l.deposito || "—"}</td>
+                        <td className="p-3 text-texto-fraco">{l.rua_torre || "—"}</td>
                         <td className="p-3">{l.quantidade}</td>
                         <td className="p-3">
                           <Button aria-label="Excluir" variant="ghost" size="icon" onClick={() => handleRemoverLinha(i)}>
-                            <Trash2 className="w-4 h-4 text-red-500" />
+                            <Trash2 className="w-4 h-4 text-erro" />
                           </Button>
                         </td>
                       </tr>
@@ -277,14 +277,14 @@ export default function NovaEmpilhaProgramacao() {
         <Button
           onClick={() => criarMutation.mutate()}
           disabled={!dataProgramada || !empilhadeiraId || criarMutation.isPending}
-          className="w-full bg-amber-600 hover:bg-amber-700 text-white text-lg py-6"
+          className="w-full bg-atencao hover:bg-atencao text-white text-lg py-6"
         >
           <Upload className="w-5 h-5 mr-2" />
           {criarMutation.isPending ? "Criando..." : `Criar Programação${linhas.length > 0 ? ` com ${linhas.length} linhas` : ""}`}
         </Button>
 
         {!empilhadeiraId && (
-          <p className="text-center text-sm text-red-500">Selecione uma empilhadeira para continuar</p>
+          <p className="text-center text-sm text-erro">Selecione uma empilhadeira para continuar</p>
         )}
       </div>
     </div>

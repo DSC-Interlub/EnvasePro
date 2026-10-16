@@ -36,12 +36,12 @@ export default function LoginModal() {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white shadow-2xl border-slate-200">
+      <Card className="w-full max-w-md bg-cartao shadow-cartao-alta border-borda">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto w-12 h-12 bg-marca-suave rounded-full flex items-center justify-center mb-3">
             <Lock className="w-6 h-6 text-marca" />
           </div>
-          <CardTitle className="text-2xl font-bold text-slate-800">Acesso ao EnvasePro</CardTitle>
+          <CardTitle className="text-2xl font-bold text-tinta">Acesso ao EnvasePro</CardTitle>
           <CardDescription>
             Entre com suas credenciais do Supabase para acessar as operações.
           </CardDescription>
@@ -49,7 +49,7 @@ export default function LoginModal() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             {erro && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700">
+              <div className="p-3 bg-erro-suave border border-erro rounded-token flex items-center gap-2 text-sm text-erro">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{erro}</span>
               </div>
@@ -58,7 +58,7 @@ export default function LoginModal() {
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <Mail className="w-4 h-4 absolute left-3 top-3 text-texto-apagado" />
                 <Input
                   id="email"
                   type="email"
@@ -74,7 +74,7 @@ export default function LoginModal() {
             <div className="space-y-1.5">
               <Label htmlFor="password">Senha</Label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <Lock className="w-4 h-4 absolute left-3 top-3 text-texto-apagado" />
                 <Input
                   id="password"
                   type="password"
@@ -91,8 +91,8 @@ export default function LoginModal() {
               {loading ? 'Entrando...' : 'Entrar no Sistema'}
             </Button>
 
-            <div className="pt-3 border-t border-slate-100 space-y-2">
-              <p className="text-xs text-center text-slate-500 font-medium">Preenchimento Rápido de E-mail:</p>
+            <div className="pt-3 border-t border-borda space-y-2">
+              <p className="text-xs text-center text-texto-fraco font-medium">Preenchimento Rápido de E-mail:</p>
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
@@ -108,10 +108,10 @@ export default function LoginModal() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="text-xs flex items-center gap-1.5 border-slate-200 hover:bg-slate-50"
+                  className="text-xs flex items-center gap-1.5 border-borda hover:bg-fundo"
                   onClick={() => preencherEmail('pcp-brasil@interlub.com')}
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-slate-700" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-tinta-media" />
                   PCP (Admin)
                 </Button>
               </div>

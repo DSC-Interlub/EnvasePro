@@ -86,25 +86,25 @@ export default function ImportarCategorias() {
   const notFound = matches?.filter(m => !m.product) ?? [];
   const invalidCat = matches?.filter(m => !['Graxa', 'Óleo', 'Pasta'].includes(m.categoria)) ?? [];
   const catColor = {
-    Graxa: "bg-amber-100 text-amber-800",
+    Graxa: "bg-atencao-suave text-atencao",
     Óleo: "bg-marca-suave text-marca",
-    Pasta: "bg-green-100 text-green-800"
+    Pasta: "bg-ok-suave text-ok"
   };
 
   if (done) {
     return (
       <div className="min-h-screen bg-fundo p-4 md:p-8 flex items-center justify-center">
-        <Card className="border-green-300 bg-green-50 max-w-md w-full">
+        <Card className="border-ok bg-ok-suave max-w-md w-full">
           <CardContent className="p-8 text-center">
-            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-black text-green-700 mb-2">Categorias atualizadas!</h2>
-            <p className="text-green-600 mb-6">{found.length} produtos foram atualizados com sucesso.</p>
+            <CheckCircle className="w-16 h-16 text-ok mx-auto mb-4" />
+            <h2 className="text-2xl font-black text-ok mb-2">Categorias atualizadas!</h2>
+            <p className="text-ok mb-6">{found.length} produtos foram atualizados com sucesso.</p>
             <div className="flex gap-3 justify-center">
               <Button onClick={() => { setDone(false); setMatches(null); setRawText(""); }} variant="outline">
                 Nova Importação
               </Button>
               <Link to={createPageUrl("Produtos")}>
-                <Button className="bg-green-600 hover:bg-green-700">Ver Produtos</Button>
+                <Button className="bg-ok hover:bg-ok">Ver Produtos</Button>
               </Link>
             </div>
           </CardContent>
@@ -121,19 +121,19 @@ export default function ImportarCategorias() {
             <Button aria-label="Voltar" variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Importar Categorias em Massa</h1>
-            <p className="text-slate-500 text-sm">Cole a lista (Código TAB Categoria) para atualizar todos os produtos de uma vez</p>
+            <h1 className="text-2xl font-bold text-tinta">Importar Categorias em Massa</h1>
+            <p className="text-texto-fraco text-sm">Cole a lista (Código TAB Categoria) para atualizar todos os produtos de uma vez</p>
           </div>
         </div>
 
         {/* Input */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <CardTitle className="text-lg">Cole a lista aqui</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
-            <p className="text-sm text-slate-500">
-              Formato: <code className="bg-slate-100 px-1 rounded">CÓDIGO[TAB]Graxa</code> ou <code className="bg-slate-100 px-1 rounded">Óleo</code> ou <code className="bg-slate-100 px-1 rounded">Pasta</code> — uma por linha.
+            <p className="text-sm text-texto-fraco">
+              Formato: <code className="bg-fundo px-1 rounded">CÓDIGO[TAB]Graxa</code> ou <code className="bg-fundo px-1 rounded">Óleo</code> ou <code className="bg-fundo px-1 rounded">Pasta</code> — uma por linha.
               Copie diretamente da planilha Excel (coluna Código + coluna Categoria).
             </p>
             <Textarea
@@ -158,38 +158,38 @@ export default function ImportarCategorias() {
         {matches && (
           <>
             <div className="grid grid-cols-2 gap-4">
-              <Card className="border-green-200 bg-green-50">
+              <Card className="border-ok bg-ok-suave">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+                  <CheckCircle className="w-8 h-8 text-ok" />
                   <div>
-                    <p className="text-2xl font-black text-green-700">{found.length}</p>
-                    <p className="text-sm text-green-600">produtos encontrados</p>
+                    <p className="text-2xl font-black text-ok">{found.length}</p>
+                    <p className="text-sm text-ok">produtos encontrados</p>
                   </div>
                 </CardContent>
               </Card>
-              <Card className="border-orange-200 bg-orange-50">
+              <Card className="border-atencao bg-atencao-suave">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <AlertCircle className="w-8 h-8 text-orange-600" />
+                  <AlertCircle className="w-8 h-8 text-atencao" />
                   <div>
-                    <p className="text-2xl font-black text-orange-700">{notFound.length}</p>
-                    <p className="text-sm text-orange-600">não encontrados</p>
+                    <p className="text-2xl font-black text-atencao">{notFound.length}</p>
+                    <p className="text-sm text-atencao">não encontrados</p>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
             {found.length > 0 && (
-              <Card className="border-slate-200 shadow-lg">
-                <CardHeader className="border-b border-slate-100">
+              <Card className="border-borda shadow-cartao">
+                <CardHeader className="border-b border-borda">
                   <CardTitle className="text-base">✅ Serão atualizados ({found.length})</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 max-h-72 overflow-y-auto">
                   <div className="space-y-1">
                     {found.map((m, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-slate-100 last:border-0">
+                      <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-borda last:border-0">
                         <div>
-                          <span className="font-mono text-xs text-slate-500 mr-2">{m.product.codigo}</span>
-                          <span className="font-medium text-slate-700">{m.product.nome}</span>
+                          <span className="font-mono text-xs text-texto-fraco mr-2">{m.product.codigo}</span>
+                          <span className="font-medium text-tinta-media">{m.product.nome}</span>
                         </div>
                         <Badge className={catColor[m.categoria]}>{m.categoria}</Badge>
                       </div>
@@ -200,14 +200,14 @@ export default function ImportarCategorias() {
             )}
 
             {notFound.length > 0 && (
-              <Card className="border-orange-200">
-                <CardHeader className="border-b border-orange-100">
-                  <CardTitle className="text-base text-orange-700">⚠️ Não encontrados ({notFound.length}) — serão ignorados</CardTitle>
+              <Card className="border-atencao">
+                <CardHeader className="border-b border-atencao">
+                  <CardTitle className="text-base text-atencao">⚠️ Não encontrados ({notFound.length}) — serão ignorados</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 max-h-48 overflow-y-auto">
                   <div className="flex flex-wrap gap-2">
                     {notFound.map((m, i) => (
-                      <Badge key={i} variant="outline" className="text-orange-600 border-orange-300">{m.codigo}</Badge>
+                      <Badge key={i} variant="outline" className="text-atencao border-atencao">{m.codigo}</Badge>
                     ))}
                   </div>
                 </CardContent>
@@ -215,10 +215,10 @@ export default function ImportarCategorias() {
             )}
 
             {updateError && (
-              <Card className="border-red-200 bg-red-50">
+              <Card className="border-erro bg-erro-suave">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                  <p className="text-red-700 text-sm">{updateError}</p>
+                  <AlertCircle className="w-5 h-5 text-erro" />
+                  <p className="text-erro text-sm">{updateError}</p>
                 </CardContent>
               </Card>
             )}
@@ -227,7 +227,7 @@ export default function ImportarCategorias() {
               <Button
                 onClick={handleConfirm}
                 disabled={isUpdating}
-                className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-6"
+                className="w-full bg-ok hover:bg-ok text-white text-lg py-6"
               >
                 {isUpdating ? (
                   <>

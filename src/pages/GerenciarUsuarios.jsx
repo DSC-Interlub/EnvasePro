@@ -60,7 +60,7 @@ export default function GerenciarUsuarios() {
   const roleBadge = (role) =>
     role === "admin"
       ? "bg-marca-suave text-marca border-marca-suave-2"
-      : "bg-slate-100 text-slate-700 border-slate-200";
+      : "bg-fundo text-tinta-media border-borda";
 
   return (
     <div className="min-h-screen bg-fundo p-4 md:p-8">
@@ -68,17 +68,17 @@ export default function GerenciarUsuarios() {
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-marca rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-marca rounded-painel flex items-center justify-center">
             <Settings className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Configurações</h1>
-            <p className="text-sm text-slate-500">Gerencie usuários, locais e programações de limpeza</p>
+            <h1 className="text-2xl font-bold text-tinta">Configurações</h1>
+            <p className="text-sm text-texto-fraco">Gerencie usuários, locais e programações de limpeza</p>
           </div>
         </div>
 
         <Tabs defaultValue={abaInicial}>
-          <TabsList className="bg-white border border-slate-200 flex-wrap h-auto gap-1">
+          <TabsList className="bg-cartao border border-borda flex-wrap h-auto gap-1">
             <TabsTrigger value="usuarios" className="flex items-center gap-2">
               <Users className="w-4 h-4" /> Usuários
             </TabsTrigger>
@@ -109,8 +109,8 @@ export default function GerenciarUsuarios() {
                 <strong>Operador:</strong> Executar linhas, registrar ocorrências, assinar como operador/ajudante.
               </AlertDescription>
             </Alert>
-            <Card className="border-slate-200 shadow-md">
-              <CardHeader className="border-b border-slate-100">
+            <Card className="border-borda shadow-cartao">
+              <CardHeader className="border-b border-borda">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Users className="w-5 h-5 text-marca" />
                   Usuários ({users.length})
@@ -122,21 +122,21 @@ export default function GerenciarUsuarios() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-marca"></div>
                   </div>
                 ) : users.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400">Nenhum usuário encontrado</div>
+                  <div className="text-center py-10 text-texto-apagado">Nenhum usuário encontrado</div>
                 ) : (
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-borda">
                     {users.map((u) => (
-                      <div key={u.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors">
+                      <div key={u.id} className="flex items-center justify-between px-6 py-4 hover:bg-fundo transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-marca to-marca-forte flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-marca flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             {(u.full_name || u.email || "?")[0].toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-900 text-sm">{u.full_name || "—"}</p>
-                            <p className="text-xs text-slate-500">{u.email}</p>
+                            <p className="font-semibold text-tinta text-sm">{u.full_name || "—"}</p>
+                            <p className="text-xs text-texto-fraco">{u.email}</p>
                           </div>
                           {u.id === currentUser?.id && (
-                            <Badge className="bg-green-100 text-green-700 text-xs ml-1">Você</Badge>
+                            <Badge className="bg-ok-suave text-ok text-xs ml-1">Você</Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
@@ -197,7 +197,7 @@ export default function GerenciarUsuarios() {
             </DialogHeader>
             {confirmModal && (
               <div className="py-4 space-y-3">
-                <p className="text-slate-700">
+                <p className="text-tinta-media">
                   Deseja alterar <strong>{confirmModal.user.full_name || confirmModal.user.email}</strong> de{" "}
                   <Badge className={`border ${roleBadge(confirmModal.user.role)}`}>{roleLabel(confirmModal.user.role || "operator")}</Badge>
                   {" "}para{" "}
@@ -211,8 +211,8 @@ export default function GerenciarUsuarios() {
                   </Alert>
                 )}
                 {confirmModal.novoRole === "operator" && (
-                  <Alert className="border-amber-200 bg-amber-50">
-                    <AlertDescription className="text-amber-700 text-sm">
+                  <Alert className="border-atencao bg-atencao-suave">
+                    <AlertDescription className="text-atencao text-sm">
                       Este usuário perderá acesso às telas administrativas.
                     </AlertDescription>
                   </Alert>

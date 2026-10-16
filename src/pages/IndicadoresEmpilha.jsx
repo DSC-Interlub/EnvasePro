@@ -112,7 +112,7 @@ export default function IndicadoresEmpilha() {
 
 /**
  * Ranking de pessoas — o mesmo bloco aparecia três vezes (empilhadores,
- * ajudantes e quem registrou ocorrência), com `border-b border-slate-100` e um
+ * ajudantes e quem registrou ocorrência), com `border-b border-borda` e um
  * `<Badge>` cinza.
  *
  * A barra de proporção é nova: a lista ordenada já dizia a ordem, mas não a

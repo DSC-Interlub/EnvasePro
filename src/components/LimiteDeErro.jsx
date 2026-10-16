@@ -45,13 +45,13 @@ export default class LimiteDeErro extends React.Component {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-6">
         <div className="max-w-md text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center">
+          <div className="w-14 h-14 rounded-painel bg-atencao-suave text-atencao mx-auto flex items-center justify-center">
             <AlertTriangle className="w-7 h-7" />
           </div>
-          <h2 className="text-xl font-bold text-slate-800">
+          <h2 className="text-xl font-bold text-tinta">
             Não foi possível abrir esta tela
           </h2>
-          <p className="text-slate-600">
+          <p className="text-texto-fraco">
             Pode ter sido uma falha de conexão. Tente de novo; se continuar,
             avise o suporte.
           </p>
@@ -73,7 +73,7 @@ export function CarregandoTela() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
       <div
-        className="w-10 h-10 border-4 border-slate-200 border-t-marca rounded-full animate-spin"
+        className="w-10 h-10 border-4 border-borda border-t-marca rounded-full animate-spin"
         role="status"
         aria-label="Carregando a tela"
       ></div>

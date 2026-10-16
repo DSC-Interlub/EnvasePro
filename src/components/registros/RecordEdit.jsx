@@ -27,7 +27,7 @@ export default function RecordEdit({ record, products, embalagens, operators, on
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex justify-between items-center">
-            <DialogTitle className="text-2xl font-bold text-slate-900">
+            <DialogTitle className="text-2xl font-bold text-tinta">
               Editar Registro
             </DialogTitle>
             <Button variant="ghost" size="icon" onClick={onClose}>

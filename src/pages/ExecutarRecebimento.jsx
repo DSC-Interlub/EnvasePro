@@ -136,7 +136,7 @@ export default function ExecutarRecebimento() {
             <div className="flex gap-2 flex-wrap">
               {recebimento.status === "Em andamento" && (
                 <>
-                  <Button size="sm" variant="outline" className="gap-1 border-yellow-400 text-atencao" onClick={handlePausar} disabled={mutRec.isPending}>
+                  <Button size="sm" variant="outline" className="gap-1 border-atencao text-atencao" onClick={handlePausar} disabled={mutRec.isPending}>
                     <Pause className="w-3 h-3" /> Pausar
                   </Button>
                   <Button size="sm" className="bg-ok hover:bg-ok gap-1" onClick={handleFinalizar} disabled={mutRec.isPending}>

@@ -76,17 +76,17 @@ export default function Produtos() {
   const certificacoes = (p) => (
     <div className="flex gap-1 flex-wrap">
       {p.nsf_3h && <Badge className="bg-marca-suave text-marca text-xs">NSF 3H</Badge>}
-      {p.nsf_h1 && <Badge className="bg-green-100 text-green-800 text-xs">NSF H1</Badge>}
-      {p.halal && <Badge className="bg-purple-100 text-purple-800 text-xs">HALAL</Badge>}
-      {p.kosher && <Badge className="bg-slate-100 text-slate-800 text-xs">KOSHER</Badge>}
+      {p.nsf_h1 && <Badge className="bg-ok-suave text-ok text-xs">NSF H1</Badge>}
+      {p.halal && <Badge className="bg-marca-suave text-marca text-xs">HALAL</Badge>}
+      {p.kosher && <Badge className="bg-fundo text-tinta text-xs">KOSHER</Badge>}
       {!p.nsf_3h && !p.nsf_h1 && !p.halal && !p.kosher && (
-        <span className="text-xs text-slate-400">-</span>
+        <span className="text-xs text-texto-apagado">-</span>
       )}
     </div>
   );
 
   const semCategoria = () => (
-    <span title="Sem categoria" className="inline-flex items-center gap-1 text-amber-600 text-xs font-medium bg-amber-100 px-1.5 py-0.5 rounded">
+    <span title="Sem categoria" className="inline-flex items-center gap-1 text-atencao text-xs font-medium bg-atencao-suave px-1.5 py-0.5 rounded">
       <AlertTriangle className="w-3 h-3" />
       Sem categoria
     </span>
@@ -97,8 +97,8 @@ export default function Produtos() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Cadastro de Produtos</h1>
-            <p className="text-slate-600 mt-1">Gerencie o catálogo de produtos</p>
+            <h1 className="text-3xl font-bold text-tinta">Cadastro de Produtos</h1>
+            <p className="text-texto-fraco mt-1">Gerencie o catálogo de produtos</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" onClick={handleExport}>
@@ -134,22 +134,22 @@ export default function Produtos() {
           />
         )}
 
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3 flex-wrap">
-                <CardTitle className="text-xl font-bold text-slate-900">
+                <CardTitle className="text-xl font-bold text-tinta">
                   Lista de Produtos
                 </CardTitle>
                 {products.filter(p => !p.categoria).length > 0 && (
-                  <span className="flex items-center gap-1.5 bg-amber-50 border border-amber-300 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                  <span className="flex items-center gap-1.5 bg-atencao-suave border border-atencao text-atencao text-xs font-semibold px-2.5 py-1 rounded-full">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     {products.filter(p => !p.categoria).length} sem categoria
                   </span>
                 )}
               </div>
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-texto-apagado w-4 h-4" />
                 <Input
                   placeholder="Buscar produtos..."
                   aria-label="Buscar produtos"
@@ -164,15 +164,15 @@ export default function Produtos() {
             {/* Celular: cartão por produto. A tabela de 6 colunas só rolava na
                 horizontal, e as ações ficavam fora da tela. */}
             {ehCelular && (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-borda">
               {lista.pagina.map((product) => (
-                <div key={product.id} className={`p-4 space-y-3 ${!product.categoria ? "bg-amber-50/50" : ""}`}>
+                <div key={product.id} className={`p-4 space-y-3 ${!product.categoria ? "bg-atencao-suave/50" : ""}`}>
                   <div>
-                    <p className="font-mono font-semibold text-slate-900">{product.codigo}</p>
-                    <p className="text-slate-700">{product.nome}</p>
+                    <p className="font-mono font-semibold text-tinta">{product.codigo}</p>
+                    <p className="text-tinta-media">{product.nome}</p>
                     {!product.categoria && <div className="mt-1">{semCategoria()}</div>}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-texto-fraco">
                     <span>{product.unidade_medida}</span>
                     {product.consistencia && <Badge variant="secondary">{product.consistencia}</Badge>}
                   </div>
@@ -193,7 +193,7 @@ export default function Produtos() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50">
+                  <TableRow className="bg-fundo">
                     <TableHead>Código</TableHead>
                     <TableHead>Nome do Produto</TableHead>
                     <TableHead>Unidade</TableHead>
@@ -204,7 +204,7 @@ export default function Produtos() {
                 </TableHeader>
                 <TableBody>
                   {lista.pagina.map((product) => (
-                    <TableRow key={product.id} className={!product.categoria ? "bg-amber-50/50" : ""}>
+                    <TableRow key={product.id} className={!product.categoria ? "bg-atencao-suave/50" : ""}>
                       <TableCell className="font-mono font-semibold">{product.codigo}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

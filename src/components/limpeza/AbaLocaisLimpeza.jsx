@@ -33,11 +33,11 @@ export default function AbaLocaisLimpeza() {
 
   const tipoColor = {
     "Sala": "bg-marca-suave text-marca",
-    "Galpão": "bg-amber-100 text-amber-700",
-    "Banheiro": "bg-purple-100 text-purple-700",
-    "Área externa": "bg-green-100 text-green-700",
-    "Corredor": "bg-slate-100 text-slate-700",
-    "Outro": "bg-gray-100 text-gray-700",
+    "Galpão": "bg-atencao-suave text-atencao",
+    "Banheiro": "bg-marca-suave text-marca",
+    "Área externa": "bg-ok-suave text-ok",
+    "Corredor": "bg-fundo text-tinta-media",
+    "Outro": "bg-fundo text-tinta-media",
   };
 
   const temProgramacoes = (id) => programacoes.some(p => p.local_id === id);
@@ -59,7 +59,7 @@ export default function AbaLocaisLimpeza() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMostrarInativos(!mostrarInativos)}
-            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700"
+            className="flex items-center gap-2 text-sm text-texto-fraco hover:text-tinta-media"
           >
             {mostrarInativos ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             {mostrarInativos ? "Ocultar inativos" : "Mostrar inativos"}
@@ -70,31 +70,31 @@ export default function AbaLocaisLimpeza() {
         </Button>
       </div>
 
-      <Card className="border-slate-200">
-        <CardHeader className="border-b border-slate-100 py-3 px-4">
-          <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+      <Card className="border-borda">
+        <CardHeader className="border-b border-borda py-3 px-4">
+          <CardTitle className="text-sm font-semibold text-tinta-media flex items-center gap-2">
             <MapPin className="w-4 h-4 text-marca" />
             Locais cadastrados ({listaFiltrada.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {listaFiltrada.length === 0 ? (
-            <div className="text-center py-10 text-slate-400">
-              <MapPin className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+            <div className="text-center py-10 text-texto-apagado">
+              <MapPin className="w-10 h-10 mx-auto mb-2 text-texto-apagado" />
               <p>Nenhum local cadastrado</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-borda">
               {listaFiltrada.map(local => (
-                <div key={local.id} className={`flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors ${local.ativo === false ? "opacity-60" : ""}`}>
+                <div key={local.id} className={`flex items-center justify-between px-4 py-3 hover:bg-fundo transition-colors ${local.ativo === false ? "opacity-60" : ""}`}>
                   <div className="flex items-center gap-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-900 text-sm">{local.nome}</span>
-                        <Badge className={`text-xs ${tipoColor[local.tipo] || "bg-gray-100 text-gray-700"}`}>{local.tipo}</Badge>
-                        {local.ativo === false && <Badge className="text-xs bg-red-100 text-red-600">Inativo</Badge>}
+                        <span className="font-medium text-tinta text-sm">{local.nome}</span>
+                        <Badge className={`text-xs ${tipoColor[local.tipo] || "bg-fundo text-tinta-media"}`}>{local.tipo}</Badge>
+                        {local.ativo === false && <Badge className="text-xs bg-erro-suave text-erro">Inativo</Badge>}
                       </div>
-                      {local.descricao && <p className="text-xs text-slate-500 mt-0.5">{local.descricao}</p>}
+                      {local.descricao && <p className="text-xs text-texto-fraco mt-0.5">{local.descricao}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

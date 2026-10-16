@@ -44,8 +44,8 @@ export default function EmbalagemForm({ embalagem, onClose }) {
   };
 
   return (
-    <Card className="border-slate-200 shadow-lg">
-      <CardHeader className="border-b border-slate-100">
+    <Card className="border-borda shadow-cartao">
+      <CardHeader className="border-b border-borda">
         <div className="flex justify-between items-center">
           <CardTitle>{embalagem ? "Editar Embalagem" : "Nova Embalagem"}</CardTitle>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -116,9 +116,9 @@ export default function EmbalagemForm({ embalagem, onClose }) {
               id="ultimos_4_digitos"
               value={formData.ultimos_4_digitos}
               disabled
-              className="bg-slate-100"
+              className="bg-fundo"
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-texto-fraco">
               Gerado automaticamente dos últimos 4 caracteres do código
             </p>
           </div>

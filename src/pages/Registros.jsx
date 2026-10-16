@@ -125,7 +125,7 @@ export default function Registros() {
   const status = (record) => {
     if (record.sala === "Bio" && record.termino && !record.material_retirado) {
       // StatusPill: o mesmo estado com a mesma cara em todo o sistema.
-      // Antes era bg-yellow-500/bg-green-600/bg-marca escritos aqui, e o
+      // Antes era bg-yellow-500/bg-ok/bg-marca escritos aqui, e o
       // mesmo "Concluido" aparecia de outro jeito em cada tela.
       return <StatusPill variante="atencao" texto="Pronto" />;
     }

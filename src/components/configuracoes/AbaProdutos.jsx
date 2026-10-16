@@ -61,19 +61,19 @@ export default function AbaProdutos() {
         <ProductForm product={editingProduct} onClose={() => { setShowForm(false); setEditingProduct(null); }} />
       )}
 
-      <Card className="border-slate-200 shadow-md">
-        <CardHeader className="border-b border-slate-100">
+      <Card className="border-borda shadow-cartao">
+        <CardHeader className="border-b border-borda">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <CardTitle className="text-lg">Produtos ({products.length})</CardTitle>
               {products.filter(p => !p.categoria).length > 0 && (
-                <span className="flex items-center gap-1 bg-amber-50 border border-amber-300 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                <span className="flex items-center gap-1 bg-atencao-suave border border-atencao text-atencao text-xs font-semibold px-2 py-0.5 rounded-full">
                   <AlertTriangle className="w-3 h-3" /> {products.filter(p => !p.categoria).length} sem categoria
                 </span>
               )}
             </div>
             <div className="relative w-56">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-texto-apagado w-4 h-4" />
               <Input placeholder="Buscar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
           </div>
@@ -82,7 +82,7 @@ export default function AbaProdutos() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-fundo">
                   <TableHead>Código</TableHead><TableHead>Nome</TableHead>
                   <TableHead>Unidade</TableHead><TableHead>Consistência</TableHead>
                   <TableHead>Certificações</TableHead><TableHead className="text-right">Ações</TableHead>
@@ -90,12 +90,12 @@ export default function AbaProdutos() {
               </TableHeader>
               <TableBody>
                 {filteredProducts.map(p => (
-                  <TableRow key={p.id} className={!p.categoria ? "bg-amber-50/50" : ""}>
+                  <TableRow key={p.id} className={!p.categoria ? "bg-atencao-suave/50" : ""}>
                     <TableCell className="font-mono font-semibold">{p.codigo}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {p.nome}
-                        {!p.categoria && <span className="text-amber-600 text-xs bg-amber-100 px-1.5 py-0.5 rounded flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Sem categoria</span>}
+                        {!p.categoria && <span className="text-atencao text-xs bg-atencao-suave px-1.5 py-0.5 rounded flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Sem categoria</span>}
                       </div>
                     </TableCell>
                     <TableCell>{p.unidade_medida}</TableCell>
@@ -103,16 +103,16 @@ export default function AbaProdutos() {
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {p.nsf_3h && <Badge className="bg-marca-suave text-marca text-xs">NSF 3H</Badge>}
-                        {p.nsf_h1 && <Badge className="bg-green-100 text-green-800 text-xs">NSF H1</Badge>}
-                        {p.halal && <Badge className="bg-purple-100 text-purple-800 text-xs">HALAL</Badge>}
-                        {p.kosher && <Badge className="bg-slate-100 text-slate-800 text-xs">KOSHER</Badge>}
-                        {!p.nsf_3h && !p.nsf_h1 && !p.halal && !p.kosher && <span className="text-xs text-slate-400">-</span>}
+                        {p.nsf_h1 && <Badge className="bg-ok-suave text-ok text-xs">NSF H1</Badge>}
+                        {p.halal && <Badge className="bg-marca-suave text-marca text-xs">HALAL</Badge>}
+                        {p.kosher && <Badge className="bg-fundo text-tinta text-xs">KOSHER</Badge>}
+                        {!p.nsf_3h && !p.nsf_h1 && !p.halal && !p.kosher && <span className="text-xs text-texto-apagado">-</span>}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button aria-label={`Editar o produto ${p.codigo}`} variant="ghost" size="icon" onClick={() => { setEditingProduct(p); setShowForm(true); }}><Edit className="w-4 h-4" /></Button>
-                        <Button aria-label={`Excluir o produto ${p.codigo}`} variant="ghost" size="icon" onClick={() => confirm("Excluir produto?") && deleteMutation.mutate(p.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
+                        <Button aria-label={`Excluir o produto ${p.codigo}`} variant="ghost" size="icon" onClick={() => confirm("Excluir produto?") && deleteMutation.mutate(p.id)}><Trash2 className="w-4 h-4 text-erro" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>

@@ -116,7 +116,7 @@ export default function ExecutarEmpilha() {
     return (
       <div className="min-h-screen bg-fundo p-8 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-marca mx-auto mb-4"></div>
           <p className="text-texto-fraco">Carregando programação...</p>
         </div>
       </div>
@@ -176,7 +176,7 @@ export default function ExecutarEmpilha() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div><p className="text-xs font-medium text-texto-fraco">Pendentes</p><p className="text-2xl font-bold mt-1 text-atencao">{pendentes}</p></div>
-                <Clock className="w-8 h-8 text-yellow-400 opacity-50" />
+                <Clock className="w-8 h-8 text-atencao opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -204,7 +204,7 @@ export default function ExecutarEmpilha() {
             <OctagonX className="w-4 h-4 mr-2" /> Registrar Parada
           </Button>
           {isAdmin && (
-            <Button variant="outline" className="border-amber-300 text-atencao hover:bg-atencao-suave" onClick={() => setShowAddLinha(true)}>
+            <Button variant="outline" className="border-atencao text-atencao hover:bg-atencao-suave" onClick={() => setShowAddLinha(true)}>
               <Plus className="w-4 h-4 mr-2" /> Adicionar Linha
             </Button>
           )}

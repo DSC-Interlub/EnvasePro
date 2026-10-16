@@ -112,9 +112,9 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
         </DialogHeader>
         <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto pr-1">
           {aviso && (
-            <Alert className="border-amber-300 bg-amber-50">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-700 text-sm">
+            <Alert className="border-atencao bg-atencao-suave">
+              <AlertTriangle className="h-4 w-4 text-atencao" />
+              <AlertDescription className="text-atencao text-sm">
                 Já existe uma programação para este local nesta data. Clique em "Salvar" novamente para confirmar.
               </AlertDescription>
             </Alert>
@@ -139,7 +139,7 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
                 {form.responsaveis.map(r => (
                   <Badge key={r.id} className="bg-marca-suave text-marca border border-marca-suave-2 gap-1 pr-1">
                     {r.nome}
-                    <button onClick={() => handleRemoveResponsavel(r.id)} className="ml-0.5 hover:text-red-600">
+                    <button onClick={() => handleRemoveResponsavel(r.id)} className="ml-0.5 hover:text-erro">
                       <X className="w-3 h-3" />
                     </button>
                   </Badge>
@@ -164,7 +164,7 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
               </div>
             )}
             {form.responsaveis.length === 0 && (
-              <p className="text-xs text-slate-400 mt-1">Adicione ao menos um responsável.</p>
+              <p className="text-xs text-texto-apagado mt-1">Adicione ao menos um responsável.</p>
             )}
           </div>
 

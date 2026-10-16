@@ -67,8 +67,8 @@ export default function Embalagens() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Cadastro de Embalagens</h1>
-            <p className="text-slate-600 mt-1">Gerencie os tipos de embalagem</p>
+            <h1 className="text-3xl font-bold text-tinta">Cadastro de Embalagens</h1>
+            <p className="text-texto-fraco mt-1">Gerencie os tipos de embalagem</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link to={createPageUrl("ImportarEmbalagens")}>
@@ -100,14 +100,14 @@ export default function Embalagens() {
           />
         )}
 
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <CardTitle className="text-xl font-bold text-slate-900">
+              <CardTitle className="text-xl font-bold text-tinta">
                 Lista de Embalagens
               </CardTitle>
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-texto-apagado w-4 h-4" />
                 <Input
                   placeholder="Buscar embalagens..."
                   aria-label="Buscar embalagens"
@@ -122,14 +122,14 @@ export default function Embalagens() {
             {/* Celular: cartão por embalagem. A tabela de 6 colunas só rolava
                 na horizontal e deixava as ações fora da tela. */}
             {ehCelular && (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-borda">
               {lista.pagina.map((embalagem) => (
                 <div key={embalagem.id} className="p-4 space-y-3">
                   <div>
-                    <p className="font-mono font-semibold text-slate-900">{embalagem.codigo}</p>
-                    <p className="text-slate-700">{embalagem.descricao}</p>
+                    <p className="font-mono font-semibold text-tinta">{embalagem.codigo}</p>
+                    <p className="text-tinta-media">{embalagem.descricao}</p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-texto-fraco">
                     {embalagem.conteudo && <span>{embalagem.conteudo}</span>}
                     {embalagem.tipo && <Badge variant="secondary">{embalagem.tipo}</Badge>}
                     {embalagem.ultimos_4_digitos && (
@@ -146,7 +146,7 @@ export default function Embalagens() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50">
+                  <TableRow className="bg-fundo">
                     <TableHead>Código</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Conteúdo</TableHead>

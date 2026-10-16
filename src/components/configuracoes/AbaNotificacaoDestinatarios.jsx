@@ -88,10 +88,10 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
     <div className="space-y-6">
       {/* Alerta quando não houver destinatários ativos */}
       {semDestinatariosAtivos && (
-        <Alert variant="destructive" className="bg-amber-50 border-amber-300 text-amber-900 shadow-sm">
-          <AlertTriangle className="h-5 w-5 text-amber-600" />
-          <AlertTitle className="font-bold text-amber-900">Atenção: Nenhum destinatário ativo configurado</AlertTitle>
-          <AlertDescription className="text-amber-800 text-sm mt-1">
+        <Alert variant="destructive" className="bg-atencao-suave border-atencao text-atencao shadow-cartao">
+          <AlertTriangle className="h-5 w-5 text-atencao" />
+          <AlertTitle className="font-bold text-atencao">Atenção: Nenhum destinatário ativo configurado</AlertTitle>
+          <AlertDescription className="text-atencao text-sm mt-1">
             Quando um operador registrar uma ocorrência de empilhadeira com a opção <strong>"Notificar Líder"</strong>,
             o sistema <strong>não terá para quem enviar o alerta por e-mail</strong>. Cadastre ao menos um endereço de
             e-mail ativo abaixo para garantir a entrega das notificações.
@@ -101,12 +101,12 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
 
       {/* Formulário de Cadastro (exclusivo para Admins) */}
       {isAdmin && (
-        <Card className="shadow-sm border-slate-200">
+        <Card className="shadow-cartao border-borda">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <CardTitle className="text-base font-bold text-tinta flex items-center gap-2">
               <Plus className="w-4 h-4 text-marca" /> Novo Destinatário de Ocorrências
             </CardTitle>
-            <CardDescription className="text-xs text-slate-500">
+            <CardDescription className="text-xs text-texto-fraco">
               Adicione e-mails da liderança ou equipe técnica que devem receber o resumo sempre que uma ocorrência for aberta.
             </CardDescription>
           </CardHeader>
@@ -114,7 +114,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
             <form onSubmit={handleAdicionar} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="nomeDest" className="text-xs text-slate-600">
+                  <Label htmlFor="nomeDest" className="text-xs text-texto-fraco">
                     Nome / Cargo (opcional)
                   </Label>
                   <Input
@@ -126,7 +126,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="emailDest" className="text-xs text-slate-600">
+                  <Label htmlFor="emailDest" className="text-xs text-texto-fraco">
                     E-mail institucional *
                   </Label>
                   <Input
@@ -141,8 +141,8 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                 </div>
               </div>
 
-              {erroForm && <p className="text-xs text-red-600 font-semibold">{erroForm}</p>}
-              {sucessoForm && <p className="text-xs text-emerald-600 font-semibold">{sucessoForm}</p>}
+              {erroForm && <p className="text-xs text-erro font-semibold">{erroForm}</p>}
+              {sucessoForm && <p className="text-xs text-ok font-semibold">{sucessoForm}</p>}
 
               <Button
                 type="submit"
@@ -157,49 +157,49 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
       )}
 
       {/* Lista de Destinatários */}
-      <Card className="shadow-sm border-slate-200">
+      <Card className="shadow-cartao border-borda">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <Mail className="w-4 h-4 text-purple-600" /> Destinatários Cadastrados
+            <CardTitle className="text-base font-bold text-tinta flex items-center gap-2">
+              <Mail className="w-4 h-4 text-marca" /> Destinatários Cadastrados
             </CardTitle>
-            <CardDescription className="text-xs text-slate-500">
+            <CardDescription className="text-xs text-texto-fraco">
               {destinatarios.length} destinatário(s) cadastrado(s) • {ativos.length} ativo(s)
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-xs text-slate-500 py-4 text-center">Carregando destinatários...</p>
+            <p className="text-xs text-texto-fraco py-4 text-center">Carregando destinatários...</p>
           ) : destinatarios.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 space-y-2">
-              <Mail className="w-8 h-8 mx-auto text-slate-400" />
+            <div className="text-center py-8 text-texto-fraco space-y-2">
+              <Mail className="w-8 h-8 mx-auto text-texto-apagado" />
               <p className="text-sm font-semibold">Nenhum destinatário cadastrado.</p>
-              <p className="text-xs text-slate-400">Utilize o formulário acima para adicionar e-mails.</p>
+              <p className="text-xs text-texto-apagado">Utilize o formulário acima para adicionar e-mails.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-borda">
               {destinatarios.map((d) => (
                 <div key={d.id} className="py-3 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-slate-900 truncate">
+                      <p className="text-sm font-bold text-tinta truncate">
                         {d.nome || d.email.split("@")[0]}
                       </p>
                       <Badge
                         variant="outline"
                         className={
                           d.ativo
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]"
-                            : "bg-slate-100 text-slate-500 border-slate-200 text-[10px]"
+                            ? "bg-ok-suave text-ok border-ok text-[10px]"
+                            : "bg-fundo text-texto-fraco border-borda text-[10px]"
                         }
                       >
                         {d.ativo ? "Ativo" : "Inativo"}
                       </Badge>
                     </div>
-                    <p className="text-xs text-slate-500 font-mono truncate">{d.email}</p>
+                    <p className="text-xs text-texto-fraco font-mono truncate">{d.email}</p>
                     {d.created_at && (
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-[10px] text-texto-apagado">
                         Cadastrado em: {format(new Date(d.created_at), "dd/MM/yyyy HH:mm")}
                       </p>
                     )}
@@ -216,7 +216,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                         className="h-12 px-3 text-xs flex items-center gap-1"
                         title={d.ativo ? "Desativar notificações para este e-mail" : "Ativar notificações"}
                       >
-                        <Power className={`w-3.5 h-3.5 ${d.ativo ? "text-amber-600" : "text-emerald-600"}`} />
+                        <Power className={`w-3.5 h-3.5 ${d.ativo ? "text-atencao" : "text-ok"}`} />
                         {d.ativo ? "Desativar" : "Ativar"}
                       </Button>
                       <Button aria-label="Excluir"
@@ -228,7 +228,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                           }
                         }}
                         disabled={deleteMutation.isPending}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="h-8 w-8 p-0 text-erro hover:text-erro hover:bg-erro-suave"
                         title="Excluir permanentemente"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
