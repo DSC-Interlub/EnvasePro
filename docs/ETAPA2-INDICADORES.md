@@ -1,6 +1,6 @@
 # Etapa 2 — indicadores no banco
 
-**Status (19/10/2026): os cinco passos do §4.1 implementados e provados no
+**Status (19/10/2026): os cinco passos do §4.1 e as metas diárias implementados e provados no
 banco LOCAL. NADA aplicado em produção.** Passos 1 a 3 (telas de parede) na
 seção 7; passos 4 e 5 (telas de admin) na seção 8.
 
@@ -481,3 +481,47 @@ continua lendo as tabelas para as outras abas.
 A carga de volume ganhou paradas (com e sem tipo, com `tempo_total` em três
 formatos), ajudantes (inclusive `"nenhum"`), tempos e cancelamentos de
 recebimento — sem eles, metade desses indicadores compararia zero com zero.
+
+---
+
+## 9. Metas diárias (Bloco 2b) — 19/10/2026, banco LOCAL
+
+### 9.1 O que o dono decidiu
+
+| Pergunta | Decisão |
+|---|---|
+| O que a meta do envase conta | **as duas coisas**: unidades produzidas **e** envases concluídos |
+| Por sala ou da fábrica | **uma por sala** (Bio e Industrial) |
+| Quais módulos têm meta | **envase, check-out e empilhadeira** |
+| Como muda no tempo | **valor fixo com histórico**: vale a partir de uma data, até ser trocado |
+
+### 9.2 O que foi feito
+
+- Migration `20261019000006_metas_diarias.sql`: tabela `metas_diarias` (uma linha por
+  item e data de início; CHECK de item/sala/valor; índice único com
+  `NULLS NOT DISTINCT`), função `metas_do_dia(dia)` e os dois painéis das TVs
+  recriados com a meta e o realizado do envase por sala — **só esses acréscimos**.
+- **RLS:** qualquer conta logada lê (as TVs precisam); só admin escreve; anon nada.
+  **O histórico é imutável no banco:** meta que já valeu em dia passado não se
+  altera nem se apaga, nem pelo admin. Hoje e o futuro podem ser corrigidos.
+- Tela `/Metas` (só admin, menu "Cadastros"): o que vale hoje, lançar/trocar, histórico.
+- TVs: com meta, o anel mede o realizado contra ela; **sem meta, nada muda** — o texto
+  é idêntico ao de antes (provado). No envase, o anel soma só as salas que **têm**
+  meta, e a legenda diz qual sala está sem meta. A pílula "Produção de hoje" mostra
+  "% da meta de N un.".
+- Recuo: sem a função/tabela no banco, as telas calculam o mesmo (sem meta, se a
+  tabela não existir).
+
+### 9.3 Provas
+
+| Script | O que prova |
+|---|---|
+| `test-metas.mjs` | JWT real: TV e operador leem e não escrevem; anon não lê; admin lança; CHECKs e duplicidade recusados; vigência (hoje × amanhã); histórico imutável até para o admin; `metas_do_dia` = regra do navegador |
+| `test-meta-na-tela.mjs` | sem meta, anel e legenda idênticos aos de antes; só uma sala com meta; acima de 100% |
+| `test-metas-ui.mjs` | Playwright: admin lança pela tela, a TV mostra, admin apaga; operador não abre `/Metas` |
+| `test-tv-layout.mjs` | 232/232 com as legendas de meta, inclusive em 800×395 |
+
+### 9.4 Não decidido (fica para o dono)
+
+- **Alerta de ritmo** ("abaixo do esperado para este horário") exige saber o horário
+  do turno de cada módulo. Não foi inventado: a TV mostra % da meta, sem julgar o ritmo.
