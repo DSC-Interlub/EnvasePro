@@ -96,9 +96,15 @@ checar('rotulo de -10 e "Reprovado"', rotulo(-10) === 'Reprovado');
 checar('rotulo de null e "—"', rotulo(null) === '—');
 
 // Era este o defeito do Painel: nota negativa caindo no ramo amarelo.
-checar('NOTA NEGATIVA e VERMELHA no texto', corTexto(-10) === 'text-red-700');
-checar('NOTA NEGATIVA e VERMELHA no selo', corSelo(-10).includes('red'));
-checar('NOTA NEGATIVA e VERMELHA na caixa', corCaixa(-10).includes('red'));
+//
+// Desde 19/10/2026 as classes são TOKENS (`erro`, `atencao`, `ok`) e não
+// cores soltas (`red-700`, `yellow-700`). A asserção continua a mesma em
+// intenção — nota negativa usa a cor de ERRO, nunca a de atenção — e ficou
+// mais forte: confere também que ela é DIFERENTE da cor de uma nota em
+// atenção (50), que era exatamente o defeito.
+checar('NOTA NEGATIVA e VERMELHA no texto', corTexto(-10) === 'text-erro' && corTexto(-10) !== corTexto(50));
+checar('NOTA NEGATIVA e VERMELHA no selo', /\berro\b/.test(corSelo(-10)) && !/atencao/.test(corSelo(-10)));
+checar('NOTA NEGATIVA e VERMELHA na caixa', /\berro\b/.test(corCaixa(-10)) && !/atencao/.test(corCaixa(-10)));
 checar('NOTA NEGATIVA e "red" no nome de cor', corNome(-10) === 'red');
 console.log('      -> Painel.jsx:549 tinha so verde/amarelo: negativa ficava AMARELA');
 
