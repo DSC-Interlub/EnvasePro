@@ -724,16 +724,23 @@ const functionsAdapter = {
     const { inicio, fim } = limitesDoMes(dia);
     const progs = await lerTudo(() => supabase.from('checkout_programacoes').select('id').eq('data_programada', dia));
     const ids = progs.map((p) => p.id);
-    const [envaseHoje, envaseMes, checkoutHoje, produtos, painelEmpilha, paradasHoje, empilhadeiras] = await Promise.all([
+    const [envaseHoje, envaseMes, checkoutHoje, painelEmpilha, paradasHoje, empilhadeiras] = await Promise.all([
       lerTudo(() => supabase.from('envase_records').select('*').eq('data', dia)),
       lerTudo(() => supabase.from('envase_records').select('sala, quantidade_produzida, codigo_produto')
         .gte('data', inicio).lt('data', fim)),
       ids.length ? lerTudo(() => supabase.from('checkout_itens').select('*').in('programacao_id', ids)) : [],
-      lerTudo(() => supabase.from('products').select('codigo, categoria, halal, kosher, nsf_3h, nsf_h1')),
       painelEmpilhaNoNavegador(dia),
       lerTudo(() => supabase.from('empilhadeira_paradas').select('hora_fim').eq('data', dia)),
       lerTudo(() => supabase.from('empilhadeira_configs').select('nome, ativa, data_proxima_manutencao, created_at')),
     ]);
+    // Só os produtos que aparecem no dia e no mês — não o catálogo inteiro
+    // (1.599 linhas) a cada 30 s. Em lotes de 150 códigos, para a URL caber.
+    const codigos = [...new Set([...envaseHoje, ...envaseMes].map((r) => r.codigo_produto).filter(Boolean))];
+    const produtos = [];
+    for (let i = 0; i < codigos.length; i += 150) {
+      produtos.push(...await lerTudo(() => supabase.from('products')
+        .select('codigo, categoria, halal, kosher, nsf_3h, nsf_h1').in('codigo', codigos.slice(i, i + 150))));
+    }
     return calcularPainelTelevisao({
       dia, envaseHoje, envaseMes, checkoutHoje, produtos, painelEmpilha, paradasHoje, empilhadeiras,
     });
