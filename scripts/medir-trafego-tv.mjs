@@ -18,8 +18,14 @@ import { enforceNonProductionGuard } from './lib/db-guard.js';
 dotenv.config({ path: '.env.local' });
 enforceNonProductionGuard('medir-trafego-tv');
 
-const APP = 'http://127.0.0.1:5173';
+const APP = process.env.APP_MEDIR || 'http://127.0.0.1:5173';
 const JANELA = Number(process.argv[2] || 180) * 1000;
+const SAIDA = process.argv[3] || 'scratch/etapa2/trafego-base.json';
+const SO = (process.argv[4] || '').split(',').filter(Boolean);
+// A carga inicial (login, primeira leitura de tudo) acontece uma vez; a TV
+// fica ligada o dia inteiro. A meta do plano é sobre o REGIME — o que a tela
+// pede por minuto depois que assentou. Os primeiros 20s ficam fora dele.
+const ASSENTAR = 20000;
 
 const TELAS = [
   ['tv', 'Televisao'],
@@ -60,7 +66,7 @@ function alvoDaUrl(url) {
 const nav = await chromium.launch({ headless: true });
 const relatorio = {};
 
-for (const [papel, tela] of TELAS) {
+for (const [papel, tela] of TELAS.filter(([, t]) => !SO.length || SO.includes(t))) {
   const ctx = await nav.newContext({ viewport: { width: 1920, height: 1080 } });
   const login = await ctx.newPage();
   await entrar(login, CONTAS[papel]);
@@ -95,8 +101,14 @@ for (const [papel, tela] of TELAS) {
   const total = pedidos.length;
   const bytes = pedidos.reduce((s, p) => s + p.bytes, 0);
 
+  const regime = pedidos.filter((p) => p.quando - inicio >= ASSENTAR);
+  const durRegime = Math.max(1, duracao - ASSENTAR / 1000);
   relatorio[`${papel}/${tela}`] = {
     segundos: Math.round(duracao),
+    regime: {
+      porMinuto: +(regime.length / durRegime * 60).toFixed(1),
+      kbPorMinuto: +(regime.reduce((s, p) => s + p.bytes, 0) / 1024 / durRegime * 60).toFixed(1),
+    },
     requisicoes: total,
     porMinuto: +(total / duracao * 60).toFixed(1),
     bytes,
@@ -111,10 +123,11 @@ for (const [papel, tela] of TELAS) {
   console.log(`\n${papel}/${tela}  (${r.segundos}s)`);
   console.log(`  ${r.requisicoes} requisicoes = ${r.porMinuto}/min | ` +
     `${(r.bytes / 1024).toFixed(1)} KB = ${r.kbPorMinuto} KB/min`);
+  console.log(`  REGIME (apos ${ASSENTAR / 1000}s): ${r.regime.porMinuto} req/min | ${r.regime.kbPorMinuto} KB/min`);
   for (const [t, v] of Object.entries(r.tabelas)) console.log(`    ${t.padEnd(32)} ${v}`);
 }
 
 await nav.close();
 fs.mkdirSync('scratch/etapa2', { recursive: true });
-fs.writeFileSync('scratch/etapa2/trafego-base.json', JSON.stringify(relatorio, null, 2));
-console.log('\n-> scratch/etapa2/trafego-base.json');
+fs.writeFileSync(SAIDA, JSON.stringify(relatorio, null, 2));
+console.log(`\n-> ${SAIDA}`);
