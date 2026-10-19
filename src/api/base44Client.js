@@ -22,6 +22,7 @@ import { calcularPainelTelevisao, limitesDoMes } from '@/lib/painelTelevisao';
 import { calcularPainelGeral, limitesDaSemana } from '@/lib/painelGeral';
 import { calcularIndicadoresEmpilha } from '@/lib/indicadoresEmpilha';
 import { calcularIndicadoresRecebimento } from '@/lib/indicadoresRecebimento';
+import { metasDoDia } from '@/lib/metas';
 
 /**
  * Colunas que sao chave estrangeira de TEXTO (referenciam `products.codigo`,
@@ -320,15 +321,30 @@ async function lerTudo(construir) {
   }
 }
 
+/**
+ * As metas vigentes num dia, lidas da tabela (recuo de metas_do_dia). Se a
+ * TABELA ainda não existe no banco (o código subiu antes da migration), é o
+ * mesmo que não haver meta: as telas mostram o que mostravam antes.
+ */
+async function metasNoNavegador(dia) {
+  const { data, error } = await executarComRenovacao(() => supabase.from('metas_diarias')
+    .select('modulo, indicador, sala, valor, vigente_desde').lte('vigente_desde', dia));
+  if (error) {
+    if (error.code === '42P01' || error.code === 'PGRST205') return metasDoDia([], dia);
+    throw error;
+  }
+  return metasDoDia(data, dia);
+}
+
 /** O painel da empilhadeira calculado no navegador — recuo das duas TVs. */
-async function painelEmpilhaNoNavegador(dia) {
+async function painelEmpilhaNoNavegador(dia, metas) {
   const progs = await lerTudo(() => supabase.from('empilha_programacoes').select('id').eq('data_programada', dia));
   const ids = progs.map((p) => p.id);
   const [linhas, ocorr] = await Promise.all([
     ids.length ? lerTudo(() => supabase.from('empilha_linhas').select('*').in('programacao_id', ids)) : [],
     lerTudo(() => supabase.from('empilha_ocorrencias').select('tipo, hora, resolvido, created_at').eq('data', dia)),
   ]);
-  return calcularPainelEmpilha(linhas, ocorr, dia);
+  return calcularPainelEmpilha(linhas, ocorr, dia, metas ?? await metasNoNavegador(dia));
 }
 
 function createEntityAdapter(entityName) {
@@ -724,14 +740,17 @@ const functionsAdapter = {
 
     const dia = hojeEmBrasilia();
     const { inicio, fim } = limitesDoMes(dia);
-    const progs = await lerTudo(() => supabase.from('checkout_programacoes').select('id').eq('data_programada', dia));
+    const [progs, metas] = await Promise.all([
+      lerTudo(() => supabase.from('checkout_programacoes').select('id').eq('data_programada', dia)),
+      metasNoNavegador(dia),
+    ]);
     const ids = progs.map((p) => p.id);
     const [envaseHoje, envaseMes, checkoutHoje, painelEmpilha, paradasHoje, empilhadeiras] = await Promise.all([
       lerTudo(() => supabase.from('envase_records').select('*').eq('data', dia)),
       lerTudo(() => supabase.from('envase_records').select('sala, quantidade_produzida, codigo_produto')
         .gte('data', inicio).lt('data', fim)),
       ids.length ? lerTudo(() => supabase.from('checkout_itens').select('*').in('programacao_id', ids)) : [],
-      painelEmpilhaNoNavegador(dia),
+      painelEmpilhaNoNavegador(dia, metas),
       lerTudo(() => supabase.from('empilhadeira_paradas').select('hora_fim').eq('data', dia)),
       lerTudo(() => supabase.from('empilhadeira_configs').select('nome, ativa, data_proxima_manutencao, created_at')),
     ]);
@@ -744,7 +763,7 @@ const functionsAdapter = {
         .select('codigo, categoria, halal, kosher, nsf_3h, nsf_h1').in('codigo', codigos.slice(i, i + 150))));
     }
     return calcularPainelTelevisao({
-      dia, envaseHoje, envaseMes, checkoutHoje, produtos, painelEmpilha, paradasHoje, empilhadeiras,
+      dia, envaseHoje, envaseMes, checkoutHoje, produtos, painelEmpilha, paradasHoje, empilhadeiras, metas,
     });
   },
 
@@ -933,6 +952,32 @@ const functionsAdapter = {
       .gte('data_prevista', de).lte('data_prevista', ate)
       .order('data_prevista', { ascending: true }).order('id'));
     return linhas.map(normalizarRetorno);
+  },
+
+  /** Todas as metas diárias (tabela pequena: uma linha por troca de meta). */
+  async metasDiarias() {
+    return lerTudo(() => supabase.from('metas_diarias').select('*')
+      .order('vigente_desde', { ascending: false }).order('id'));
+  },
+
+  /** Lança uma meta. Só admin (RLS). */
+  async lancarMeta(meta) {
+    const { data, error } = await executarComRenovacao(() =>
+      supabase.from('metas_diarias').insert(meta).select().single());
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Apaga uma meta. O RLS só deixa apagar a que começa hoje ou depois; se a
+   * linha não sumiu, é porque o banco recusou — vira erro, não silêncio.
+   */
+  async apagarMeta(id) {
+    const { data, error } = await executarComRenovacao(() =>
+      supabase.from('metas_diarias').delete().eq('id', id).select('id'));
+    if (error) throw error;
+    if (!data?.length) throw Object.assign(new Error('meta não apagada'), { code: '42501' });
+    return true;
   },
 
   /** Quantos envases existem — sem baixar nenhum. */

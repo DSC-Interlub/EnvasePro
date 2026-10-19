@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { MolduraTV, NumeroTV, MetaTV, StatusTV, GradeOperacoes, usePainelTV, u } from "@/components/fluxo/tv";
+import { anelSimples } from "@/lib/metaNaTela";
 
 export default function TelevisaoEmpilha() {
   // Re-renderiza a cada segundo: é o que faz o "tempo decorrido" andar.
@@ -61,8 +62,9 @@ export default function TelevisaoEmpilha() {
   // da TV de envase. Os DADOS acima nao mudaram — as mesmas consultas, os
   // mesmos filtros, os mesmos KPIs.
   //
-  // O anel mostra a fracao CONCLUIDA do dia. Nao ha campo de meta no banco
-  // (ver docs e o relatorio do modulo), entao nao ha "meta 150" a mostrar.
+  // O anel mede as linhas concluídas contra a META do dia, quando o admin
+  // lançou uma (tabela metas_diarias, tela /Metas); sem meta, mostra a fração
+  // concluída do dia, como antes.
   // ---------------------------------------------------------------------
   const situacoes = [
     {
@@ -132,14 +134,20 @@ export default function TelevisaoEmpilha() {
       pilulaTom: ultimaOcorrencia ? "erro" : "atencao",
     },
   ];
+  // Com meta de linhas (tabela metas_diarias), o anel mede contra ela; sem
+  // meta, a fração concluída do dia, como antes (src/lib/metaNaTela.js).
+  const anel = anelSimples({
+    concluidos: concluidas, total: totalLinhas, meta: painel?.meta ?? null,
+    unidade: "linhas", emAberto: totalLinhas - concluidas, rotuloAberto: "em aberto",
+  });
   const meta = {
     rotulo: "Concluídas",
-    valor: concluidas,
+    valor: anel.valor,
     // `meta`, não `total`: é o nome que o MetaTV lê. Com `total` o anel ficava
     // sempre em 0% (defeito do PR #24, achado pelo teste da Etapa 2).
-    meta: totalLinhas,
+    meta: anel.total,
     unidade: "linhas",
-    legenda: totalLinhas > 0 ? `${totalLinhas - concluidas} em aberto · ${totalLinhas} no dia` : "sem linhas",
+    legenda: anel.legenda,
   };
 
   return (

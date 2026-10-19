@@ -20,6 +20,7 @@ import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { enforceNonProductionGuard } from './lib/db-guard.js';
 import { calcularPainelEmpilha } from '../src/lib/painelEmpilha.js';
+import { metasDoDia } from '../src/lib/metas.js';
 
 dotenv.config({ path: '.env.local' });
 enforceNonProductionGuard('test-painel-empilha');
@@ -174,7 +175,8 @@ console.log('\n3. Recuo do navegador × RPC');
   const { data: linhas } = await tv.from('empilha_linhas').select('*').in('programacao_id', progs.map((p) => p.id));
   const { data: ocorr } = await tv.from('empilha_ocorrencias').select('tipo, hora, resolvido, created_at').eq('data', dia);
   const { data: rpc } = await tv.rpc('painel_televisao_empilha');
-  const nav = calcularPainelEmpilha(linhas, ocorr, dia);
+  const { data: metasLinhas } = await tv.from('metas_diarias').select('*');
+  const nav = calcularPainelEmpilha(linhas, ocorr, dia, metasDoDia(metasLinhas, dia));
   // Canônico: jsonb reordena as chaves, então compara-se com chaves ordenadas.
   const canon = (v) => Array.isArray(v) ? v.map(canon)
     : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon(v[k])])) : v;
