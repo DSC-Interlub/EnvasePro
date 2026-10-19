@@ -47,7 +47,7 @@ export default function CartaoAoVivo({
             <Icone className="h-[18px] w-[18px]" />
           </span>
         )}
-        <h3 className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-tinta">{titulo}</h3>
+        <h3 className="min-w-0 flex-1 text-[15px] font-extrabold leading-tight text-tinta">{titulo}</h3>
 
         {pilula && (
           <span
@@ -96,7 +96,7 @@ export default function CartaoAoVivo({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <span className="truncate text-sm font-extrabold text-tinta">{item.principal}</span>
+                    <span className="min-w-0 text-sm font-extrabold leading-tight text-tinta [overflow-wrap:anywhere]">{item.principal}</span>
                     {(item.marcas || []).map((m) => (
                       <span
                         key={m.texto}
@@ -110,7 +110,7 @@ export default function CartaoAoVivo({
                     ))}
                   </div>
                   {item.secundario && (
-                    <p className="truncate text-xs font-semibold text-texto-fraco">{item.secundario}</p>
+                    <p className="text-xs font-semibold leading-snug text-texto-fraco [overflow-wrap:anywhere]">{item.secundario}</p>
                   )}
                 </div>
 

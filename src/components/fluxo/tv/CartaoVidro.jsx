@@ -1,33 +1,39 @@
 import React from "react";
+import { u } from "./unidade";
 
 /**
- * Cartão de vidro da TV.
+ * A superfície da TV: vidro escuro, borda de 1px, raio grande.
  *
- * Fundo translúcido (6% de branco) sobre o fundo quase preto, com borda de
- * 12% — é o que o protótipo chama de vidro e o que separa um bloco do outro
- * sem usar uma caixa sólida, que sobre fundo escuro pareceria um buraco.
+ * `tom="erro"` muda só a borda — o fundo continua o mesmo vidro, para o
+ * vermelho apontar sem gritar.
  *
- * `tom="erro"` troca a borda para vermelha, como no cartão de ocorrências do
- * protótipo: o estado grave se anuncia pela moldura, não por pintar o cartão
- * inteiro — a 4 metros um bloco vermelho inteiro cansa e some o número.
+ * `data-tv-cartao` marca o cartão para o portão `test-tv-layout`: todo texto
+ * de dentro tem de caber dentro dele. Foi o que faltou na primeira versão,
+ * quando o número da meta vazava por baixo e cobria a lista.
+ *
+ * `conteiner` liga `container-type: size`: o tamanho do cartão passa a vir SÓ
+ * da grade em que ele está, nunca do conteúdo, e o conteúdo pode se medir por
+ * ele (`cqw`/`cqh`). É o que impede um número grande de empurrar o layout.
  */
 const BORDA = {
   neutro: "rgb(255 255 255 / .12)",
-  erro: "rgb(var(--erro) / .5)",
-  ok: "rgb(var(--ok) / .45)",
-  atencao: "rgb(var(--atencao) / .45)",
+  erro: "rgb(var(--erro) / .55)",
+  atencao: "rgb(var(--atencao) / .5)",
 };
 
 export default function CartaoVidro({
-  tom = "neutro", atraso = 0, raio = 40, className = "", style, children, ...props
+  tom = "neutro", atraso = 0, raio = 2, conteiner = false,
+  className = "", style, children, ...props
 }) {
   return (
     <div
-      className={`entra flex min-w-0 ${className}`}
+      data-tv-cartao=""
+      className={`entra flex min-h-0 min-w-0 overflow-hidden ${className}`}
       style={{
         background: "rgb(255 255 255 / .06)",
         border: `1px solid ${BORDA[tom] || BORDA.neutro}`,
-        borderRadius: `clamp(20px, ${raio / 19.2}vw, ${raio}px)`,
+        borderRadius: u(raio),
+        containerType: conteiner ? "size" : undefined,
         animationDelay: atraso ? `${atraso}s` : undefined,
         ...style,
       }}

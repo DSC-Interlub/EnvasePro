@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { MolduraTV, CartaoVidro, NumeroTV, MetaTV, StatusTV, ListaTV } from "@/components/fluxo/tv";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Warehouse, User, MapPin, Package, Clock, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
+import { MolduraTV, NumeroTV, MetaTV, StatusTV, GradeOperacoes, u } from "@/components/fluxo/tv";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -50,9 +47,14 @@ export default function TelevisaoEmpilha() {
   const progHojeIds = progHoje.map(p => p.id);
   const linhasHoje = allLinhas.filter(l => progHojeIds.includes(l.programacao_id));
 
+  // `tipo_linha === "Crítico"`, e NÃO `l.critico`: a tabela empilha_linhas não
+  // tem coluna `critico` (conferido no banco). Esta tela filtrava por ela desde
+  // antes do módulo 1 — o contador "Críticos pendentes" era SEMPRE zero e a
+  // linha crítica nunca ia para o topo nem ficava vermelha.
+  const ehCritica = (l) => l.tipo_linha === "Crítico";
   const linhasEmAndamento = linhasHoje
     .filter(l => l.status === "Em Andamento")
-    .sort((a, b) => (b.critico ? 1 : 0) - (a.critico ? 1 : 0));
+    .sort((a, b) => (ehCritica(b) ? 1 : 0) - (ehCritica(a) ? 1 : 0));
 
   const ocorrenciasHoje = ocorrencias.filter(o => o.data === today && !o.resolvido);
 
@@ -60,7 +62,7 @@ export default function TelevisaoEmpilha() {
   const totalLinhas = linhasHoje.length;
   const concluidas = linhasHoje.filter(l => l.status === "Concluído").length;
   const emAndamento = linhasHoje.filter(l => l.status === "Em Andamento").length;
-  const criticosPendentes = linhasHoje.filter(l => l.critico && l.status !== "Concluído").length;
+  const criticosPendentes = linhasHoje.filter(l => ehCritica(l) && l.status !== "Concluído").length;
 
   // Tempo médio
   const linhasComTempo = linhasHoje.filter(l => l.tempo_total && l.status === "Concluído");
@@ -118,6 +120,59 @@ export default function TelevisaoEmpilha() {
     },
   ];
 
+  // Cada linha em andamento, com o que a TV antiga mostrava (git 4ccc811^):
+  // empilhador com foto, AJUDANTE, produto, item, rua/torre, depósito,
+  // quantidade, crítico e tempo decorrido. Ajudante, rua/torre, item e
+  // quantidade tinham sumido na reconstrução do módulo 1.
+  const operacoes = linhasEmAndamento.map((l) => {
+    const critica = ehCritica(l);
+    const pausada = l.status === "Pausado";
+    return {
+      id: l.id,
+      tom: critica ? "erro" : pausada ? "atencao" : "neutro",
+      foto: getOperatorPhoto(l.operador_empilhadeira),
+      operador: l.operador_empilhadeira,
+      verbo: `${pausada ? "Pausado" : "Movimentando"}${l.operador_ajudante ? ` · com ${l.operador_ajudante}` : ""}`,
+      principal: l.descricao_produto || l.codigo_produto || "Linha",
+      detalhe: [
+        l.numero_item ? `Item ${l.numero_item}` : null,
+        l.rua_torre ? `Rua/torre ${l.rua_torre}` : null,
+        l.deposito ? `Depósito ${l.deposito}` : null,
+        Number(l.quantidade) > 0 ? `${Number(l.quantidade).toLocaleString("pt-BR")} un.` : null,
+      ].filter(Boolean).join(" · ") || null,
+      etiquetas: l.tipo_linha && !critica ? [{ texto: l.tipo_linha }] : [],
+      tempo: calculateElapsed(l.hora_inicio),
+      desde: l.hora_inicio ? String(l.hora_inicio).slice(0, 5) : null,
+      alerta: critica ? { texto: "CRÍTICO", tom: "erro" } : pausada ? { texto: "PAUSADA", tom: "atencao" } : null,
+    };
+  });
+
+  // A ocorrência mais recente vai na pílula: a TV antiga listava as abertas
+  // com tipo e hora, e a reconstrução tinha reduzido isso a um número no
+  // rodapé. A descrição inteira continua na tela do módulo.
+  const ultimaOcorrencia = ocorrenciasHoje[0];
+  const numeros = [
+    {
+      rotulo: "Críticos pendentes", valor: criticosPendentes, tom: "erro",
+      pilula: criticosPendentes > 0 ? "prioridade" : "nenhum crítico",
+      pilulaTom: criticosPendentes > 0 ? "erro" : "atencao",
+    },
+    {
+      rotulo: "Ocorrências abertas", valor: ocorrenciasHoje.length, tom: "erro",
+      pilula: ultimaOcorrencia
+        ? `${ultimaOcorrencia.tipo || "ocorrência"}${ultimaOcorrencia.hora ? ` · ${String(ultimaOcorrencia.hora).slice(0, 5)}` : ""}`
+        : "nenhuma aberta",
+      pilulaTom: ultimaOcorrencia ? "erro" : "atencao",
+    },
+  ];
+  const meta = {
+    rotulo: "Concluídas",
+    valor: concluidas,
+    total: totalLinhas,
+    unidade: "linhas",
+    legenda: totalLinhas > 0 ? `${totalLinhas - concluidas} em aberto · ${totalLinhas} no dia` : "sem linhas",
+  };
+
   return (
     <MolduraTV
       titulo="Movimentação de hoje"
@@ -126,56 +181,39 @@ export default function TelevisaoEmpilha() {
         <StatusTV key={s.nome} nome={s.nome} situacao={s.situacao} tom={s.tom} atraso={0.45 + i * 0.05} />
       ))}
     >
-      <div
-        className="grid min-h-0 flex-1 lg:grid-cols-[1.25fr_1fr_1fr]"
-        style={{ gap: 'clamp(14px, 1.5vw, 28px)' }}
-      >
-        <MetaTV
-          rotulo="Concluídas"
-          valor={concluidas}
-          meta={totalLinhas}
-          unidade="linhas"
-          legenda={totalLinhas > 0
-            ? `${totalLinhas - concluidas} em aberto · ${totalLinhas} no dia`
-            : 'sem linhas'}
-        />
-        <NumeroTV
-          rotulo="Em andamento"
-          valor={emAndamento}
-          pilula={`${progHoje.length} programação(ões) hoje`}
-          atraso={0.15}
-        />
-        <NumeroTV
-          rotulo="Críticos pendentes"
-          valor={criticosPendentes}
-          tom="erro"
-          pilula={criticosPendentes > 0 ? 'prioridade' : 'nenhum crítico'}
-          pilulaTom={criticosPendentes > 0 ? 'erro' : 'atencao'}
-          atraso={0.3}
-        />
-      </div>
-
-      {/* A faixa so aparece quando ha linha: sem isso ela ocuparia espaco sem
-          dizer nada e afastaria o rodape, que no prototipo fica colado embaixo. */}
-      {linhasEmAndamento.length > 0 && (
-        <CartaoVidro atraso={0.35} className="min-h-0 flex-1 overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-y-auto" style={{ padding: 'clamp(14px, 1.5vw, 28px)' }}>
-            <ListaTV
-              titulo="Linhas em andamento"
-              contagem={`${linhasEmAndamento.length} ativa(s)`}
-              vazio="Nenhuma linha em andamento agora"
-              itens={linhasEmAndamento.map((l) => ({
-                id: l.id,
-                tom: l.critico ? 'erro' : l.status === 'Pausado' ? 'atencao' : 'neutro',
-                foto: getOperatorPhoto(l.operador_empilhadeira),
-                principal: l.descricao_produto || l.codigo_produto || 'Linha',
-                secundario: `${l.operador_empilhadeira || 'sem operador'}${l.critico ? ' · crítico' : ''}${l.deposito ? ` · ${l.deposito}` : ''}`,
-                direita: calculateElapsed(l.hora_inicio),
-                direitaLegenda: 'decorrido',
-              }))}
-            />
+      {operacoes.length > 0 ? (
+        // Com linhas em andamento: elas no centro (2/3), anel e números ao lado.
+        <div
+          className="grid min-h-0 flex-1"
+          style={{ gap: u(1.3), gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" }}
+        >
+          <GradeOperacoes
+            titulo="Linhas em andamento"
+            contagem={`${operacoes.length} ${operacoes.length === 1 ? "linha" : "linhas"}`}
+            itens={operacoes}
+          />
+          <div
+            className="grid min-h-0 min-w-0"
+            style={{ gap: u(1.3), gridTemplateRows: "minmax(0, 1.15fr) minmax(0, 1fr)" }}
+          >
+            <MetaTV compacto {...meta} />
+            <div
+              className="grid min-h-0 min-w-0"
+              style={{ gap: u(1.3), gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)" }}
+            >
+              {numeros.map((n, i) => <NumeroTV key={n.rotulo} compacto {...n} atraso={0.15 + i * 0.1} />)}
+            </div>
           </div>
-        </CartaoVidro>
+        </div>
+      ) : (
+        // Sem linhas: o layout grande do protótipo.
+        <div
+          className="grid min-h-0 flex-1"
+          style={{ gap: u(1.3), gridTemplateColumns: "minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr)" }}
+        >
+          <MetaTV {...meta} />
+          {numeros.map((n, i) => <NumeroTV key={n.rotulo} {...n} atraso={0.15 + i * 0.15} />)}
+        </div>
       )}
     </MolduraTV>
   );
