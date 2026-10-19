@@ -148,10 +148,15 @@ export default function BlocoLimpeza({ currentUser, isAdmin }) {
   const [dataFim, setDataFim] = useState(semFim);
   const [modalAssinatura, setModalAssinatura] = useState(null);
 
+  // Só o período escolhido (Etapa 2). Antes: todas as programações de todo
+  // o histórico — 406 KB no volume carregado — para mostrar uma semana. Tudo
+  // abaixo já trabalhava só com o período. A chave começa com
+  // "limpeza-programacoes", então as invalidações de sempre continuam valendo.
   const { data: programacoes } = useQuery({
-    queryKey: ["limpeza-programacoes"],
-    queryFn: () => base44.entities.LimpezaProgramacao.list("data_prevista"),
+    queryKey: ["limpeza-programacoes", dataInicio, dataFim],
+    queryFn: () => base44.functions.limpezasDaFaixa(dataInicio, dataFim),
     initialData: [],
+    enabled: Boolean(dataInicio && dataFim),
   });
 
   const updateMutation = useMutation({

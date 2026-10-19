@@ -29,6 +29,7 @@ import CategoryStatsGrid from "../components/dashboard/CategoryStatsGrid";
 import CheckoutStatsGrid from "../components/dashboard/CheckoutStatsGrid"; 
 import CheckoutAnalysisGrid from "../components/dashboard/CheckoutAnalysisGrid"; 
 import { formatarData, paraData } from '@/lib/datas';
+import { faixaDoServidor } from '@/lib/faixaDashboard';
 import { PageHeader, SegmentoPeriodo, ChipsFiltro } from "@/components/fluxo";
 
 export default function Dashboard() {
@@ -44,10 +45,18 @@ export default function Dashboard() {
   const [exportStartDate, setExportStartDate] = useState("");
   const [exportEndDate, setExportEndDate] = useState("");
   
+  // Só a faixa que os filtros pedem (Etapa 2). Antes: a tabela inteira a
+  // cada abertura — 4,5 MB no volume da Base44. O filtro do navegador abaixo
+  // não mudou e roda em cima desta faixa (src/lib/faixaDashboard.js).
+  const faixa = faixaDoServidor(selectedMonth, startDate, endDate);
   const { data: records, isLoading } = useQuery({
-    queryKey: ['envase-records'],
-    queryFn: () => base44.entities.EnvaseRecord.list("-data"),
+    queryKey: ['envase-records', faixa?.de ?? null, faixa?.ate ?? null, faixa === null],
+    queryFn: () => base44.functions.envasesDaFaixa(faixa?.de ?? null, faixa?.ate ?? null),
     initialData: [],
+  });
+  const { data: totalEnvases = 0 } = useQuery({
+    queryKey: ['envase-records-contagem'],
+    queryFn: () => base44.functions.contarEnvases(),
   });
 
   const { data: checkoutItems, isLoading: loadingCheckout } = useQuery({
@@ -169,11 +178,15 @@ export default function Dashboard() {
   });
 
   const exportToExcel = async () => {
-    // Filtrar registros pela data de exportação
-    let recordsToExport = records;
+    // A exportação busca a faixa PEDIDA no diálogo (a tela só tem o período
+    // dos filtros). O filtro abaixo é o de sempre, agora sobre essa faixa.
+    const todosDaFaixa = viewMode === "envase"
+      ? await base44.functions.envasesDaFaixa(exportStartDate || null, exportEndDate || null)
+      : [];
+    let recordsToExport = todosDaFaixa;
     
     if (exportStartDate || exportEndDate) {
-      recordsToExport = records.filter(record => {
+      recordsToExport = todosDaFaixa.filter(record => {
         const recordDateStr = record.data;
         if (exportStartDate && exportEndDate) {
           return recordDateStr >= exportStartDate && recordDateStr <= exportEndDate;
@@ -393,7 +406,7 @@ export default function Dashboard() {
                 variant="outline"
                 size="lg"
                 onClick={() => setShowExportDialog(true)}
-                disabled={viewMode === "envase" ? records.length === 0 : checkoutItems.length === 0}
+                disabled={viewMode === "envase" ? totalEnvases === 0 : checkoutItems.length === 0}
               >
                 <Download className="h-4 w-4" aria-hidden="true" />
                 Exportar
