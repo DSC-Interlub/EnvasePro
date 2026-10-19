@@ -75,9 +75,13 @@ CREATE POLICY metas_diarias_delete ON public.metas_diarias
   FOR DELETE TO authenticated
   USING (public.is_admin() AND vigente_desde >= (now() AT TIME ZONE 'America/Sao_Paulo')::date);
 
--- Explícito, sem depender do privilégio padrão. Sem TRUNCATE (que ignora RLS).
+-- Explícito, sem depender do privilégio padrão: authenticated fica SÓ com
+-- SELECT/INSERT/UPDATE/DELETE (o RLS decide quem escreve). O padrão herdado
+-- daria também TRUNCATE (que ignora RLS), REFERENCES, TRIGGER e MAINTAIN —
+-- nada disso é necessário. (Ajustado ANTES de qualquer aplicação em produção:
+-- achado no ensaio do script de aplicação, 19/10/2026.)
 REVOKE ALL ON public.metas_diarias FROM anon;
-REVOKE TRUNCATE ON public.metas_diarias FROM authenticated;
+REVOKE ALL ON public.metas_diarias FROM authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.metas_diarias TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.metas_diarias TO service_role;
 
