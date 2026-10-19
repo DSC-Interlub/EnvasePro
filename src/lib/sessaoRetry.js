@@ -27,6 +27,25 @@
  *  - se nem a renovação funcionar, devolve o erro **original**, que é mais
  *    honesto do que mascará-lo com o erro da renovação.
  *
+ * POR QUE REPETIR UMA ESCRITA TAMBÉM É SEGURO
+ *
+ * Desde 13/10/2026 isto também envolve `create`, `update`, `delete` e
+ * `bulkCreate`, não só as leituras. A pergunta óbvia é se repetir um INSERT
+ * pode duplicar uma linha.
+ *
+ * Não pode, e o motivo é onde a recusa acontece: 401, PGRST301 e PGRST303 são
+ * recusados na **validação do token**, antes de o PostgREST montar qualquer
+ * comando SQL. Nenhuma linha foi tocada, então não há nada parcialmente
+ * aplicado para a segunda tentativa duplicar.
+ *
+ * Isto NÃO é suposição: `scripts/test-renovacao-sessao.js` faz uma escrita
+ * com token inválido contra o banco local e confere que a tabela continua com
+ * o mesmo número de linhas.
+ *
+ * O que torna isso válido é a regra estreita de `ehErroDeSessao`. Um erro de
+ * gravação de verdade — 23505 chave duplicada, 42501 recusado pelo RLS — não
+ * é repetido, justamente porque aí sim o comando chegou ao banco.
+ *
  * Vive fora do `base44Client` de propósito: sem dependência de alias, pode ser
  * testado direto pelo Node.
  */
