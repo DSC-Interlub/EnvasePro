@@ -85,14 +85,10 @@ async function runBrowserTests() {
   const page3 = await ctx3.newPage();
   await page3.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
   
-  // Aguarda aparecer o botão de login
-  await page3.waitForSelector('text=Fazer Login no Sistema', { timeout: 10000 });
-  const temBotaoLogin = await page3.locator('text=Fazer Login no Sistema').count();
+  // Desde o PR #25 a tela de login aparece DIRETO (sem botão para abrir).
+  await page3.waitForSelector('#email', { timeout: 10000 });
+  const temBotaoLogin = await page3.locator('#email').count();
   console.log(`   ↳ Apresentou tela de login? ${temBotaoLogin > 0 ? '✅ SIM (Correto!)' : '❌ NÃO (Erro!)'}`);
-
-  // Clica para abrir modal de login
-  await page3.click('text=Fazer Login no Sistema');
-  await page3.waitForSelector('text=Acesso ao EnvasePro', { timeout: 5000 });
 
   const shot3 = path.join(SCRATCH_DIR, '03-modal-login.png');
   await page3.screenshot({ path: shot3 });
@@ -107,7 +103,7 @@ async function runBrowserTests() {
   await page3.waitForTimeout(300);
 
   // Submete o login
-  await page3.click('button[type="submit"]:has-text("Entrar no Sistema")');
+  await page3.click('button[type="submit"]');
   console.log('   ↳ Aguardando autenticação e abertura do modal "Quem é você hoje?"...');
   await page3.waitForSelector('text=Quem é você hoje?', { timeout: 15000 });
   console.log('   ✅ Modal "Quem é você hoje?" abriu automaticamente com sucesso!');

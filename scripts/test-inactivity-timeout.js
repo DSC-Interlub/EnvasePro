@@ -80,7 +80,7 @@ async function runInactivityTests() {
 
     await adminPage.fill('input#email', adminEmail);
     await adminPage.fill('input#password', adminPass);
-    await adminPage.click('button[type="submit"]:has-text("Entrar no Sistema")');
+    await adminPage.click('button[type="submit"]');
     await sleep(3000);
 
     // Confirma que está logado como admin
@@ -154,7 +154,7 @@ async function runInactivityTests() {
 
     await tvPage.fill('input#email', tvEmail);
     await tvPage.fill('input#password', tvPass);
-    await tvPage.click('button[type="submit"]:has-text("Entrar no Sistema")');
+    await tvPage.click('button[type="submit"]');
     await sleep(3000);
 
     console.log('   ✅ TV logada com sucesso.');

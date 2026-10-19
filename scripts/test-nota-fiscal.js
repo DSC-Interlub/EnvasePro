@@ -45,14 +45,13 @@ async function run() {
   }
 
   console.log(`Realizando login como PCP/Admin (${adminEmail})...`);
-  await page.waitForSelector('text=Fazer Login no Sistema', { timeout: 15000 });
-  await page.click('text=Fazer Login no Sistema');
-  await page.waitForSelector('text=Acesso ao EnvasePro');
+  // Login direto (PR #25): o formulário já é a tela.
+  await page.waitForSelector('input#email', { timeout: 15000 });
 
   // Preenche credenciais
   await page.fill('input#email', adminEmail);
   await page.fill('input#password', adminPass);
-  await page.click('button[type="submit"]:has-text("Entrar no Sistema")');
+  await page.click('button[type="submit"]');
   await page.waitForTimeout(3000);
 
   // Navega para /NovaNotaFiscal

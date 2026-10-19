@@ -57,14 +57,12 @@ async function runTvAuthTest() {
   console.log(`\n[1/3] 🔑 Efetuando login inicial com a conta compartilhada de TV (${tvEmail})...`);
   await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
 
-  const loginBtn = page.locator('text=Fazer Login no Sistema').first();
-  await loginBtn.waitFor({ state: 'visible', timeout: 10000 });
-  await loginBtn.click();
-  await page.waitForTimeout(500);
+  // Login direto (PR #25): o formulário já é a tela.
+  await page.locator('input#email').waitFor({ state: 'visible', timeout: 10000 });
 
   await page.fill('input#email', tvEmail);
   await page.fill('input#password', tvPass);
-  await page.click('button[type="submit"]:has-text("Entrar no Sistema")');
+  await page.click('button[type="submit"]');
   await page.waitForTimeout(3500);
 
   // Verificar se o Supabase gravou a sessão no localStorage

@@ -68,13 +68,12 @@ async function runTest() {
   await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
 
   // Fazer login como admin
-  const loginBtn = page.locator('text=Fazer Login no Sistema').first();
-  if (await loginBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await loginBtn.click();
-    await page.waitForTimeout(500);
+  // Login direto (PR #25): se o formulário está na tela, entra.
+  const campoEmail = page.locator('input#email').first();
+  if (await campoEmail.isVisible({ timeout: 5000 }).catch(() => false)) {
     await page.fill('input#email', adminEmail);
     await page.fill('input#password', adminPass);
-    await page.click('button[type="submit"]:has-text("Entrar no Sistema")');
+    await page.click('button[type="submit"]');
     await page.waitForTimeout(3000);
   }
 
