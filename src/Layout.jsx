@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
   LayoutDashboard, ClipboardList, Package, List, Warehouse, Settings,
-  Truck, ClipboardCheck, FileText, Activity, Menu, X,
+  Truck, ClipboardCheck, FileText, Activity, Menu, X, Target,
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
@@ -30,6 +30,7 @@ const allNavItems = [
   { title: "Recebimento", url: "/Recebimento", icon: Truck, roles: ["admin", "operator"], badgeKey: "recebimento", grupo: "Operação" },
   { title: "Checklist Recebimento", url: "/ChecklistRecebimento", icon: ClipboardCheck, roles: ["admin", "operator"], grupo: "Operação" },
   { title: "Notas Fiscais", url: "/NotasFiscais", icon: FileText, roles: ["admin", "operator"], grupo: "Operação" },
+  { title: "Metas diárias", url: "/Metas", icon: Target, roles: ["admin"], grupo: "Cadastros" },
   { title: "Configurações", url: "/GerenciarUsuarios", icon: Settings, roles: ["admin"], grupo: "Cadastros" },
 ];
 

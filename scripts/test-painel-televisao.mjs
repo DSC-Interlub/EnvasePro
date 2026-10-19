@@ -19,6 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 import { enforceNonProductionGuard } from './lib/db-guard.js';
 import { calcularPainelEmpilha } from '../src/lib/painelEmpilha.js';
 import { calcularPainelTelevisao, limitesDoMes } from '../src/lib/painelTelevisao.js';
+import { metasDoDia } from '../src/lib/metas.js';
 
 dotenv.config({ path: '.env.local', quiet: true });
 enforceNonProductionGuard('test-painel-televisao');
@@ -73,14 +74,17 @@ console.log('\nA. RPC × recuo do navegador (objeto inteiro)');
   const { inicio, fim } = limitesDoMes(dia);
   const idsCk = progsCheckout.filter((p) => p.data_programada === dia).map((p) => p.id);
   const idsEmp = progsEmp.filter((p) => p.data_programada === dia).map((p) => p.id);
+  const { data: metasLinhas } = await tv.from('metas_diarias').select('*');
+  const metas = metasDoDia(metasLinhas, dia);
   const nav = calcularPainelTelevisao({
     dia,
+    metas,
     envaseHoje: envaseTodos.filter((r) => r.data === dia),
     envaseMes: envaseTodos.filter((r) => r.data >= inicio && r.data < fim),
     checkoutHoje: checkoutTodos.filter((i) => idsCk.includes(i.programacao_id)),
     produtos,
     painelEmpilha: calcularPainelEmpilha(linhasEmp.filter((l) => idsEmp.includes(l.programacao_id)),
-      ocorrEmp.filter((o) => o.data === dia), dia),
+      ocorrEmp.filter((o) => o.data === dia), dia, metas),
     paradasHoje: paradas.filter((p) => p.data === dia),
     empilhadeiras,
   });
@@ -95,7 +99,7 @@ console.log('\nA. RPC × recuo do navegador (objeto inteiro)');
     return v;
   });
   let algum = false;
-  for (const bloco of ['envase', 'checkout', 'empilha', 'mes']) {
+  for (const bloco of ['envase', 'checkout', 'empilha', 'mes', 'metas']) {
     const a = JSON.stringify(canon(norm(nav[bloco])));
     const b = JSON.stringify(canon(norm(rpc[bloco])));
     ok(a === b, `bloco "${bloco}" idêntico`);

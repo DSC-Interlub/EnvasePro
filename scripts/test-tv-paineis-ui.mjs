@@ -26,6 +26,7 @@ import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
 import { enforceNonProductionGuard } from './lib/db-guard.js';
 import { criarAjudantes, esperarPor } from './lib/ui-teste.js';
+import { anelEnvase, anelSimples } from '../src/lib/metaNaTela.js';
 
 dotenv.config({ path: '.env.local', quiet: true });
 enforceNonProductionGuard('test-tv-paineis-ui');
@@ -45,11 +46,18 @@ const tvCli = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPAB
 await tvCli.auth.signInWithPassword({ email: process.env.TEST_TV_EMAIL, password: process.env.TEST_TV_PASSWORD });
 const { data: esperado, error } = await tvCli.rpc('painel_televisao_empilha');
 if (error) throw error;
+// O anel e a legenda dependem de haver META (tabela metas_diarias): o
+// esperado sai das mesmas funções que a tela usa (src/lib/metaNaTela.js).
+const anelEmp = anelSimples({
+  concluidos: esperado.concluidas, total: esperado.total, meta: esperado.meta ?? null,
+  unidade: 'linhas', emAberto: esperado.total - esperado.concluidas, rotuloAberto: 'em aberto',
+});
+const pctDe = (a) => (a.total ? Math.round(Math.min(1, a.valor / a.total) * 100) : 0);
 const textos = [
   `${esperado.em_andamento} linha(s) agora`,
   `${esperado.criticos_pendentes} pendente(s)`,
   `${esperado.ocorrencias_abertas} aberta(s)`,
-  `${esperado.total - esperado.concluidas} em aberto · ${esperado.total} no dia`,
+  anelEmp.legenda,
 ];
 console.log('='.repeat(72));
 console.log(`TV empilhadeira — painel da Etapa 2 | ${APP}`);
@@ -88,7 +96,7 @@ try {
     const { ctx, page, pedidos, apareceu } = await abrirTV('1. Com a função no banco');
     await page.waitForTimeout(3000);
     ok(apareceu, 'os 4 números da RPC estão na tela');
-    const pct = esperado.total ? Math.round((esperado.concluidas / esperado.total) * 100) : 0;
+    const pct = pctDe(anelEmp);
     const rotuloAnel = await page.locator('[aria-label*="por cento"]').first().getAttribute('aria-label');
     ok(new RegExp(`, ${pct} por cento`).test(rotuloAnel || ''), `o anel mostra ${pct}% (${rotuloAnel})`);
     ok(await page.locator('[data-tv-atualizacao="ok"]').count() === 1
@@ -143,8 +151,9 @@ try {
   // 4 e 5. A TV principal (/Televisao), com a RPC e com o recuo.
   const { data: pt, error: ePt } = await tvCli.rpc('painel_televisao');
   if (ePt) throw ePt;
+  const anelEnv = anelEnvase({ envase: pt.envase, metas: pt.metas });
   const principal = [
-    `${pt.envase.em_andamento} em andamento · ${pt.envase.lancados} lançados`, // legenda do anel
+    anelEnv.legenda,                                                          // legenda do anel
     `${pt.checkout.pendentes} pendentes`,                                     // rodapé (correção 2)
     `${pt.empilha.ocorrencias_abertas} aberta(s) hoje`,                       // rodapé
     Number(pt.envase.producao_dia).toLocaleString('pt-BR'),                      // produção de hoje
@@ -163,9 +172,11 @@ try {
     const { ctx, page, pedidos, apareceu } = await abrirTV(rotulo, preparar, 'Televisao', principal);
     // Pausa a rotação: a captura tem de ser do painel de envase.
     await page.getByRole('button', { name: /pausar rotação/i }).click().catch(() => {});
+    // E escolhe o slide explicitamente: a rotação pode ter andado antes da pausa.
+    await page.getByRole('tab', { name: 'Envase' }).click();
     await page.waitForTimeout(3000);
     ok(apareceu, 'legenda do anel, rodapé e produção do dia batem com a RPC');
-    const pct = pt.envase.lancados ? Math.round((pt.envase.concluidos / pt.envase.lancados) * 100) : 0;
+    const pct = pctDe(anelEnv);
     const anel = await page.locator('[aria-label*="por cento"]').first().getAttribute('aria-label');
     ok(new RegExp(`, ${pct} por cento`).test(anel || ''), `o anel mostra ${pct}% (${anel})`);
     const tabelas = [...new Set(pedidos.map(tabela))];

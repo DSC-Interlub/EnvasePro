@@ -28,7 +28,7 @@ const minutosDe = (texto) => {
   return m ? Number(m[1]) * 60 + Number(m[2]) : null;
 };
 
-export function calcularPainelEmpilha(linhasHoje, ocorrenciasHoje, dia) {
+export function calcularPainelEmpilha(linhasHoje, ocorrenciasHoje, dia, metas = null) {
   const ehCritica = (l) => l.tipo_linha === "Crítico";
   const concluidas = linhasHoje.filter((l) => l.status === "Concluído");
   const tempos = concluidas.map((l) => minutosDe(l.tempo_total)).filter((m) => m !== null);
@@ -60,6 +60,8 @@ export function calcularPainelEmpilha(linhasHoje, ocorrenciasHoje, dia) {
 
   return {
     dia,
+    // Meta de linhas concluídas vigente hoje (src/lib/metas.js); null = sem meta.
+    meta: metas?.empilhadeira?.linhas ?? null,
     total: linhasHoje.length,
     concluidas: concluidas.length,
     em_andamento: linhasHoje.filter((l) => l.status === "Em Andamento").length,

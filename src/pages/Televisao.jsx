@@ -6,6 +6,7 @@ import {
 } from "@/components/fluxo/tv";
 import { format } from "date-fns";
 import { formatarData } from '@/lib/datas';
+import { anelEnvase, pilulaProducao, anelSimples } from '@/lib/metaNaTela';
 
 /* ===================== UTILITÁRIOS ===================== */
 function calcElapsed(startTime) {
@@ -224,17 +225,14 @@ export default function Televisao() {
   // A estrutura e a do prototipo TV-fabrica.html: anel da meta + dois numeros
   // gigantes + quatro cartoes de status no rodape.
   //
-  // SOBRE A "META": o prototipo mostra "meta 150", e NAO EXISTE campo de meta
-  // em lugar nenhum do banco (conferido em todas as colunas de public). Em vez
-  // de inventar um numero, o anel mostra o que e real: a fracao CONCLUIDA do
-  // que foi lancado hoje. Se o dono quiser meta de verdade, ela precisa de
-  // coluna — esta anotado no relatorio.
+  // SOBRE A "META": desde a migration 20261019000006 ela existe (tabela
+  // metas_diarias, lançada pelo admin em /Metas). Com meta, o anel mede o
+  // realizado contra ela; sem meta, a fração CONCLUÍDA do que foi lançado no
+  // dia, como antes. A regra está em src/lib/metaNaTela.js.
   // ---------------------------------------------------------------------
   const emAndamentoEnvase = envase.em_andamento;
-  // Correção 3 da migration: "lançados" conta cada envase uma vez. Antes era
-  // concluídos + em andamento, e o Bio terminado aguardando retirada entrava
-  // nos dois.
-  const totalEnvaseHoje = envase.lancados;
+  // "Lançados" (correção 3 da migration: cada envase uma vez) e a meta do
+  // anel vêm de anelEnvase(), em src/lib/metaNaTela.js.
   // Correção 2: o total do dia é o total; antes somava concluídos + total.
   const totalCheckoutHoje = checkout.total_dia;
 
@@ -244,18 +242,14 @@ export default function Televisao() {
     {
       modulo: 'Envase',
       titulo: 'Produção de hoje',
-      meta: {
-        rotulo: 'Concluídos',
-        valor: envase.concluidos,
-        total: totalEnvaseHoje,
-        unidade: 'envases',
-        legenda: totalEnvaseHoje > 0
-          ? `${emAndamentoEnvase} em andamento · ${totalEnvaseHoje} lançados`
-          : 'sem lançamentos',
-      },
+      // Com meta (tabela metas_diarias), o anel mede contra ela; sem meta,
+      // a fração concluída do que foi lançado, como antes. Regra em
+      // src/lib/metaNaTela.js.
+      meta: { rotulo: 'Concluídos', unidade: 'envases', ...anelEnvase({ envase, metas: dados?.metas }) },
       numeros: [
         { rotulo: 'Produção de hoje', valor: Number(envase.producao_dia).toLocaleString('pt-BR'),
-          pilula: `${mes.registros} registros no mês`, pilulaTom: 'atencao' },
+          pilula: pilulaProducao({ envase, metas: dados?.metas })?.texto ?? `${mes.registros} registros no mês`,
+          pilulaTom: pilulaProducao({ envase, metas: dados?.metas })?.tom ?? 'atencao' },
         { rotulo: 'Ocorrências abertas', valor: ocorrenciasAbertas, tom: 'erro',
           pilula: ocorrenciasAbertas > 0 ? 'precisa de atenção' : 'nenhuma aberta',
           pilulaTom: ocorrenciasAbertas > 0 ? 'erro' : 'atencao' },
@@ -268,13 +262,11 @@ export default function Televisao() {
       modulo: 'Check-out',
       titulo: 'Expedição de hoje',
       meta: {
-        rotulo: 'Concluídos',
-        valor: checkout.concluidos,
-        total: totalCheckoutHoje,
-        unidade: 'pedidos',
-        legenda: totalCheckoutHoje > 0
-          ? `${checkout.pendentes} pendentes · ${totalCheckoutHoje} no dia`
-          : 'sem pedidos',
+        rotulo: 'Concluídos', unidade: 'pedidos',
+        ...anelSimples({
+          concluidos: checkout.concluidos, total: totalCheckoutHoje, meta: dados?.metas?.checkout?.pedidos ?? null,
+          unidade: 'pedidos', emAberto: checkout.pendentes, rotuloAberto: 'pendentes',
+        }),
       },
       numeros: [
         { rotulo: 'Em andamento', valor: checkout.em_andamento,
@@ -291,13 +283,11 @@ export default function Televisao() {
       modulo: 'Empilhadeira',
       titulo: 'Movimentação de hoje',
       meta: {
-        rotulo: 'Concluídas',
-        valor: empilha.concluidas,
-        total: empilha.total,
-        unidade: 'linhas',
-        legenda: empilha.total > 0
-          ? `${empilha.total - empilha.concluidas} em aberto · ${empilha.total} no dia`
-          : 'sem linhas',
+        rotulo: 'Concluídas', unidade: 'linhas',
+        ...anelSimples({
+          concluidos: empilha.concluidas, total: empilha.total, meta: empilha.meta ?? null,
+          unidade: 'linhas', emAberto: empilha.total - empilha.concluidas, rotuloAberto: 'em aberto',
+        }),
       },
       numeros: [
         { rotulo: 'Tempo médio por linha',
