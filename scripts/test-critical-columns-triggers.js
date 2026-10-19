@@ -134,11 +134,19 @@ async function main() {
   }).eq('id', empLinha.id);
   assertBloqueado(res1_2, 'Operador tenta finalizar status_assinatura = "Completo"');
 
-  // Teste 1.3: Operador tenta trocar operador_empilhadeira_id
-  const res1_3 = await opClient.from('empilha_linhas').update({
+  // Teste 1.3: operador_empilhadeira_id é de ESCRITA ÚNICA (reconciliação,
+  // 20261007000001): o operador PREENCHE quando está vazio — é o fluxo de
+  // "iniciar linha" — e não TROCA depois. Esta suíte esperava bloqueio já no
+  // preenchimento, regra anterior à reconciliação.
+  const { data: outroOp } = await serviceClient.from('operators').select('id').neq('id', operatorFkId).limit(1).single();
+  const res1_3a = await opClient.from('empilha_linhas').update({
     operador_empilhadeira_id: operatorFkId
   }).eq('id', empLinha.id);
-  assertBloqueado(res1_3, 'Operador tenta alterar operador_empilhadeira_id');
+  assertPermitido(res1_3a, 'Operador preenche operador_empilhadeira_id vazio (escrita única)');
+  const res1_3 = await opClient.from('empilha_linhas').update({
+    operador_empilhadeira_id: outroOp.id
+  }).eq('id', empLinha.id);
+  assertBloqueado(res1_3, 'Operador tenta TROCAR operador_empilhadeira_id já preenchido');
 
   // Teste 1.4: Operador tenta alterar created_at (Imutável)
   const res1_4 = await opClient.from('empilha_linhas').update({
@@ -533,8 +541,12 @@ async function main() {
   console.log('   ✓ Todos os registros de teste foram removidos com sucesso via service_role.');
 
   console.log('\n' + '='.repeat(78));
-  console.log(`🏁 RESULTADO FINAL: ${testesPassados} de ${totalTestes} testes passaram com 100% de sucesso!`);
+  const todos = testesPassados === totalTestes;
+  console.log(`🏁 RESULTADO FINAL: ${testesPassados} de ${totalTestes} testes passaram${todos ? '' : ` — ${totalTestes - testesPassados} FALHA(S)`}`);
   console.log('='.repeat(78));
+  // Antes saía com 0 mesmo com falha (e dizia "100% de sucesso"): a rodada
+  // automática marcava OK uma suíte de segurança que tinha achado um buraco.
+  if (!todos) process.exitCode = 1;
 }
 
 main().catch(err => {
