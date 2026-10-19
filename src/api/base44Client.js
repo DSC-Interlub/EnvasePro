@@ -20,6 +20,8 @@ import { executarComRenovacao as repetirSeSessao } from '@/lib/sessaoRetry';
 import { calcularPainelEmpilha, hojeEmBrasilia } from '@/lib/painelEmpilha';
 import { calcularPainelTelevisao, limitesDoMes } from '@/lib/painelTelevisao';
 import { calcularPainelGeral, limitesDaSemana } from '@/lib/painelGeral';
+import { calcularIndicadoresEmpilha } from '@/lib/indicadoresEmpilha';
+import { calcularIndicadoresRecebimento } from '@/lib/indicadoresRecebimento';
 
 /**
  * Colunas que sao chave estrangeira de TEXTO (referenciam `products.codigo`,
@@ -826,6 +828,119 @@ const functionsAdapter = {
       linhasSemAssinatura, recebimentos, participantes, checklistsSemana, limpezas, nfsSemana,
       nfsSemArquivo3dias, ocorrenciasEmpilha, ocorrenciasRecebimento, paradasHoje, empilhadeiras,
     });
+  },
+
+  /**
+   * Indicadores da empilhadeira num período, calculados NO BANCO (Etapa 2,
+   * passo 4). Antes as telas baixavam todo o histórico de linhas,
+   * programações, paradas e ocorrências para mostrar um período.
+   * Mesmo recuo das TVs: só quando a função não existe no banco.
+   */
+  async indicadoresEmpilhadeira(de, ate) {
+    const { data, error } = await executarComRenovacao(() =>
+      supabase.rpc('indicadores_empilhadeira', { de, ate }));
+    if (!error) return { ...data, calculado_no: 'banco' };
+    if (!funcaoAusente(error)) throw error;
+
+    const programacoes = await lerTudo(() => supabase.from('empilha_programacoes')
+      .select('id, data_programada').gte('data_programada', de).lte('data_programada', ate));
+    const ids = programacoes.map((p) => p.id);
+    const linhas = [];
+    // Em lotes: 100 ids de programação por consulta, para a URL caber.
+    for (let i = 0; i < ids.length; i += 100) {
+      linhas.push(...await lerTudo(() => supabase.from('empilha_linhas')
+        .select('programacao_id, tipo_linha, status, tempo_total, operador_empilhadeira, operador_ajudante')
+        .in('programacao_id', ids.slice(i, i + 100))));
+    }
+    const [paradas, ocorrencias, configs] = await Promise.all([
+      lerTudo(() => supabase.from('empilhadeira_paradas').select('tipo, data, tempo_total').gte('data', de).lte('data', ate)),
+      lerTudo(() => supabase.from('empilha_ocorrencias').select('tipo, data, resolvido, registrado_por').gte('data', de).lte('data', ate)),
+      lerTudo(() => supabase.from('empilhadeira_configs').select('id, ativa, duracao_turno_horas, created_at')),
+    ]);
+    const ativa = configs.filter((c) => c.ativa === true)
+      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)) || (a.id < b.id ? -1 : 1))[0];
+    return calcularIndicadoresEmpilha({
+      de, ate, programacoes, linhas, paradas, ocorrencias, duracaoTurnoHoras: ativa?.duracao_turno_horas,
+    });
+  },
+
+  /**
+   * Indicadores de recebimento num período, calculados NO BANCO (Etapa 2,
+   * passo 4). Antes a página baixava todo o histórico de recebimentos,
+   * ocorrências e participantes. Mesmo recuo das outras telas.
+   */
+  async indicadoresRecebimento(de, ate) {
+    const { data, error } = await executarComRenovacao(() =>
+      supabase.rpc('indicadores_recebimento', { de, ate }));
+    if (!error) return { ...data, calculado_no: 'banco' };
+    if (!funcaoAusente(error)) throw error;
+
+    // A data que vale é a de chegada, senão a prevista: busca pelas duas
+    // (sem .or(), ver §2.2 do CLAUDE.md) e junta sem repetir.
+    const campos = 'id, tipo, status, data_chegada, data_prevista, tempo_produtivo_minutos, tempo_pausado_minutos';
+    const [porChegada, porPrevista] = await Promise.all([
+      lerTudo(() => supabase.from('recebimentos').select(campos).gte('data_chegada', de).lte('data_chegada', ate)),
+      lerTudo(() => supabase.from('recebimentos').select(campos).is('data_chegada', null).gte('data_prevista', de).lte('data_prevista', ate)),
+    ]);
+    const recebimentos = [...new Map([...porChegada, ...porPrevista].map((r) => [r.id, r])).values()];
+    const ids = recebimentos.map((r) => r.id);
+    const participantes = [];
+    const ocorrencias = [];
+    for (let i = 0; i < ids.length; i += 100) {
+      const lote = ids.slice(i, i + 100);
+      const [p, o] = await Promise.all([
+        lerTudo(() => supabase.from('recebimento_participantes').select('recebimento_id, operator_nome').in('recebimento_id', lote)),
+        lerTudo(() => supabase.from('recebimento_ocorrencias').select('recebimento_id, tipo, resolvido').in('recebimento_id', lote)),
+      ]);
+      participantes.push(...p);
+      ocorrencias.push(...o);
+    }
+    return calcularIndicadoresRecebimento({ de, ate, recebimentos, participantes, ocorrencias });
+  },
+
+  /**
+   * Os checklists de um período, por data de entrega. Os indicadores de
+   * checklist continuam no navegador (as faixas moram em src/lib/checklist.js),
+   * mas a página buscava os 500 mais recentes e filtrava — agora busca o
+   * período.
+   */
+  async checklistsDoPeriodo(de, ate) {
+    return lerTudo(() => supabase.from('checklist_recebimentos').select('*')
+      .gte('data_entrega', de).lte('data_entrega', ate));
+  },
+
+  /**
+   * Envases de uma faixa de datas, do mais recente para o mais antigo — o
+   * mesmo formato do list("-data") de antes, mas só a faixa (o Dashboard
+   * baixava a tabela inteira). Sem `de` nem `ate`, devolve tudo.
+   */
+  async envasesDaFaixa(de, ate) {
+    const linhas = await lerTudo(() => {
+      let q = supabase.from('envase_records').select('*');
+      if (de) q = q.gte('data', de);
+      if (ate) q = q.lte('data', ate);
+      return q.order('data', { ascending: false }).order('id');
+    });
+    return linhas.map(normalizarRetorno);
+  },
+
+  /**
+   * Programações de limpeza de uma faixa de data prevista, em ordem de data —
+   * o list("data_prevista") de antes, mas só a faixa.
+   */
+  async limpezasDaFaixa(de, ate) {
+    const linhas = await lerTudo(() => supabase.from('limpeza_programacoes').select('*')
+      .gte('data_prevista', de).lte('data_prevista', ate)
+      .order('data_prevista', { ascending: true }).order('id'));
+    return linhas.map(normalizarRetorno);
+  },
+
+  /** Quantos envases existem — sem baixar nenhum. */
+  async contarEnvases() {
+    const { count, error } = await executarComRenovacao(() =>
+      supabase.from('envase_records').select('id', { count: 'exact', head: true }));
+    if (error) throw error;
+    return count ?? 0;
   },
 
   /**

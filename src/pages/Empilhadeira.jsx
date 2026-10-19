@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router-dom";
@@ -18,21 +18,13 @@ import {
   BarChart2, OctagonX, ShieldAlert, CheckCheck, Settings, TrendingUp, User
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
-import { format, differenceInDays, parseISO, addDays, eachDayOfInterval } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { format, differenceInDays, parseISO, addDays } from "date-fns";
 import { useAuth } from "@/lib/AuthContext";
 import FiltroPeriodoEmpilha from "../components/empilhadeira/FiltroperiodoEmpilha";
 import BlocosIndicadores from "../components/empilhadeira/BlocosIndicadores";
 import PainelPendenciasAdmin from "../components/empilhadeira/PainelPendenciasAdmin";
 import { PageHeader, StatCard, SectionCard, StatusPill, SegmentoPeriodo, ChipsFiltro, MiniKPI, EmptyState as VazioFluxo, CORES_GRAFICO, EIXO, GRADE, TOOLTIP, LEGENDA, RAIO_BARRA } from "@/components/fluxo";
 
-
-function minsFromHHMM(str) {
-  if (!str) return 0;
-  if (str.includes("min")) return parseInt(str) || 0;
-  const [h, m] = str.split(":").map(Number);
-  return (h || 0) * 60 + (m || 0);
-}
 
 function EmptyState({ label }) {
   return (
@@ -167,87 +159,14 @@ export default function Empilhadeira() {
   };
 
   // ── Indicadores ────────────────────────────────────────────────────────────
-  const duracaoTurnoMins = (empilhadeiraAtiva?.duracao_turno_horas || 8) * 60;
-
-  const progIds = useMemo(() =>
-    programacoes.filter(p => emPeriodo(p.data_programada)).map(p => p.id),
-    [programacoes, dataInicio, dataFim]
-  );
-
-  const linhasFiltradas = useMemo(() =>
-    linhas.filter(l => progIds.includes(l.programacao_id)),
-    [linhas, progIds]
-  );
-
-  const paradasFiltradas = useMemo(() =>
-    paradas.filter(p => emPeriodo(p.data)),
-    [paradas, dataInicio, dataFim]
-  );
-
-  const ocorrenciasFiltradas = useMemo(() =>
-    ocorrencias.filter(o => emPeriodo(o.data)),
-    [ocorrencias, dataInicio, dataFim]
-  );
-
-  const totalNormal = linhasFiltradas.filter(l => l.tipo_linha === "Normal" || !l.tipo_linha).length;
-  const totalCritico = linhasFiltradas.filter(l => l.tipo_linha === "Crítico").length;
-  const totalAvulso = linhasFiltradas.filter(l => l.tipo_linha === "Avulso").length;
-  const totalConcluidas = linhasFiltradas.filter(l => l.status === "Concluído").length;
-
-  const temposMins = linhasFiltradas.filter(l => l.tempo_total && l.status === "Concluído").map(l => minsFromHHMM(l.tempo_total));
-  const tempoMedioGeral = temposMins.length > 0 ? Math.round(temposMins.reduce((a, b) => a + b, 0) / temposMins.length) : 0;
-
-  const tempoMedioTipo = ["Normal", "Crítico", "Avulso"].map(tipo => {
-    const ts = linhasFiltradas.filter(l => (l.tipo_linha === tipo || (!l.tipo_linha && tipo === "Normal")) && l.status === "Concluído" && l.tempo_total).map(l => minsFromHHMM(l.tempo_total));
-    return { tipo, media: ts.length > 0 ? Math.round(ts.reduce((a, b) => a + b, 0) / ts.length) : 0, count: ts.length };
+  // Prontos do banco (Etapa 2), e só quando a aba está aberta. Aqui havia uma
+  // TERCEIRA cópia das contas do BlocosIndicadores, calculada a cada render e
+  // nunca exibida — removida.
+  const { data: indicadores, isLoading: carregandoIndicadores } = useQuery({
+    queryKey: ["indicadores-empilha", dataInicio, dataFim],
+    queryFn: () => base44.functions.indicadoresEmpilhadeira(dataInicio, dataFim),
+    enabled: abaAtiva === "indicadores",
   });
-
-  const dias = dataInicio && dataFim ? eachDayOfInterval({ start: parseISO(dataInicio), end: parseISO(dataFim) }) : [];
-  const linhasPorDia = dias.map(d => {
-    const dia = format(d, "yyyy-MM-dd");
-    const ps = programacoes.filter(p => p.data_programada === dia).map(p => p.id);
-    const ls = linhas.filter(l => ps.includes(l.programacao_id));
-    return { dia: format(d, "dd/MM", { locale: ptBR }), Normal: ls.filter(l => l.tipo_linha === "Normal" || !l.tipo_linha).length, Crítico: ls.filter(l => l.tipo_linha === "Crítico").length, Avulso: ls.filter(l => l.tipo_linha === "Avulso").length };
-  });
-
-  const rankingEmpilhador = {};
-  const rankingAjudante = {};
-  linhasFiltradas.filter(l => l.status === "Concluído").forEach(l => {
-    if (l.operador_empilhadeira) {
-      if (!rankingEmpilhador[l.operador_empilhadeira]) rankingEmpilhador[l.operador_empilhadeira] = { total: 0, mins: [] };
-      rankingEmpilhador[l.operador_empilhadeira].total++;
-      if (l.tempo_total) rankingEmpilhador[l.operador_empilhadeira].mins.push(minsFromHHMM(l.tempo_total));
-    }
-    if (l.operador_ajudante && l.operador_ajudante !== "nenhum") {
-      if (!rankingAjudante[l.operador_ajudante]) rankingAjudante[l.operador_ajudante] = { total: 0, mins: [] };
-      rankingAjudante[l.operador_ajudante].total++;
-      if (l.tempo_total) rankingAjudante[l.operador_ajudante].mins.push(minsFromHHMM(l.tempo_total));
-    }
-  });
-  const toRanking = (obj) => Object.entries(obj).map(([nome, d]) => ({
-    nome, total: d.total, media: d.mins.length > 0 ? Math.round(d.mins.reduce((a, b) => a + b, 0) / d.mins.length) : 0,
-  })).sort((a, b) => b.total - a.total);
-
-  const totalTempoParadoInd = paradasFiltradas.reduce((acc, p) => acc + (parseInt(p.tempo_total) || 0), 0);
-  const paradaPorTipo = Object.entries(paradasFiltradas.reduce((acc, p) => { acc[p.tipo] = (acc[p.tipo] || 0) + (parseInt(p.tempo_total) || 0); return acc; }, {})).map(([name, value]) => ({ name, value }));
-  const paradasPorDia = dias.map(d => {
-    const dia = format(d, "yyyy-MM-dd");
-    const ps = paradasFiltradas.filter(p => p.data === dia);
-    return { dia: format(d, "dd/MM", { locale: ptBR }), paradas: ps.length, tempo: ps.reduce((a, p) => a + (parseInt(p.tempo_total) || 0), 0) };
-  });
-
-  const ocorrPorTipo = Object.entries(ocorrenciasFiltradas.reduce((acc, o) => { acc[o.tipo || "Outro"] = (acc[o.tipo || "Outro"] || 0) + 1; return acc; }, {})).map(([name, value]) => ({ name, value }));
-  const rankOcorrencias = Object.entries(ocorrenciasFiltradas.reduce((acc, o) => { if (o.registrado_por) { acc[o.registrado_por] = (acc[o.registrado_por] || 0) + 1; } return acc; }, {})).map(([nome, total]) => ({ nome, total })).sort((a, b) => b.total - a.total);
-
-  const oeeDias = dias.map(d => {
-    const dia = format(d, "yyyy-MM-dd");
-    const ps = programacoes.filter(p => p.data_programada === dia).map(p => p.id);
-    const ls = linhas.filter(l => ps.includes(l.programacao_id) && l.status === "Concluído" && l.tempo_total);
-    const produtivo = ls.reduce((a, l) => a + minsFromHHMM(l.tempo_total), 0);
-    const aproveitamento = duracaoTurnoMins > 0 ? Math.min(100, Math.round((produtivo / duracaoTurnoMins) * 100)) : 0;
-    return { dia: format(d, "dd/MM", { locale: ptBR }), aproveitamento };
-  });
-  const oeeMedio = oeeDias.length > 0 ? Math.round(oeeDias.reduce((a, d) => a + d.aproveitamento, 0) / oeeDias.length) : 0;
 
   const diasParaManutConfig = empilhadeira?.data_proxima_manutencao ? differenceInDays(parseISO(empilhadeira.data_proxima_manutencao), new Date()) : null;
 
@@ -529,16 +448,7 @@ export default function Empilhadeira() {
             {/* Os mesmos cinco blocos da pagina IndicadoresEmpilha, agora de um
                 componente so: eram ~210 linhas copiadas nos dois arquivos, e as
                 duas copias ja divergiam numa variavel. */}
-            <BlocosIndicadores
-              linhasFiltradas={linhasFiltradas}
-              paradasFiltradas={paradasFiltradas}
-              ocorrenciasFiltradas={ocorrenciasFiltradas}
-              programacoes={programacoes}
-              linhas={linhas}
-              empilhadeiraAtiva={empilhadeira}
-              dataInicio={dataInicio}
-              dataFim={dataFim}
-            />
+            <BlocosIndicadores dados={indicadores} carregando={carregandoIndicadores} />
           </TabsContent>
           <TabsContent value="configuracoes" className="space-y-4">
 

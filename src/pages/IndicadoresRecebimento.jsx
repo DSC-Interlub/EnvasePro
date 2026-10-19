@@ -27,10 +27,19 @@ export default function IndicadoresRecebimento() {
   const [dataInicio, setDataInicio] = useState(format(new Date(d.getFullYear(), d.getMonth(), 1), "yyyy-MM-dd"));
   const [dataFim, setDataFim] = useState(format(new Date(d.getFullYear(), d.getMonth() + 1, 0), "yyyy-MM-dd"));
 
-  const { data: recebimentos = [] } = useQuery({ queryKey: ["recebimentos"], queryFn: () => base44.entities.Recebimento.list() });
-  const { data: ocorrencias = [] } = useQuery({ queryKey: ["recebimento-ocorrencias-all"], queryFn: () => base44.entities.RecebimentoOcorrencia.list() });
-  const { data: participantes = [] } = useQuery({ queryKey: ["recebimento-participantes-all"], queryFn: () => base44.entities.RecebimentoParticipante.list() });
-  const { data: checklists = [] } = useQuery({ queryKey: ["checklists"], queryFn: () => base44.entities.ChecklistRecebimento.list("-data_entrega", 500) });
+  // Os indicadores vêm prontos do banco — public.indicadores_recebimento
+  // (Etapa 2). Antes a página baixava TODO o histórico de recebimentos,
+  // ocorrências e participantes, e cruzava os três no navegador.
+  const { data: ind } = useQuery({
+    queryKey: ["indicadores-recebimento", dataInicio, dataFim],
+    queryFn: () => base44.functions.indicadoresRecebimento(dataInicio, dataFim),
+  });
+  // O checklist fica no navegador (as faixas moram em src/lib/checklist.js),
+  // buscando só o período em vez dos 500 mais recentes.
+  const { data: checklistsFiltrados = [] } = useQuery({
+    queryKey: ["checklists-periodo", dataInicio, dataFim],
+    queryFn: () => base44.functions.checklistsDoPeriodo(dataInicio, dataFim),
+  });
 
   const setFiltro = (tipo) => {
     const d = new Date();
@@ -39,59 +48,23 @@ export default function IndicadoresRecebimento() {
     else { setDataInicio(format(new Date(d.getFullYear(), d.getMonth(), 1), "yyyy-MM-dd")); setDataFim(format(new Date(d.getFullYear(), d.getMonth() + 1, 0), "yyyy-MM-dd")); }
   };
 
-  const filtrados = recebimentos.filter(r => {
-    const data = r.data_chegada || r.data_prevista || "";
-    return data >= dataInicio && data <= dataFim;
-  });
-
-  const concluidos = filtrados.filter(r => r.status === "Concluído" && r.tempo_produtivo_minutos != null);
-
-  // Volume por tipo
-  const porTipo = Object.entries(filtrados.reduce((acc, r) => {
-    acc[r.tipo] = (acc[r.tipo] || 0) + 1; return acc;
-  }, {})).map(([name, value]) => ({ name, value }));
-
-  // Volume por status
-  const porStatus = Object.entries(filtrados.reduce((acc, r) => {
-    acc[r.status] = (acc[r.status] || 0) + 1; return acc;
-  }, {})).map(([name, value]) => ({ name, value }));
-
-  // Por dia
-  const porDia = Object.entries(filtrados.reduce((acc, r) => {
-    const d = r.data_chegada || r.data_prevista || ""; if (!d) return acc;
-    acc[d] = (acc[d] || 0) + 1; return acc;
-  }, {})).sort(([a], [b]) => a.localeCompare(b)).map(([date, total]) => ({
-    dia: format(new Date(date + "T00:00:00"), "dd/MM", { locale: ptBR }), total
+  const I = ind ?? {
+    total: 0, concluidos: 0, em_andamento: 0, cancelados: 0, por_tipo: [], por_dia: [],
+    tempo: { medio: 0, produtivo_total: 0, pausado_total: 0, base: 0, por_tipo: [] },
+    ocorrencias: { total: 0, abertas: 0, resolvidas: 0, por_tipo: [] }, equipe: [],
+  };
+  const porTipo = I.por_tipo;
+  const porDia = I.por_dia.map((d) => ({
+    dia: format(new Date(d.dia + "T00:00:00"), "dd/MM", { locale: ptBR }), total: d.total,
   }));
+  const tempoMedioGeral = I.tempo.medio;
+  const tempoTotalProdutivo = Number(I.tempo.produtivo_total);
+  const tempoPausadoTotal = Number(I.tempo.pausado_total);
+  // Correção da migration: "Nacional" entra (a lista antiga o omitia).
+  const tempoMedioPorTipo = I.tempo.por_tipo;
+  const rankingOp = I.equipe;
+  const ocPorTipo = I.ocorrencias.por_tipo;
 
-  // Tempo médio
-  const tempoMedioGeral = concluidos.length > 0
-    ? Math.round(concluidos.reduce((s, r) => s + r.tempo_produtivo_minutos, 0) / concluidos.length) : 0;
-  const tempoPausadoTotal = filtrados.reduce((s, r) => s + (r.tempo_pausado_minutos || 0), 0);
-  const tempoTotalProdutivo = filtrados.reduce((s, r) => s + (r.tempo_produtivo_minutos || 0), 0);
-
-  const tempoMedioPorTipo = ["Importação", "Devolução", "Material auxiliar", "Outro"].map(tipo => {
-    const deste = concluidos.filter(r => r.tipo === tipo);
-    return { tipo, media: deste.length > 0 ? Math.round(deste.reduce((s, r) => s + r.tempo_produtivo_minutos, 0) / deste.length) : 0, total: deste.length };
-  });
-
-  // Ranking operadores
-  const rankingOp = Object.entries(
-    participantes.filter(p => filtrados.some(r => r.id === p.recebimento_id)).reduce((acc, p) => {
-      acc[p.operator_nome] = (acc[p.operator_nome] || 0) + 1; return acc;
-    }, {})
-  ).sort(([, a], [, b]) => b - a).slice(0, 8).map(([nome, total]) => ({ nome, total }));
-
-  // Ocorrências por tipo
-  const ocFiltradas = ocorrencias.filter(o => filtrados.some(r => r.id === o.recebimento_id));
-  const ocPorTipo = Object.entries(ocFiltradas.reduce((acc, o) => {
-    acc[o.tipo] = (acc[o.tipo] || 0) + 1; return acc;
-  }, {})).map(([name, value]) => ({ name, value }));
-
-  const checklistsFiltrados = checklists.filter(c => {
-    const d = c.data_entrega || "";
-    return d >= dataInicio && d <= dataFim;
-  });
   const cores = CORES_GRAFICO();
   const eixo = EIXO();
   const grade = GRADE();
@@ -131,7 +104,7 @@ export default function IndicadoresRecebimento() {
         <ChipsFiltro
           rotulo="Escolher indicadores"
           opcoes={[
-            { valor: "recebimento", rotulo: "Recebimento", contagem: filtrados.length },
+            { valor: "recebimento", rotulo: "Recebimento", contagem: I.total },
             { valor: "checklist", rotulo: "Checklist", contagem: checklistsFiltrados.length },
           ]}
           valor={aba}
@@ -144,18 +117,18 @@ export default function IndicadoresRecebimento() {
           <>
             {/* ── VOLUME ───────────────────────────────────────────────── */}
             <SectionCard titulo="Volume" legenda="Recebimentos no período" icone={Package} atraso={0.05}>
-              {filtrados.length === 0 ? (
+              {I.total === 0 ? (
                 <EmptyState icone={Package} titulo="Nenhum recebimento no período" />
               ) : (
                 <div className="flex min-w-0 flex-col gap-5">
                   <div className="grid min-w-0 grid-cols-2 gap-2.5 md:grid-cols-4">
-                    <MiniKPI rotulo="Total" valor={filtrados.length} />
+                    <MiniKPI rotulo="Total" valor={I.total} />
                     <MiniKPI rotulo="Concluídos" tom="ok"
-                      valor={filtrados.filter((r) => r.status === "Concluído").length} />
+                      valor={I.concluidos} />
                     <MiniKPI rotulo="Em andamento" tom="marca"
-                      valor={filtrados.filter((r) => r.status === "Em andamento").length} />
+                      valor={I.em_andamento} />
                     <MiniKPI rotulo="Cancelados" tom="erro"
-                      valor={filtrados.filter((r) => r.status === "Cancelado").length} />
+                      valor={I.cancelados} />
                   </div>
 
                   <div className="grid min-w-0 gap-5 md:grid-cols-2">
@@ -203,7 +176,7 @@ export default function IndicadoresRecebimento() {
                   <MiniKPI rotulo="Tempo médio geral" valor={minToHM(tempoMedioGeral)} />
                   <MiniKPI rotulo="Total produtivo" valor={minToHM(tempoTotalProdutivo)} tom="ok" />
                   <MiniKPI rotulo="Total pausado" valor={minToHM(tempoPausadoTotal)} tom="atencao" />
-                  <MiniKPI rotulo="Baseado em" valor={`${concluidos.length} concluídos`} />
+                  <MiniKPI rotulo="Baseado em" valor={`${I.tempo.base} concluídos`} />
                 </div>
 
                 <div className="min-w-0">
@@ -236,11 +209,11 @@ export default function IndicadoresRecebimento() {
             <SectionCard titulo="Ocorrências" legenda="Abertas e resolvidas" icone={AlertTriangle} atraso={0.15}>
               <div className="flex min-w-0 flex-col gap-4">
                 <div className="grid min-w-0 grid-cols-2 gap-2.5 md:grid-cols-3">
-                  <MiniKPI rotulo="Total" valor={ocFiltradas.length} />
+                  <MiniKPI rotulo="Total" valor={I.ocorrencias.total} />
                   <MiniKPI rotulo="Abertas" tom="erro"
-                    valor={ocFiltradas.filter((o) => !o.resolvido).length} />
+                    valor={I.ocorrencias.abertas} />
                   <MiniKPI rotulo="Resolvidas" tom="ok"
-                    valor={ocFiltradas.filter((o) => o.resolvido).length} />
+                    valor={I.ocorrencias.resolvidas} />
                 </div>
 
                 {ocPorTipo.length === 0 ? (

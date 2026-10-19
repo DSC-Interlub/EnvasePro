@@ -1,8 +1,8 @@
 # Etapa 2 — indicadores no banco
 
-**Status (19/10/2026): passos 1 a 3 do §4.1 implementados e provados no
-banco LOCAL — as três telas de parede. NADA aplicado em produção.** Resultado e
-provas na seção 7. Os passos 4 e 5 (telas de admin) seguem como plano.
+**Status (19/10/2026): os cinco passos do §4.1 implementados e provados no
+banco LOCAL. NADA aplicado em produção.** Passos 1 a 3 (telas de parede) na
+seção 7; passos 4 e 5 (telas de admin) na seção 8.
 
 Escrito para quem for implementar a Etapa 2 e para quem precisar aprovar o
 gasto de tráfego.
@@ -407,11 +407,77 @@ do novo.
 
 ### 7.5 O que falta
 
-- Passos 4 e 5 (indicadores de admin e Dashboard).
-- **Aplicar em produção** as três migrations — só com autorização escrita do
+- **Aplicar em produção** as migrations (as três daqui e as duas da seção 8) — só com autorização escrita do
   dono. Até lá o código publicado roda no recuo, que é correto mas não economiza
   o tráfego. O tráfego do recuo **não foi medido**; ele lê só o dia, a semana e
   o mês (e só os produtos desses códigos), então é limitado, mas maior que o
   da RPC.
 - O PR #11 (fuso) tem migration `20261013000001`, **anterior** a estas. Se for
   aplicado depois delas, o `supabase db push` vai exigir `--include-all`.
+
+---
+
+## 8. Passos 4 e 5 — telas de admin (19/10/2026, banco LOCAL)
+
+### 8.1 O que foi feito
+
+| Passo | Mudança | Tela |
+|---|---|---|
+| 4 | `20261019000004_indicadores_empilhadeira.sql` — `indicadores_empilhadeira(de, ate)` | `/IndicadoresEmpilha` e aba "Indicadores" de `/Empilhadeira` |
+| 4 | `20261019000005_indicadores_recebimento.sql` — `indicadores_recebimento(de, ate)` | `/IndicadoresRecebimento` |
+| 5 | **sem migration**: o Dashboard busca só a faixa de datas que os filtros pedem | `/Dashboard` |
+
+As contas da empilhadeira saíram de dentro do `BlocosIndicadores.jsx` para
+`src/lib/indicadoresEmpilha.js` (o componente agora só desenha); as do
+recebimento, para `src/lib/indicadoresRecebimento.js`. Essas funções são o recuo
+e a referência de paridade, como nas TVs. A `/Empilhadeira` tinha uma **terceira**
+cópia das contas, calculada a cada render e nunca exibida — removida.
+
+**O checklist ficou no navegador de propósito** (§2.6): as faixas de nota moram em
+`src/lib/checklist.js` e copiá-las para o SQL criaria duas verdades. Ele passou a
+buscar só o período, em vez dos 500 checklists mais recentes.
+
+**Por que o passo 5 não virou função SQL.** O Dashboard tem cinco componentes de
+gráfico, exportação para Excel e regras de filtro que divergem entre envase e
+check-out (no envase, início e fim só valem com um mês escolhido; no check-out,
+sempre). Levar tudo para o banco exigiria reescrever os cinco componentes e
+decidir qual regra vale — decisão do dono, não minha. Em vez disso, o servidor
+devolve a **menor faixa que contém** tudo o que o filtro do navegador deixaria
+passar (`src/lib/faixaDashboard.js`), e o filtro de sempre roda em cima dela: os
+gráficos recebem **as mesmas linhas**, provado por combinação de filtros.
+
+### 8.2 Tráfego — por abertura de tela, build de produção nos dois lados
+
+| Tela | Antes | Depois |
+|---|---|---|
+| `/IndicadoresEmpilha` | 13 req · 3.222 KB | 6 req · 4,2 KB (−99,9%) |
+| `/IndicadoresRecebimento` | 9 req · 256 KB | 7 req · 14,1 KB (−94%) |
+| `/Dashboard` | 15 req · 4.961 KB | 11 req · 400 KB (−92%) |
+
+Telas de admin não atualizam sozinhas; o custo é por abertura (e por foco de
+janela). A aba "Indicadores" da `/Empilhadeira` não foi medida à parte: a página
+continua lendo as tabelas para as outras abas.
+
+### 8.3 Correções declaradas
+
+| Tela | Correção |
+|---|---|
+| Indicadores da empilhadeira | a aba da `/Empilhadeira` usava a PRIMEIRA empilhadeira da lista para o turno; agora a ATIVA, como a página |
+| Indicadores da empilhadeira | parada sem tipo aparecia na pizza como "null"; agora "Sem tipo" |
+| Indicadores da empilhadeira | período invertido derrubava a tela; agora devolve vazio |
+| Indicadores (os dois) | desempates de ranking e fatias em ordem alfabética, em vez da ordem de chegada |
+| Indicadores de recebimento | tempo médio por tipo omitia **"Nacional"**; entra |
+| Indicadores de recebimento | checklists limitados aos 500 mais recentes; agora o período |
+
+### 8.4 Provas
+
+| Script | O que prova |
+|---|---|
+| `test-indicadores-empilha.mjs` | RPC = recuo (objeto inteiro) em 6 períodos, incluindo vazio e invertido; recuo = conta antiga em 20 indicadores; nenhum zerado em 30 dias; 2 mutantes pegos |
+| `test-indicadores-recebimento.mjs` | o mesmo, 16 indicadores; "Nacional" presente; 2 mutantes pegos |
+| `test-indicadores-ui.mjs` | Playwright: as 3 telas, Hoje e Mês, com a função e sem ela — números na tela = RPC; nenhuma tabela lida sem filtro de período |
+| `test-dashboard-faixa.mjs` | 8 combinações de filtro do Dashboard e 3 períodos da limpeza: mesmas linhas da tabela inteira |
+
+A carga de volume ganhou paradas (com e sem tipo, com `tempo_total` em três
+formatos), ajudantes (inclusive `"nenhum"`), tempos e cancelamentos de
+recebimento — sem eles, metade desses indicadores compararia zero com zero.

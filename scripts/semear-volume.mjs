@@ -80,6 +80,7 @@ async function limpar() {
     ['checkout_itens', 'numero_pedido'],
     ['envase_records', 'op'],
     ['empilha_ocorrencias', 'descricao'],
+    ['empilhadeira_paradas', 'descricao'],
     ['empilha_programacoes', 'observacoes'],
     ['checkout_programacoes', 'observacoes'],
   ];
@@ -173,6 +174,8 @@ async function carregar() {
       quantidade: 10 + (i % 90),
       status: andamento ? 'Em Andamento' : 'Concluído',
       operador_empilhadeira: op.nome, operador_empilhadeira_id: op.id,
+      // Ajudante em 1 de 4 linhas; 'nenhum' em algumas, que o ranking ignora.
+      operador_ajudante: i % 4 === 0 ? ops[(i + 3) % ops.length].nome : i % 9 === 0 ? 'nenhum' : null,
       hora_inicio: hhmm(hoje ? Math.max(0, agoraMin() - 10 - (i % 30)) : 480 + (i % 300)),
       hora_termino: andamento ? null : hhmm(480 + (i % 300) + minutos),
       tempo_total: andamento ? null : `${Math.floor(minutos / 60)}:${String(minutos % 60).padStart(2, '0')}`,
@@ -189,6 +192,23 @@ async function carregar() {
     registrado_por: escolher(ops).nome,
     resolvido: i > 5,
   }));
+  // Paradas, todas FECHADAS (as TVs mostram "parada agora" só com uma
+  // aberta). Algumas sem tipo e com tempo_total em formatos diferentes ("45",
+  // "1:30", "20 min"), que é o que a regra de conversão precisa enfrentar.
+  const paradas = Array.from({ length: 130 }, (_, i) => ({
+    empilhadeira_id: emp.id,
+    tipo: i % 13 === 0 ? null : escolher(['Quebra', 'Manutenção', 'Aguardando operador', 'Falta de material', 'Outro']),
+    descricao: `${MARCA} parada ${i}`,
+    registrado_por: escolher(ops).nome,
+    data: diaMenos(Math.floor(i * 2)),
+    hora_inicio: hhmm(540 + (i % 200)),
+    hora_fim: hhmm(560 + (i % 200)),
+    tempo_total: i % 11 === 0 ? '1:30' : i % 7 === 0 ? '20 min' : String(5 + (i % 50)),
+  }));
+  const rp = await svc.from('empilhadeira_paradas').insert(paradas);
+  if (rp.error) throw new Error(`paradas: ${rp.error.message}`);
+  console.log(`  empilhadeira_paradas ${paradas.length}`);
+
   const r = await svc.from('empilha_ocorrencias').insert(ocorr);
   if (r.error) console.log(`  empilha_ocorrencias  pulado: ${r.error.message}`);
   else console.log(`  empilha_ocorrencias  ${ocorr.length}`);
@@ -216,7 +236,10 @@ async function carregarPainelGeral(ops) {
       numero_documento: `${MARCA}-REC-${i}`,
       fornecedor_nome: `Fornecedor ${i % 25}`,
       data_prevista: diaMenos(d), data_chegada: diaMenos(d),
-      status: andamento ? 'Em andamento' : hoje ? 'Agendado' : 'Concluído',
+      status: andamento ? 'Em andamento' : hoje ? 'Agendado' : i % 17 === 5 ? 'Cancelado' : 'Concluído',
+      // Tempos para os indicadores; uma parte SEM tempo, que a média ignora.
+      tempo_produtivo_minutos: !andamento && !hoje && i % 10 !== 3 ? 30 + (i % 90) + (i % 4) * 0.5 : null,
+      tempo_pausado_minutos: !andamento && !hoje && i % 5 === 0 ? 10 + (i % 7) : null,
       prioridade: i % 11 === 0 ? 'Urgente' : i % 7 === 0 ? 'Alta' : 'Normal',
       datetime_inicio: andamento ? isoMenos(25 + i * 10) : hoje ? null : new Date(`${diaMenos(d)}T11:00:00Z`).toISOString(),
       datetime_fim: andamento || hoje ? null : new Date(`${diaMenos(d)}T12:30:00Z`).toISOString(),
