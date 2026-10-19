@@ -140,33 +140,41 @@ export function rotulo(checklistOuNota, criterio = CRITERIO_ATIVO) {
 /**
  * Classes de cor do texto. Os quatro estados existem SEMPRE — foi a falta do
  * ramo vermelho que fez a TV mostrar nota negativa em amarelo.
+ *
+ * Desde 19/10/2026 as três funções de classe (corTexto, corSelo, corCaixa)
+ * devolvem TOKENS da direção Fluxo (`ok`, `atencao`, `erro`), não cores
+ * soltas do Tailwind. Só a cor mudou: a regra de nota e de veredito, acima,
+ * não foi tocada — `scripts/comparar-checklist.mjs` prova, comparando com a
+ * versão anterior em todas as notas de -90 a +90 e todas as combinações de
+ * respostas. `corNome` continua devolvendo "green"/"yellow"/"red" porque é
+ * uma interface: o Painel traduz esses nomes para tom.
  */
 export function corTexto(checklistOuNota, criterio = CRITERIO_ATIVO) {
   return {
-    APROVADO: 'text-green-700',
-    ATENCAO: 'text-yellow-700',
-    REPROVADO: 'text-red-700',
-    SEM_NOTA: 'text-slate-500',
+    APROVADO: 'text-ok',
+    ATENCAO: 'text-atencao',
+    REPROVADO: 'text-erro',
+    SEM_NOTA: 'text-texto-fraco',
   }[classificar(checklistOuNota, criterio)];
 }
 
 /** Classes de selo (fundo + texto + borda). */
 export function corSelo(checklistOuNota, criterio = CRITERIO_ATIVO) {
   return {
-    APROVADO: 'bg-green-100 text-green-700 border-green-200',
-    ATENCAO: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    REPROVADO: 'bg-red-100 text-red-700 border-red-200',
-    SEM_NOTA: 'bg-slate-100 text-slate-600 border-slate-200',
+    APROVADO: 'bg-ok-suave text-ok border-ok/30',
+    ATENCAO: 'bg-atencao-suave text-atencao border-atencao/30',
+    REPROVADO: 'bg-erro-suave text-erro border-erro/30',
+    SEM_NOTA: 'bg-fundo text-texto-fraco border-borda',
   }[classificar(checklistOuNota, criterio)];
 }
 
 /** Classes de caixa (fundo claro + borda), usadas nos blocos de destaque. */
 export function corCaixa(checklistOuNota, criterio = CRITERIO_ATIVO) {
   return {
-    APROVADO: 'bg-green-50 border-green-300',
-    ATENCAO: 'bg-yellow-50 border-yellow-300',
-    REPROVADO: 'bg-red-50 border-red-300',
-    SEM_NOTA: 'bg-slate-50 border-slate-200',
+    APROVADO: 'bg-ok-suave border-ok/40',
+    ATENCAO: 'bg-atencao-suave border-atencao/40',
+    REPROVADO: 'bg-erro-suave border-erro/40',
+    SEM_NOTA: 'bg-fundo border-borda',
   }[classificar(checklistOuNota, criterio)];
 }
 

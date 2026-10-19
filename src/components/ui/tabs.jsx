@@ -9,7 +9,14 @@ const TabsList = React.forwardRef(({ className, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground",
+      // h-auto + alvo de 48px na aba: com h-9 fixo na lista, cada aba
+      // ficava com 28px de altura. Aba e alvo de toque como qualquer botao.
+      // Segmentado: trilha branca com sombra rasa, pilula ativa por dentro.
+      // Era `bg-muted` cinza sem relevo, onde a aba ativa se distinguia so
+      // pelo texto. O prototipo do painel usa trilha branca com a pilula
+      // destacada — o estado fica obvio a distancia.
+      "inline-flex h-auto items-center justify-center gap-1 rounded-token bg-cartao p-1.5",
+      "shadow-leve text-texto-fraco",
       className
     )}
     {...props} />
@@ -20,7 +27,13 @@ const TabsTrigger = React.forwardRef(({ className, ...props }, ref) => (
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow",
+      // A aba e alvo de toque: 48px, do item (g) da V1.
+      "press inline-flex min-h-[48px] items-center justify-center gap-2 whitespace-nowrap",
+      "rounded-token-sm px-4 text-sm font-bold outline-none",
+      "hover:bg-marca-suave hover:text-marca",
+      "focus-visible:border-marca focus-visible:shadow-foco",
+      "disabled:pointer-events-none disabled:opacity-50",
+      "data-[state=active]:bg-marca data-[state=active]:text-white data-[state=active]:shadow-marca",
       className
     )}
     {...props} />

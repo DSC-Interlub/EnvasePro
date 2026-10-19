@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Lista com filtros</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Manrope',sans-serif;color:#141A2B;background:#F3F4F8;-webkit-font-smoothing:antialiased}
+button,a{font-family:inherit;cursor:pointer;transition:transform .15s ease,box-shadow .25s ease,background-color .2s ease,color .2s ease,border-color .2s ease}
+button:active{transform:scale(.97)}
+.nv:hover{background:#EEF1FF;color:#3B5BFF}
+.row{transition:background-color .15s}
+.row:hover{background:#F6F7FB}
+.act{opacity:0;transition:opacity .2s}
+.row:hover .act{opacity:1}
+.search{transition:border-color .2s,box-shadow .2s}
+.search:focus-within{border-color:#3B5BFF;box-shadow:0 0 0 4px rgba(59,91,255,.14)}
+.pri:hover{box-shadow:0 14px 30px rgba(59,91,255,.4);transform:translateY(-2px)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.in{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;min-height:900px;padding:16px;gap:16px;box-sizing:border-box;background:#F3F4F8">
+  <aside style="flex:1 1 248px;max-width:100%;background:#fff;border-radius:24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);padding:20px 14px;display:flex;flex-direction:column;gap:2px;box-sizing:border-box">
+    <div style="display:flex;align-items:center;gap:12px;padding:4px 10px 20px"><div style="width:44px;height:44px;border-radius:14px;background:#141A2B;color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center">EP</div><div><div style="font-weight:800;font-size:18px;letter-spacing:-.02em;line-height:1.1">EnvasePro</div><div style="font-size:12px;font-weight:600;color:#7A8296">Operações Interlub</div></div></div>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Painel geral</a>
+    <a href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;background:#EEF1FF;color:#3B5BFF;text-decoration:none;font-weight:700;font-size:15px">Registros</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Check-out</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Empilhadeira</a>
+    <a class="nv" href="#" style="display:flex;align-items:center;height:48px;padding:0 14px;border-radius:14px;color:#4A5268;text-decoration:none;font-weight:600;font-size:15px">Recebimento</a>
+  </aside>
+
+  <main style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+    <header class="in" style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between;padding:6px 4px 0">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#7A8296">Envase <span style="margin:0 6px">/</span> Registros</div>
+        <h1 style="margin:4px 0 0;font-size:38px;line-height:1.1;font-weight:800;letter-spacing:-.03em">Todos os registros</h1>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button style="height:52px;padding:0 22px;border:0;border-radius:16px;background:#fff;box-shadow:0 1px 3px rgba(20,26,43,.12);font-size:15px;font-weight:700;color:#141A2B">Exportar Excel</button>
+        <button class="pri" style="height:52px;padding:0 24px;border:0;border-radius:16px;background:#3B5BFF;color:#fff;font-size:15px;font-weight:800;box-shadow:0 10px 24px rgba(59,91,255,.34)">+ Novo registro</button>
+      </div>
+    </header>
+
+    <section class="in" style="animation-delay:.08s;background:#fff;border-radius:24px;box-shadow:0 1px 2px rgba(20,26,43,.05),0 10px 30px rgba(20,26,43,.05);overflow:hidden">
+      <div style="padding:18px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+            <button onClick="{{c.press}}" style="height:44px;padding:0 16px;border:0;border-radius:999px;font-size:14px;font-weight:700;background:{{c.bg}};color:{{c.fg}};display:flex;align-items:center;gap:8px">{{c.label}}<span style="font-size:12px;font-weight:800;padding:2px 8px;border-radius:999px;background:{{c.nbg}};color:{{c.nfg}}">{{c.n}}</span></button>
+          </sc-for>
+        </div>
+        <label class="search" style="display:flex;align-items:center;gap:10px;background:#F3F4F8;border:2px solid transparent;border-radius:16px;padding:0 16px;height:48px;box-sizing:border-box;min-width:260px">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7A8296" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Buscar</span>
+          <input placeholder="Buscar produto ou código" style="flex:1;border:0;outline:0;background:transparent;font-family:'Manrope',sans-serif;font-size:15px;font-weight:600;height:44px;color:#141A2B">
+        </label>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;min-width:760px;border-collapse:collapse;font-size:15px">
+          <thead><tr style="text-align:left;font-size:12px;font-weight:700;color:#7A8296;background:#FAFAFC"><th style="padding:12px 20px">Código</th><th style="padding:12px 8px">Produto</th><th style="padding:12px 8px">Quantidade</th><th style="padding:12px 8px">Operador</th><th style="padding:12px 8px">Situação</th><th style="padding:12px 20px"></th></tr></thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+              <tr class="row" style="height:60px;border-top:1px solid #EDEFF5">
+                <td style="padding:0 20px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#5A6280">{{r.cod}}</td>
+                <td style="padding:0 8px;font-weight:700">{{r.nome}}</td>
+                <td style="padding:0 8px;font-weight:600;font-variant-numeric:tabular-nums">{{r.qtd}}</td>
+                <td style="padding:0 8px;color:#4A5268;font-weight:600">{{r.op}}</td>
+                <td style="padding:0 8px"><span style="display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:800;background:{{r.sbg}};color:{{r.sfg}}"><span style="width:7px;height:7px;border-radius:4px;background:{{r.sdot}}"></span>{{r.st}}</span></td>
+                <td style="padding:0 20px;text-align:right"><button class="act" style="height:40px;padding:0 16px;border:0;border-radius:12px;background:#EEF1FF;color:#3B5BFF;font-size:14px;font-weight:800">Abrir →</button></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #EDEFF5;font-size:14px;font-weight:600;color:#7A8296">
+        <span>Mostrando {{count}} de 1.234 registros</span>
+        <div style="display:flex;gap:8px"><button style="height:44px;padding:0 18px;border:0;border-radius:12px;background:#F3F4F8;font-weight:700;color:#141A2B">← Anterior</button><button style="height:44px;padding:0 18px;border:0;border-radius:12px;background:#141A2B;font-weight:700;color:#fff">Próxima →</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const f = s.f || 'todos';
+    const all = [
+      { cod: 'IVP050211010', nome: 'Intergrease LC N 2', qtd: '24 KG', op: '[Operador A]', st: 'Aguarda assinatura', k: 'ass' },
+      { cod: 'GVP010471270', nome: 'Black Chain Plus', qtd: '40 KG', op: '[Operador B]', st: 'Concluído', k: 'ok' },
+      { cod: 'GVP010651270', nome: 'Black Chain Light', qtd: '16 KG', op: '[Operador A]', st: 'Em andamento', k: 'and' },
+      { cod: 'GVP010653220', nome: 'Black Chain Light', qtd: '32 KG', op: '[Operador C]', st: 'Concluído', k: 'ok' },
+      { cod: 'IVP050215020', nome: 'Intergrease LC N 2', qtd: '18 KG', op: '[Operador B]', st: 'Aguarda assinatura', k: 'ass' },
+      { cod: 'IVP010083220', nome: 'Produto histórico', qtd: '12 UN', op: '[Operador C]', st: 'Concluído', k: 'ok' }
+    ];
+    const sty = { ass: ['#FFF1D6', '#8A5A00', '#E69A00'], ok: ['#DDF4EA', '#0A6B45', '#12A66B'], and: ['#E3E8FF', '#2A43C7', '#3B5BFF'] };
+    const rows = all.filter((r) => f === 'todos' || r.k === f).map((r) => ({ ...r, sbg: sty[r.k][0], sfg: sty[r.k][1], sdot: sty[r.k][2] }));
+    const cnt = (k) => all.filter((r) => k === 'todos' || r.k === k).length;
+    const chips = [['todos', 'Todos'], ['ass', 'Aguarda assinatura'], ['and', 'Em andamento'], ['ok', 'Concluídos']].map(([k, label]) => {
+      const on = f === k;
+      return { label, n: cnt(k), bg: on ? '#141A2B' : '#F3F4F8', fg: on ? '#fff' : '#4A5268', nbg: on ? 'rgba(255,255,255,.18)' : '#fff', nfg: on ? '#fff' : '#4A5268', press: () => this.setState({ f: k }) };
+    });
+    return { rows, chips, count: rows.length };
+  }
+}
+</script>
+</body>
+</html>

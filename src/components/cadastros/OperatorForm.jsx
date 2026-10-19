@@ -96,8 +96,8 @@ export default function OperatorForm({ operator, onClose }) {
   };
 
   return (
-    <Card className="border-slate-200 shadow-lg">
-      <CardHeader className="border-b border-slate-100">
+    <Card className="border-borda shadow-cartao">
+      <CardHeader className="border-b border-borda">
         <div className="flex justify-between items-center">
           <CardTitle>{operator ? "Editar Operador" : "Novo Operador"}</CardTitle>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -115,7 +115,7 @@ export default function OperatorForm({ operator, onClose }) {
               placeholder="Ex.: Lucas Araujo"
             />
             {errors.nome && (
-              <p className="text-xs text-red-600 font-medium">{errors.nome.message}</p>
+              <p className="text-xs text-erro font-medium">{errors.nome.message}</p>
             )}
           </div>
 
@@ -128,7 +128,7 @@ export default function OperatorForm({ operator, onClose }) {
                 placeholder="Ex.: 3804"
               />
               {errors.matricula && (
-                <p className="text-xs text-red-600 font-medium">{errors.matricula.message}</p>
+                <p className="text-xs text-erro font-medium">{errors.matricula.message}</p>
               )}
             </div>
 
@@ -151,7 +151,7 @@ export default function OperatorForm({ operator, onClose }) {
                 )}
               />
               {errors.sala && (
-                <p className="text-xs text-red-600 font-medium">{errors.sala.message}</p>
+                <p className="text-xs text-erro font-medium">{errors.sala.message}</p>
               )}
             </div>
           </div>
@@ -160,11 +160,11 @@ export default function OperatorForm({ operator, onClose }) {
           <div className="space-y-2">
             <Label htmlFor="foto">Foto do Operador</Label>
             {erroUpload && (
-              <p className="text-xs text-red-600 font-medium">{erroUpload}</p>
+              <p className="text-xs text-erro font-medium">{erroUpload}</p>
             )}
             <div className="flex items-center gap-4">
               {(previewUrl || fotoUrl) ? (
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-slate-200">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-borda">
                   <img
                     src={previewUrl || fotoUrl}
                     alt="Foto do operador"
@@ -172,8 +172,8 @@ export default function OperatorForm({ operator, onClose }) {
                   />
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200">
-                  <User className="w-10 h-10 text-slate-400" />
+                <div className="w-20 h-20 rounded-full bg-fundo flex items-center justify-center border-2 border-borda">
+                  <User className="w-10 h-10 text-texto-apagado" />
                 </div>
               )}
               <div className="flex-1">
@@ -185,7 +185,7 @@ export default function OperatorForm({ operator, onClose }) {
                   disabled={uploading}
                   className="cursor-pointer"
                 />
-                {uploading && <p className="text-xs text-blue-600 mt-1">Fazendo upload...</p>}
+                {uploading && <p className="text-xs text-marca mt-1">Fazendo upload...</p>}
               </div>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function OperatorForm({ operator, onClose }) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-marca hover:bg-marca-forte" disabled={saveMutation.isPending || uploading}>
+            <Button aria-label="Salvar" type="submit" className="bg-marca hover:bg-marca-forte" disabled={saveMutation.isPending || uploading}>
               <Save className="w-4 h-4 mr-2" />
               {saveMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>

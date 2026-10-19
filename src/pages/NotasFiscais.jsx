@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, FileText, Image } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PageHeader } from "@/components/fluxo";
 
 export default function NotasFiscais() {
   const navigate = useNavigate();
@@ -32,64 +33,78 @@ export default function NotasFiscais() {
   const fmtDate = (d) => d ? format(new Date(d), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—";
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <FileText className="w-7 h-7 text-blue-600" /> Arquivo de NFs
-        </h1>
-        <Button onClick={() => navigate("/NovaNotaFiscal")} className="gap-1 bg-marca hover:bg-marca-forte">
-          <Plus className="w-4 h-4" /> Arquivar NF
-        </Button>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <Input
-          value={busca}
-          onChange={e => setBusca(e.target.value)}
-          placeholder="Buscar por número da NF..."
-          className="pl-9"
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
+      <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-4">
+        <PageHeader
+          migalha={[{ rotulo: "Recebimento" }, { rotulo: "Notas fiscais" }]}
+          titulo="Arquivo de notas fiscais"
+          legenda="Retenção legal de cinco anos"
+          acoes={
+            <Button size="lg" onClick={() => navigate("/NovaNotaFiscal")}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Arquivar NF
+            </Button>
+          }
         />
-      </div>
 
-      <div className="text-sm text-slate-500">{filtered.length} nota(s) encontrada(s)</div>
+        {/* A contagem foi para junto da busca: era uma linha solta de texto
+            cinza embaixo do campo, que ninguém relacionava ao filtro. */}
+        <div className="cartao-fluxo flex min-w-0 flex-wrap items-center justify-between gap-3 p-4">
+          <div className="relative min-w-0 flex-1 sm:max-w-sm">
+            <Search
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-texto-apagado"
+              aria-hidden="true"
+            />
+            <Input
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              placeholder="Buscar por número da NF"
+              aria-label="Buscar nota fiscal pelo número"
+              className="pl-10"
+            />
+          </div>
+          <span className="num text-sm font-bold text-texto-fraco">
+            {filtered.length} nota(s)
+          </span>
+        </div>
 
       {isLoading ? (
         <div className="space-y-2">
-          {[1,2,3].map(i => <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse" />)}
+          {[1,2,3].map(i => <div key={i} className="h-16 bg-fundo rounded-painel animate-pulse" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <Card><CardContent className="p-12 text-center text-slate-400">Nenhuma nota fiscal arquivada</CardContent></Card>
+        <Card><CardContent className="p-12 text-center text-texto-apagado">Nenhuma nota fiscal arquivada</CardContent></Card>
       ) : (
         <div className="space-y-2">
           {filtered.map(nf => (
             <Card
               key={nf.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className="cursor-pointer hover:shadow-cartao transition-shadow"
               onClick={() => navigate(`/NotaFiscalDetalhe?id=${nf.id}`)}
             >
               <CardContent className="p-4 flex items-center gap-4">
                 {nf.arquivo_url ? (
-                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-marca-suave text-marca rounded-token flex items-center justify-center flex-shrink-0">
                     <FileText className="w-6 h-6" />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Image className="w-5 h-5 text-slate-300" />
+                  <div className="w-12 h-12 bg-fundo rounded-token flex items-center justify-center flex-shrink-0">
+                    <Image className="w-5 h-5 text-texto-apagado" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-mono font-bold text-blue-700 text-lg">{nf.numero_nf}</p>
-                  <p className="text-xs text-slate-400">{fmtDate(nf.created_date)} · {nf.arquivado_por_nome || "—"}</p>
+                  <p className="font-mono font-bold text-marca text-lg">{nf.numero_nf}</p>
+                  <p className="text-xs text-texto-apagado">{fmtDate(nf.created_date)} · {nf.arquivado_por_nome || "—"}</p>
                 </div>
                 {!nf.arquivo_url && (
-                  <span className="text-xs text-orange-500 bg-orange-50 px-2 py-1 rounded-full flex-shrink-0">sem foto</span>
+                  <span className="text-xs text-atencao bg-atencao-suave px-2 py-1 rounded-full flex-shrink-0">sem foto</span>
                 )}
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

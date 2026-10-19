@@ -3,15 +3,12 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Plus, Calendar, Package, CheckCircle, Clock, Filter, AlertCircle, Trash2 } from "lucide-react";
+import { Plus, Calendar, Package, CheckCircle, Filter, AlertCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { formatarData } from '@/lib/datas';
+import { PageHeader, StatCard, ListaCard, StatusPill, EmptyState } from "@/components/fluxo";
 
 export default function Checkout() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
@@ -56,25 +53,6 @@ export default function Checkout() {
       deleteProgramacaoMutation.mutate(programacao.id);
     }
   };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Pendente": return "bg-yellow-100 text-yellow-800";
-      case "Em Andamento": return "bg-blue-100 text-blue-800";
-      case "Concluído": return "bg-green-100 text-green-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "Pendente": return <Clock className="w-4 h-4" />;
-      case "Em Andamento": return <Package className="w-4 h-4" />;
-      case "Concluído": return <CheckCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
-    }
-  };
-
   const filteredProgramacoes = programacoes.filter(prog => {
     if (!prog.data_programada) return false;
     
@@ -102,230 +80,173 @@ export default function Checkout() {
 
   const isLoading = isLoadingProgramacoes || isLoadingCheckoutItems;
 
+  const itensDaProg = (progId) => checkoutItems.filter((item) => item.programacao_id === progId);
+  const totalCriticos = filteredProgramacoes.reduce(
+    (total, prog) => total + itensDaProg(prog.id).filter((item) => item.critico).length, 0);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
-              Check-out de Pedidos
-            </h1>
-            <p className="text-slate-600 mt-1">
-              Gerencie as programações e execução de check-out
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
+      <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-4">
+        <PageHeader
+          migalha={[{ rotulo: "Operação" }, { rotulo: "Check-out" }]}
+          titulo="Check-out de pedidos"
+          legenda="Programações e execução"
+          acoes={
+            <Link to={createPageUrl("NovaProgramacaoCheckout")}>
+              <Button size="lg">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Nova programação
+              </Button>
+            </Link>
+          }
+        />
+
+        {/* Filtro de período: era um cartão de 6rem com três campos rotulados
+            um a um. O `type` do campo já diz ao olho o que ele é, e o
+            `aria-label` diz ao leitor de tela. */}
+        <div className="cartao-fluxo flex min-w-0 flex-wrap items-center gap-2.5 p-4">
+          <span className="flex items-center gap-2 text-[13px] font-bold text-texto-fraco">
+            <Filter className="h-4 w-4" aria-hidden="true" />
+            Período
+          </span>
+          <Input
+            id="month" type="month" aria-label="Filtrar por mês"
+            value={selectedMonth}
+            onChange={(e) => { setSelectedMonth(e.target.value); setStartDate(""); setEndDate(""); }}
+            className="w-44"
+          />
+          <Input
+            id="startDate" type="date" aria-label="Data inicial" value={startDate}
+            onChange={(e) => setStartDate(e.target.value)} max={endDate || undefined} className="w-40"
+          />
+          <span className="text-sm font-bold text-texto-apagado">até</span>
+          <Input
+            id="endDate" type="date" aria-label="Data final" value={endDate}
+            onChange={(e) => setEndDate(e.target.value)} min={startDate || undefined} className="w-40"
+          />
+          {(startDate || endDate) && (
+            <p className="w-full text-xs font-semibold text-texto-fraco">
+              {startDate && endDate
+                ? `Mostrando programações de ${formatarData(startDate, "dd/MM/yyyy")} até ${formatarData(endDate, "dd/MM/yyyy")}`
+                : startDate
+                  ? `Mostrando programações a partir de ${formatarData(startDate, "dd/MM/yyyy")}`
+                  : `Mostrando programações até ${formatarData(endDate, "dd/MM/yyyy")}`}
             </p>
-          </div>
-          <Link to={createPageUrl("NovaProgramacaoCheckout")}>
-            <Button className="bg-marca hover:bg-marca-forte">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Programação
-            </Button>
-          </Link>
+          )}
         </div>
 
-        {/* Filtros */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Filter className="w-4 h-4 text-slate-600" />
-              <Label className="text-sm font-medium text-slate-700">
-                Filtrar por Período
-              </Label>
-            </div>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="month" className="text-sm text-slate-600 mb-1 block">
-                  Mês
-                </Label>
-                <Input
-                  id="month"
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => {
-                    setSelectedMonth(e.target.value);
-                    setStartDate("");
-                    setEndDate("");
-                  }}
-                  className="bg-white"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="startDate" className="text-sm text-slate-600 mb-1 block">
-                  Data Inicial
-                </Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-white"
-                  max={endDate || undefined}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="endDate" className="text-sm text-slate-600 mb-1 block">
-                  Data Final
-                </Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-white"
-                  min={startDate || undefined}
-                />
-              </div>
-            </div>
-            {(startDate || endDate) && (
-              <p className="text-xs text-slate-500 mt-2">
-                {startDate && endDate ? (
-                  <>Mostrando programações de {formatarData(startDate, "dd/MM/yyyy")} até {formatarData(endDate, "dd/MM/yyyy")}</>
-                ) : startDate ? (
-                  <>Mostrando programações a partir de {formatarData(startDate, "dd/MM/yyyy")}</>
-                ) : (
-                  <>Mostrando programações até {formatarData(endDate, "dd/MM/yyyy")}</>
-                )}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-slate-200 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Total de Programações</p>
-                  <p className="text-3xl font-bold text-slate-900 mt-2">
-                    {filteredProgramacoes.length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-200 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Pedidos Críticos</p>
-                  <p className="text-3xl font-bold text-red-600 mt-2">
-                    {filteredProgramacoes.reduce((total, prog) => {
-                      const itemsDaProg = checkoutItems.filter(item => item.programacao_id === prog.id);
-                      return total + itemsDaProg.filter(item => item.critico).length;
-                    }, 0)}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-200 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Concluídas</p>
-                  <p className="text-3xl font-bold text-green-600 mt-2">
-                    {filteredProgramacoes.filter(p => p.status === "Concluído").length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid min-w-0 gap-4 [grid-template-columns:repeat(auto-fit,minmax(230px,1fr))]">
+          <StatCard
+            rotulo="Programações" valor={filteredProgramacoes.length}
+            icone={Calendar} destaque legenda="no período" atraso={0.05}
+          />
+          <StatCard
+            rotulo="Pedidos críticos" valor={totalCriticos} icone={AlertCircle}
+            tom={totalCriticos > 0 ? "erro" : "neutro"} legenda="exigem atenção" atraso={0.1}
+          />
+          <StatCard
+            rotulo="Concluídas" icone={CheckCircle} tom="ok" atraso={0.15}
+            valor={filteredProgramacoes.filter((p) => p.status === "Concluído").length}
+            legenda="programações fechadas"
+          />
         </div>
 
-        {/* Lista de Programações */}
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
-            <CardTitle className="text-xl font-bold text-slate-900">
-              Programações de Check-out
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
+        <ListaCard atraso={0.2}>
+          <div className="px-5 pb-5 pt-4">
             {isLoading ? (
-              <div className="text-center py-8 text-slate-500">
-                Carregando programações...
-              </div>
+              <EmptyState carregando />
             ) : filteredProgramacoes.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-                <p className="text-slate-500 mb-4">Nenhuma programação encontrada</p>
-                <Link to={createPageUrl("NovaProgramacaoCheckout")}>
-                  <Button className="bg-marca hover:bg-marca-forte">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Criar Primeira Programação
-                  </Button>
-                </Link>
-              </div>
+              <EmptyState
+                icone={Calendar}
+                titulo="Nenhuma programação no período"
+                legenda="Ajuste o período acima ou crie a primeira programação."
+                acao={
+                  <Link to={createPageUrl("NovaProgramacaoCheckout")}>
+                    <Button><Plus className="h-4 w-4" aria-hidden="true" />Criar programação</Button>
+                  </Link>
+                }
+              />
             ) : (
-              <div className="grid gap-4">
-                {filteredProgramacoes.map((prog) => (
-                  <Card key={prog.id} className="border-slate-200 hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <Link 
-                          to={createPageUrl(`ExecutarCheckout?id=${prog.id}`)}
-                          className="flex-1 cursor-pointer"
-                        >
-                          <div>
-                            <div className="flex items-center gap-3 mb-2">
-                              <Calendar className="w-5 h-5 text-blue-600" />
-                              <h3 className="text-lg font-bold text-slate-900">
-                                {formatarData(prog.data_programada, "EEEE, dd 'de' MMMM 'de' yyyy")}
-                              </h3>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-                              <div className="flex items-center gap-1">
-                                <Package className="w-4 h-4" />
-                                <span>{prog.total_pedidos} pedidos</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <CheckCircle className="w-4 h-4" />
-                                <span>{prog.pedidos_concluidos} concluídos</span>
-                              </div>
-                            </div>
-                            {prog.observacoes && (
-                              <p className="text-sm text-slate-500 mt-2 italic">
-                                "{prog.observacoes}"
-                              </p>
-                            )}
-                          </div>
-                        </Link>
-                        <div className="flex items-center gap-3">
-                          <Badge className={`${getStatusColor(prog.status)} flex items-center gap-1`}>
-                            {getStatusIcon(prog.status)}
-                            {prog.status}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteProgramacao(prog)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                            disabled={deleteProgramacaoMutation.isPending}
+              <ul className="flex flex-col gap-2.5">
+                {filteredProgramacoes.map((prog) => {
+                  const itens = itensDaProg(prog.id);
+                  const criticos = itens.filter((i) => i.critico).length;
+                  const total = prog.total_pedidos || itens.length;
+                  const feitos = prog.pedidos_concluidos || 0;
+                  const pct = total > 0 ? Math.round((feitos / total) * 100) : 0;
+
+                  return (
+                    <li
+                      key={prog.id}
+                      className="flex min-w-0 flex-col gap-3 rounded-painel bg-fundo p-4
+                                 sm:flex-row sm:items-center"
+                    >
+                      <Link
+                        to={createPageUrl(`ExecutarCheckout?id=${prog.id}`)}
+                        className="foco-fluxo min-w-0 flex-1 rounded-token"
+                      >
+                        <span className="block text-lg font-extrabold text-tinta">
+                          {formatarData(prog.data_programada, "EEEE, dd 'de' MMMM 'de' yyyy")}
+                        </span>
+
+                        <span className="mt-1 flex flex-wrap items-center gap-3 text-sm font-semibold text-texto-fraco">
+                          <span className="flex items-center gap-1.5">
+                            <Package className="h-4 w-4" aria-hidden="true" />
+                            <span className="num font-bold text-tinta">{total}</span> pedidos
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle className="h-4 w-4" aria-hidden="true" />
+                            <span className="num font-bold text-tinta">{feitos}</span> concluídos
+                          </span>
+                          {criticos > 0 && (
+                            <span className="rounded-full bg-erro-suave px-2.5 py-0.5 text-xs font-extrabold text-erro">
+                              {criticos} crítico{criticos > 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </span>
+
+                        {/* Barra de progresso: a programação dizia "12 pedidos,
+                            3 concluídos" e deixava a conta para quem olhava. */}
+                        {total > 0 && (
+                          <span
+                            className="mt-2.5 block h-1.5 max-w-sm overflow-hidden rounded-full bg-cartao"
+                            role="img"
+                            aria-label={`${pct}% concluído`}
                           >
-                            <Trash2 className="w-5 h-5" />
-                          </Button>
-                        </div>
+                            <span
+                              className={`block h-full rounded-full ${pct === 100 ? "bg-ok" : "bg-marca"}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </span>
+                        )}
+
+                        {prog.observacoes && (
+                          <span className="mt-2 block text-sm font-semibold italic text-texto-apagado">
+                            “{prog.observacoes}”
+                          </span>
+                        )}
+                      </Link>
+
+                      <div className="flex flex-none items-center gap-2.5">
+                        <StatusPill estado={prog.status} />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteProgramacao(prog)}
+                          disabled={deleteProgramacaoMutation.isPending}
+                          aria-label={`Excluir a programação de ${formatarData(prog.data_programada, "dd/MM/yyyy")}`}
+                          className="text-texto-fraco hover:bg-erro-suave hover:text-erro"
+                        >
+                          <Trash2 className="h-5 w-5" aria-hidden="true" />
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </ListaCard>
       </div>
     </div>
   );

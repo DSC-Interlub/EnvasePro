@@ -1,19 +1,17 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Upload, Trash2 } from "lucide-react";
-import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { ArrowLeft, Save, Upload, Trash2, AlertCircle, Calendar, Package } from "lucide-react";
+import { format } from "date-fns";
 import { formatarData } from '@/lib/datas';
+import { PageHeader, SectionCard } from "@/components/fluxo";
 
 export default function NovaProgramacaoCheckout() {
   const navigate = useNavigate();
@@ -109,24 +107,20 @@ export default function NovaProgramacaoCheckout() {
       items: pedidosParsed
     });
   };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigate(createPageUrl("Checkout"))}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Nova Programação de Check-out</h1>
-            <p className="text-slate-600 mt-1">Crie a programação e importe os pedidos</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
+      <div className="mx-auto flex min-w-0 max-w-5xl flex-col gap-4">
+        <PageHeader
+          migalha={[{ rotulo: "Check-out" }, { rotulo: "Nova programação" }]}
+          titulo="Nova programação de check-out"
+          legenda="Escolha a data e cole os pedidos"
+          acoes={
+            <Button variant="outline" size="lg" onClick={() => navigate(createPageUrl("Checkout"))}>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Voltar
+            </Button>
+          }
+        />
 
         {error && (
           <Alert variant="destructive">
@@ -135,32 +129,26 @@ export default function NovaProgramacaoCheckout() {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Data da Programação */}
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="border-b border-slate-100">
-              <CardTitle className="text-xl font-bold text-slate-900">
-                Data da Programação
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="data_programada">Data para o Check-out *</Label>
+        <form onSubmit={handleSubmit} className="flex min-w-0 flex-col gap-4">
+          <SectionCard titulo="Data da programação" icone={Calendar} atraso={0.05}>
+            <div className="flex min-w-0 flex-col gap-5">
+              <div className="min-w-0 space-y-2">
+                <Label htmlFor="data_programada">Data para o check-out *</Label>
                 <Input
                   id="data_programada"
                   type="date"
                   value={dataProgramada}
                   onChange={(e) => setDataProgramada(e.target.value)}
                   required
-                  className="max-w-md"
+                  className="max-w-xs"
                 />
-                <p className="text-sm text-slate-500">
-                  Selecione o dia em que os check-outs serão realizados
+                <p className="text-sm font-semibold text-texto-fraco">
+                  O dia em que os check-outs serão realizados
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="observacoes">Observações da Programação</Label>
+              <div className="min-w-0 space-y-2">
+                <Label htmlFor="observacoes">Observações da programação</Label>
                 <Textarea
                   id="observacoes"
                   value={observacoes}
@@ -168,97 +156,99 @@ export default function NovaProgramacaoCheckout() {
                   placeholder='Ex: "Check-out começou tarde pois estávamos sem rede"'
                   rows={3}
                 />
-                <p className="text-sm text-slate-500">
-                  Adicione observações gerais sobre esta programação
-                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </SectionCard>
 
-          {/* Importar Pedidos */}
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="border-b border-slate-100">
-              <CardTitle className="text-xl font-bold text-slate-900">
-                Importar Pedidos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-2">
+          <SectionCard
+            titulo="Importar pedidos"
+            legenda="Formato: PV-XXXXX, data e cliente, separados por tabulação"
+            icone={Upload}
+            atraso={0.1}
+          >
+            <div className="flex min-w-0 flex-col gap-4">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="pedidos">Cole a lista de pedidos</Label>
                 <Textarea
                   id="pedidos"
                   value={pedidosText}
                   onChange={(e) => setPedidosText(e.target.value)}
-                  placeholder="PV-20.235	22/10/2025	Cooperativa Pecuária Holambra Ltda
-PV-20.236	22/10/2025	Alvoar Lácteos S/A
-PV-20.237	22/10/2025	Tec Tor Indústria e Comércio de"
+                  placeholder={"PV-20.235\t22/10/2025\tCooperativa Pecuária Holambra Ltda\nPV-20.236\t22/10/2025\tAlvoar Lácteos S/A\nPV-20.237\t22/10/2025\tTec Tor Indústria e Comércio de"}
                   rows={8}
-                  className="font-mono text-sm"
+                  className="codigo text-sm"
                 />
-                <p className="text-sm text-slate-500">
-                  Cole os dados no formato: PV-XXXXX [TAB] Data [TAB] Cliente
-                </p>
               </div>
 
               <Button
                 type="button"
-                onClick={parsePedidos}
+                size="lg"
                 variant="outline"
+                onClick={parsePedidos}
+                disabled={!pedidosText.trim()}
                 className="w-full"
               >
-                <Upload className="w-4 h-4 mr-2" />
-                Processar Pedidos
+                <Upload className="h-4 w-4" aria-hidden="true" />
+                Processar pedidos
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </SectionCard>
 
-          {/* Lista de Pedidos Processados */}
           {pedidosParsed.length > 0 && (
-            <Card className="border-slate-200 shadow-lg">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="text-xl font-bold text-slate-900">
-                  Pedidos Importados ({pedidosParsed.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {pedidosParsed.map((pedido, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200"
-                    >
-                      <div className="flex-1">
-                        <p className="font-semibold text-slate-900">{pedido.numero_pedido}</p>
-                        <p className="text-sm text-slate-600">{pedido.cliente}</p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Entrega: {formatarData(pedido.data_entrega, "dd/MM/yyyy")}
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removePedido(index)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+            <SectionCard
+              titulo="Pedidos importados"
+              legenda={`${pedidosParsed.length} pedido(s) prontos para gravar`}
+              icone={Package}
+              atraso={0.15}
+            >
+              <ul className="flex max-h-96 min-w-0 flex-col gap-2 overflow-y-auto">
+                {pedidosParsed.map((pedido, index) => (
+                  <li
+                    key={`${pedido.numero_pedido}-${index}`}
+                    className="flex min-h-[56px] items-center justify-between gap-3
+                               rounded-token bg-fundo px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="codigo truncate font-extrabold text-tinta">{pedido.numero_pedido}</p>
+                      <p className="truncate text-sm font-semibold text-texto-fraco">{pedido.cliente}</p>
+                      <p className="num text-xs font-semibold text-texto-apagado">
+                        Entrega: {formatarData(pedido.data_entrega, "dd/MM/yyyy")}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePedido(index)}
+                      aria-label={`Remover o pedido ${pedido.numero_pedido} da lista`}
+                      className="flex-none text-texto-fraco hover:bg-erro-suave hover:text-erro"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
           )}
 
-          {/* Botão Salvar */}
-          <Button
-            type="submit"
-            className="w-full bg-marca hover:bg-marca-forte"
-            disabled={createProgramacaoMutation.isPending || pedidosParsed.length === 0}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {createProgramacaoMutation.isPending ? "Salvando..." : "Criar Programação"}
-          </Button>
+          {/* O botão fica desabilitado sem pedido processado, e isso não era
+              explicado em lugar nenhum: quem colava a lista e clicava direto em
+              "Criar" encontrava um botão morto sem saber por quê. */}
+          <div className="flex min-w-0 flex-col gap-2">
+            <Button aria-label="Salvar"
+              type="submit"
+              size="lg"
+              className="h-16 w-full rounded-painel text-base"
+              disabled={createProgramacaoMutation.isPending || pedidosParsed.length === 0}
+            >
+              <Save className="h-5 w-5" aria-hidden="true" />
+              {createProgramacaoMutation.isPending ? "Salvando…" : "Criar programação"}
+            </Button>
+            {pedidosParsed.length === 0 && (
+              <p className="text-center text-sm font-semibold text-texto-apagado">
+                Cole a lista e toque em “Processar pedidos” antes de criar.
+              </p>
+            )}
+          </div>
         </form>
       </div>
     </div>

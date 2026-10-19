@@ -61,12 +61,12 @@ export default function Operadores() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Cadastro de Operadores</h1>
-            <p className="text-slate-600 mt-1">Gerencie a equipe de produção</p>
+            <h1 className="text-3xl font-bold text-tinta">Cadastro de Operadores</h1>
+            <p className="text-texto-fraco mt-1">Gerencie a equipe de produção</p>
           </div>
           <Button 
             onClick={() => {
@@ -90,14 +90,14 @@ export default function Operadores() {
           />
         )}
 
-        <Card className="border-slate-200 shadow-lg">
-          <CardHeader className="border-b border-slate-100">
+        <Card className="border-borda shadow-cartao">
+          <CardHeader className="border-b border-borda">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <CardTitle className="text-xl font-bold text-slate-900">
+              <CardTitle className="text-xl font-bold text-tinta">
                 Lista de Operadores
               </CardTitle>
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-texto-apagado w-4 h-4" />
                 <Input
                   placeholder="Buscar operadores..."
                   aria-label="Buscar operadores"
@@ -112,12 +112,12 @@ export default function Operadores() {
             {/* Celular: cartão por operador, para as ações não ficarem fora da
                 tela como ficavam com a tabela rolando na horizontal. */}
             {ehCelular && (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-borda">
               {lista.pagina.map((operator) => (
                 <div key={operator.id} className="p-4 space-y-3">
                   <div>
-                    <p className="font-semibold text-slate-900">{operator.nome}</p>
-                    <p className="font-mono text-sm text-slate-600">{operator.matricula}</p>
+                    <p className="font-semibold text-tinta">{operator.nome}</p>
+                    <p className="font-mono text-sm text-texto-fraco">{operator.matricula}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {operator.sala && <Badge variant="secondary">{operator.sala}</Badge>}
@@ -135,7 +135,7 @@ export default function Operadores() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50">
+                  <TableRow className="bg-fundo">
                     <TableHead>Nome</TableHead>
                     <TableHead>Matrícula</TableHead>
                     <TableHead>Sala</TableHead>

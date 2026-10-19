@@ -163,10 +163,10 @@ export default function ModalImportarSAP({ open, onClose }) {
 
         {!parsed && (
           <div className="space-y-3">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-texto-fraco">
               Cole abaixo os dados copiados da nova consulta SAP. O sistema extrai: <strong>Nº doc, Cód. fornecedor, Fornecedor, Data de Chegada, Código do Item, Produto, Quantidade e Item para Recebimento</strong>.
             </p>
-            <p className="text-xs text-slate-500 bg-slate-50 p-2 rounded border">
+            <p className="text-xs text-texto-fraco bg-fundo p-2 rounded border">
               Cole diretamente do relatório SAP (Ctrl+A → Ctrl+C).<br />
               Registros com o mesmo Nº doc + Código do Item serão atualizados. Linhas sem item (fornecedores não-FOR000002) ficam uma por documento.
             </p>
@@ -182,15 +182,15 @@ export default function ModalImportarSAP({ open, onClose }) {
         {parsed && !resultado && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-slate-700">{parsed.length} registros encontrados</p>
+              <p className="text-sm font-medium text-tinta-media">{parsed.length} registros encontrados</p>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setSelected(parsed.map((_, i) => i))}>Selecionar todos</Button>
-                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setSelected([])}>Desmarcar todos</Button>
+                <Button size="sm" variant="outline" className="text-xs h-12" onClick={() => setSelected(parsed.map((_, i) => i))}>Selecionar todos</Button>
+                <Button size="sm" variant="outline" className="text-xs h-12" onClick={() => setSelected([])}>Desmarcar todos</Button>
               </div>
             </div>
-            <div className="overflow-x-auto border rounded-lg">
+            <div className="overflow-x-auto border rounded-token">
               <table className="w-full text-xs">
-                <thead className="bg-slate-50">
+                <thead className="bg-fundo">
                   <tr>
                     <th className="px-2 py-1.5 text-left w-8"></th>
                     <th className="px-2 py-1.5 text-left">Nº doc.</th>
@@ -207,9 +207,9 @@ export default function ModalImportarSAP({ open, onClose }) {
                     const key = `${row.numero_documento}|${row.codigo_item || ""}`;
                     const existe = !!existentesMap[key];
                     return (
-                      <tr key={i} className={`border-t hover:bg-slate-50 cursor-pointer ${selected.includes(i) ? "" : "opacity-40"}`} onClick={() => toggleRow(i)}>
+                      <tr key={i} className={`border-t hover:bg-fundo cursor-pointer ${selected.includes(i) ? "" : "opacity-40"}`} onClick={() => toggleRow(i)}>
                         <td className="px-2 py-1.5">
-                          {selected.includes(i) ? <CheckSquare className="w-3.5 h-3.5 text-blue-600" /> : <Square className="w-3.5 h-3.5 text-slate-400" />}
+                          {selected.includes(i) ? <CheckSquare className="w-3.5 h-3.5 text-marca" /> : <Square className="w-3.5 h-3.5 text-texto-apagado" />}
                         </td>
                         <td className="px-2 py-1.5 font-mono">{row.numero_documento}</td>
                         <td className="px-2 py-1.5 max-w-[150px] truncate">{row.nome_fornecedor}</td>
@@ -218,7 +218,7 @@ export default function ModalImportarSAP({ open, onClose }) {
                         <td className="px-2 py-1.5 max-w-[180px] truncate">{row.produto || "—"}</td>
                         <td className="px-2 py-1.5 text-right font-mono">{row.quantidade > 0 ? row.quantidade.toLocaleString('pt-BR') : "—"}</td>
                         <td className="px-2 py-1.5">
-                          <Badge className={existe ? "bg-orange-100 text-orange-700 text-[10px]" : "bg-green-100 text-green-700 text-[10px]"}>
+                          <Badge className={existe ? "bg-atencao-suave text-atencao text-[10px]" : "bg-ok-suave text-ok text-[10px]"}>
                             {existe ? "Atualizar" : "Novo"}
                           </Badge>
                         </td>
@@ -232,9 +232,9 @@ export default function ModalImportarSAP({ open, onClose }) {
         )}
 
         {resultado && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center space-y-1">
-            <p className="text-green-800 font-semibold">Importação concluída!</p>
-            <p className="text-sm text-green-700">
+          <div className="bg-ok-suave border border-ok rounded-token p-4 text-center space-y-1">
+            <p className="text-ok font-semibold">Importação concluída!</p>
+            <p className="text-sm text-ok">
               {resultado.criados} criados · {resultado.atualizados} atualizados · {resultado.ignorados} já existiam (sem alteração)
             </p>
           </div>

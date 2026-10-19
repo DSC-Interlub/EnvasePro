@@ -1,95 +1,77 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Factory, Package, TrendingUp, Clock, Users, Box } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Factory, Package, TrendingUp, Users } from "lucide-react";
+import { StatCard, EmptyState } from "@/components/fluxo";
 
-export default function StatsGrid({ 
-  records, 
-  todayRecords, 
-  totalProduction, 
-  todayProduction,
+/**
+ * Indicadores de produção — padrão Painel.
+ *
+ * O que saiu: o círculo colorido de 128px girando atrás de cada cartão
+ * (`translate-x-8 -translate-y-8 ... opacity-10`), que existia em cinco cores
+ * diferentes — `green`, `emerald`, `marca`, `purple`, `orange` — das quais três
+ * não eram token do sistema. O número tinha 30px; agora tem 60.
+ *
+ * O primeiro cartão vai em `destaque` porque é o total: era o mesmo cartão dos
+ * outros quatro, e o olho não tinha onde pousar primeiro.
+ *
+ * As contas não mudaram.
+ */
+export default function StatsGrid({
+  records,
+  totalProduction,
   productsCount,
   operatorsCount,
-  isLoading 
+  isLoading,
 }) {
-  const totalBio = records.filter(r => r.sala === "Bio").reduce((sum, r) => sum + (r.quantidade_produzida || 0), 0);
-  const totalIndustrial = records.filter(r => r.sala === "Industrial").reduce((sum, r) => sum + (r.quantidade_produzida || 0), 0);
+  const bio = records.filter((r) => r.sala === "Bio");
+  const industrial = records.filter((r) => r.sala === "Industrial");
+  const soma = (lista) => lista.reduce((s, r) => s + (r.quantidade_produzida || 0), 0);
 
   const stats = [
     {
-      title: "Produção Total",
-      value: totalProduction.toLocaleString('pt-BR'),
-      icon: TrendingUp,
-      color: "bg-green-500",
-      trend: `${records.length} registros`
+      rotulo: "Produção total",
+      valor: totalProduction.toLocaleString("pt-BR"),
+      icone: TrendingUp,
+      destaque: true,
+      legenda: `${records.length} registros`,
     },
     {
-      title: "Produção Bio",
-      value: totalBio.toLocaleString('pt-BR'),
-      icon: Factory,
-      color: "bg-emerald-500",
-      trend: `${records.filter(r => r.sala === "Bio").length} registros`
+      rotulo: "Produção Bio",
+      valor: soma(bio).toLocaleString("pt-BR"),
+      icone: Factory,
+      legenda: `${bio.length} registros`,
     },
     {
-      title: "Produção Industrial",
-      value: totalIndustrial.toLocaleString('pt-BR'),
-      icon: Factory,
-      color: "bg-blue-500",
-      trend: `${records.filter(r => r.sala === "Industrial").length} registros`
+      rotulo: "Produção Industrial",
+      valor: soma(industrial).toLocaleString("pt-BR"),
+      icone: Factory,
+      legenda: `${industrial.length} registros`,
     },
     {
-      title: "Produtos Cadastrados",
-      value: productsCount,
-      icon: Package,
-      color: "bg-purple-500",
-      trend: "ativos"
+      rotulo: "Produtos cadastrados",
+      valor: productsCount,
+      icone: Package,
+      legenda: "ativos",
     },
     {
-      title: "Operadores Ativos",
-      value: operatorsCount,
-      icon: Users,
-      color: "bg-orange-500",
-      trend: "cadastrados"
+      rotulo: "Operadores ativos",
+      valor: operatorsCount,
+      icone: Users,
+      legenda: "cadastrados",
     },
   ];
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
-            <CardHeader className="p-6">
-              <Skeleton className="h-20 w-full" />
-            </CardHeader>
-          </Card>
-        ))}
+      <div className="cartao-fluxo">
+        <EmptyState carregando />
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((stat, index) => (
-        <Card 
-          key={index}
-          className="relative overflow-hidden hover:shadow-lg transition-shadow duration-300 border-slate-200"
-        >
-          <div className={`absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8 ${stat.color} rounded-full opacity-10`} />
-          <CardHeader className="p-6">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-500">{stat.title}</p>
-                <CardTitle className="text-3xl font-bold mt-2 text-slate-900">
-                  {stat.value}
-                </CardTitle>
-                <p className="text-xs text-slate-400 mt-2">{stat.trend}</p>
-              </div>
-              <div className={`p-3 rounded-xl ${stat.color} bg-opacity-20`}>
-                <stat.icon className={`w-6 h-6 ${stat.color.replace('bg-', 'text-')}`} />
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+    <div className="grid min-w-0 gap-4 [grid-template-columns:repeat(auto-fit,minmax(230px,1fr))]">
+      {stats.map((s, i) => (
+        <StatCard key={s.rotulo} {...s} atraso={0.05 + i * 0.05} />
       ))}
     </div>
   );

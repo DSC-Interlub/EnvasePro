@@ -12,8 +12,8 @@ export default function RodapeDaLista({ mostrando, total, temMais, carregarMais,
   if (total === 0) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 px-4 py-4">
-      <p className="text-sm text-slate-600" role="status" aria-live="polite">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-borda px-4 py-4">
+      <p className="text-sm text-texto-fraco" role="status" aria-live="polite">
         Mostrando <strong>{mostrando}</strong> de <strong>{total}</strong> {substantivo}
       </p>
       {temMais && (

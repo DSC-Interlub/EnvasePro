@@ -218,20 +218,52 @@ for (const [nome, w, h] of LARGURAS) {
   const ctx = await nav.newContext({ viewport: { width: w, height: h }, storageState: estado });
   for (const tela of ['Produtos', 'Embalagens', 'Operadores', 'Registros']) {
     const p = await abrir(ctx, tela);
-    const m = await p.evaluate(() => {
+    // MEDE DUAS VEZES, com 300ms entre elas, e so conta como pequeno o que for
+    // pequeno nas DUAS leituras.
+    //
+    // Por que: com 150 botoes na tela, uma leitura unica pegava 1 a 3 deles no
+    // meio do render e relatava "menor que 48px" para um botao que, relido no
+    // instante seguinte, media 102x48. O resultado mudava de rodada para
+    // rodada com o MESMO codigo — era ruido do instrumento, e ruido de
+    // instrumento num portao de qualidade e pior que nenhum portao: ensina a
+    // ignorar a falha.
+    const medir = () => p.evaluate(() => {
       const acoes = [...document.querySelectorAll('button')]
         .filter(b => /^(editar|excluir|ver detalhes)/i.test(b.getAttribute('aria-label') || ''));
-      const pequenos = acoes.filter(b => {
+      const pequenos = {};
+      for (const b of acoes) {
         const r = b.getBoundingClientRect();
-        return r.width > 0 && (r.width < 48 || r.height < 48);
-      }).length;
+      // Meio pixel de folga, e nao `< 48` cru: getBoundingClientRect devolve
+      // 47.99999999999999 para uma caixa de 48px, e o portao falhava relatando
+      // "48.0x48.0 esta abaixo de 48px" — uma falha que se contradiz na
+      // propria mensagem. Meio pixel nao muda nada para o dedo e elimina o
+      // ruido de ponto flutuante.
+        if (r.width > 0 && (r.width < 47.5 || r.height < 47.5)) {
+          // Uma casa decimal: com Math.round, um alvo de 47,6px era impresso
+          // como "48" e a falha parecia contradizer a si mesma.
+          pequenos[`${b.getAttribute('aria-label')}`] =
+            `${r.width.toFixed(1)}x${r.height.toFixed(1)}`;
+        }
+      }
       return {
         acoes: acoes.length, pequenos,
         estouro: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       };
     });
+
+    const m1 = await medir();
+    await new Promise(r => setTimeout(r, 300));
+    const m2 = await medir();
+    const persistentes = Object.keys(m1.pequenos).filter(k => k in m2.pequenos);
+    const m = {
+      acoes: m2.acoes,
+      pequenos: persistentes.length,
+      detalhe: persistentes.map(k => `${k} ${m2.pequenos[k]}`),
+      estouro: m2.estouro,
+    };
+
     checar(`${nome}/${tela}: nenhum alvo abaixo de 48px (${m.acoes} alvos)`, m.pequenos === 0,
-      `${m.pequenos} pequenos`);
+      m.detalhe.slice(0, 4).join(' | '));
     checar(`${nome}/${tela}: a pagina nao rola na horizontal`, m.estouro <= 0,
       `estouro de ${m.estouro}px`);
     await p.close();

@@ -25,10 +25,10 @@ const CHECKLIST_CAMPOS = [
 ];
 
 function RespostaBadge({ valor }) {
-  if (!valor) return <span className="text-slate-400 text-xs">—</span>;
-  if (valor === "Sim") return <Badge className="bg-green-100 text-green-700 text-xs">Sim</Badge>;
-  if (valor === "Não") return <Badge className="bg-red-100 text-red-700 text-xs">Não</Badge>;
-  return <Badge className="bg-slate-100 text-slate-500 text-xs">N/A</Badge>;
+  if (!valor) return <span className="text-texto-apagado text-xs">—</span>;
+  if (valor === "Sim") return <Badge className="bg-ok-suave text-ok text-xs">Sim</Badge>;
+  if (valor === "Não") return <Badge className="bg-erro-suave text-erro text-xs">Não</Badge>;
+  return <Badge className="bg-fundo text-texto-fraco text-xs">N/A</Badge>;
 }
 
 export default function ChecklistDetalhe() {
@@ -49,8 +49,8 @@ export default function ChecklistDetalhe() {
   const criadoHoje = checklist?.created_date?.startsWith(hoje);
   const podeEditar = isAdmin && criadoHoje;
 
-  if (isLoading) return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
-  if (!checklist) return <div className="p-8 text-center text-slate-400">Checklist não encontrado.</div>;
+  if (isLoading) return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-marca" /></div>;
+  if (!checklist) return <div className="p-8 text-center text-texto-apagado">Checklist não encontrado.</div>;
 
   const nota = checklist.nota_final ?? 0;
   const cor = notaColor(nota);
@@ -59,12 +59,12 @@ export default function ChecklistDetalhe() {
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/ChecklistRecebimento")}>
+        <Button aria-label="Voltar" variant="ghost" size="icon" onClick={() => navigate("/ChecklistRecebimento")}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-slate-900">Checklist — {checklist.numero_pedido_compras}</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-tinta">Checklist — {checklist.numero_pedido_compras}</h1>
+          <p className="text-xs text-texto-fraco">
             {checklist.data_entrega ? format(new Date(checklist.data_entrega + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—"} ·
             Criado por {checklist.criado_por_nome || "—"}
           </p>
@@ -77,11 +77,11 @@ export default function ChecklistDetalhe() {
       </div>
 
       {/* Card de nota final */}
-      <div className={`p-6 rounded-xl border-2 text-center ${corCaixa(nota)}`}>
-        <p className="text-sm text-slate-500 mb-1">Nota Final</p>
+      <div className={`p-6 rounded-painel border-2 text-center ${corCaixa(nota)}`}>
+        <p className="text-sm text-texto-fraco mb-1">Nota Final</p>
         <p className={`text-5xl font-bold ${corTexto(nota)}`}>{nota}</p>
         <p className={`text-lg font-semibold mt-1 ${corTexto(nota)}`}>{label}</p>
-        <p className="text-xs text-slate-500 mt-2">
+        <p className="text-xs text-texto-fraco mt-2">
           {checklist.total_sim} Sim (+{checklist.soma_sim}) · {checklist.total_nao} Não ({checklist.soma_nao})
         </p>
       </div>
@@ -105,9 +105,9 @@ export default function ChecklistDetalhe() {
             ["Quantidade recebida", `${checklist.quantidade_recebida} ${checklist.unidade_medida}`],
             ["Nº Lote", checklist.numero_lote],
           ].map(([label, valor], i) => (
-            <div key={i} className="flex justify-between items-start py-1 border-b border-slate-100 last:border-0 gap-4">
-              <span className="text-slate-500 flex-shrink-0">{label}</span>
-              <span className="font-medium text-slate-900 text-right">{valor}</span>
+            <div key={i} className="flex justify-between items-start py-1 border-b border-borda last:border-0 gap-4">
+              <span className="text-texto-fraco flex-shrink-0">{label}</span>
+              <span className="font-medium text-tinta text-right">{valor}</span>
             </div>
           ))}
         </CardContent>
@@ -120,8 +120,8 @@ export default function ChecklistDetalhe() {
           {CHECKLIST_CAMPOS.map(campo => {
             const valor = checklist[campo.key];
             return (
-              <div key={campo.key} className={`flex items-center justify-between p-2.5 rounded-lg ${valor === "Não" ? "bg-red-50" : valor === "N/A" ? "bg-slate-50" : "bg-green-50/40"}`}>
-                <span className="text-sm text-slate-700 flex-1">{campo.label}</span>
+              <div key={campo.key} className={`flex items-center justify-between p-2.5 rounded-token ${valor === "Não" ? "bg-erro-suave" : valor === "N/A" ? "bg-fundo" : "bg-ok-suave/40"}`}>
+                <span className="text-sm text-tinta-media flex-1">{campo.label}</span>
                 <RespostaBadge valor={valor} />
               </div>
             );
@@ -134,7 +134,7 @@ export default function ChecklistDetalhe() {
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">3. Observações</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap">{checklist.observacoes}</p>
+            <p className="text-sm text-tinta-media whitespace-pre-wrap">{checklist.observacoes}</p>
           </CardContent>
         </Card>
       )}

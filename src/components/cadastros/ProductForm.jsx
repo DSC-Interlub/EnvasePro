@@ -41,8 +41,8 @@ export default function ProductForm({ product, onClose }) {
   };
 
   return (
-    <Card className="border-slate-200 shadow-lg">
-      <CardHeader className="border-b border-slate-100">
+    <Card className="border-borda shadow-cartao">
+      <CardHeader className="border-b border-borda">
         <div className="flex justify-between items-center">
           <CardTitle>{product ? "Editar Produto" : "Novo Produto"}</CardTitle>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -113,11 +113,11 @@ export default function ProductForm({ product, onClose }) {
           </div>
 
           {/* Certificações */}
-          <div className="space-y-3 pt-4 border-t border-slate-200">
+          <div className="space-y-3 pt-4 border-t border-borda">
             <Label className="text-base font-semibold">Certificações</Label>
             
             <div className="space-y-3">
-              <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center space-x-3 p-3 bg-marca-suave rounded-token border border-marca-suave-2">
                 <Checkbox
                   id="nsf_3h"
                   checked={formData.nsf_3h}
@@ -127,12 +127,12 @@ export default function ProductForm({ product, onClose }) {
                   htmlFor="nsf_3h"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
                 >
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <CheckCircle className="w-4 h-4 text-marca" />
                   NSF 3H
                 </label>
               </div>
 
-              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-center space-x-3 p-3 bg-ok-suave rounded-token border border-ok">
                 <Checkbox
                   id="nsf_h1"
                   checked={formData.nsf_h1}
@@ -142,12 +142,12 @@ export default function ProductForm({ product, onClose }) {
                   htmlFor="nsf_h1"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
                 >
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <CheckCircle className="w-4 h-4 text-ok" />
                   NSF H1
                 </label>
               </div>
 
-              <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-token border border-purple-200">
                 <Checkbox
                   id="halal"
                   checked={formData.halal}
@@ -162,7 +162,7 @@ export default function ProductForm({ product, onClose }) {
                 </label>
               </div>
 
-              <div className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="flex items-center space-x-3 p-3 bg-fundo rounded-token border border-borda">
                 <Checkbox
                   id="kosher"
                   checked={formData.kosher}
@@ -172,7 +172,7 @@ export default function ProductForm({ product, onClose }) {
                   htmlFor="kosher"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
                 >
-                  <CheckCircle className="w-4 h-4 text-slate-600" />
+                  <CheckCircle className="w-4 h-4 text-texto-fraco" />
                   KOSHER
                 </label>
               </div>

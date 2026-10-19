@@ -98,16 +98,16 @@ export default function NovaNotaFiscal() {
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/NotasFiscais")}>
+        <Button aria-label="Voltar" variant="ghost" size="icon" onClick={() => navigate("/NotasFiscais")}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-xl font-bold text-slate-900">Arquivar Notas Fiscais</h1>
+        <h1 className="text-xl font-bold text-tinta">Arquivar Notas Fiscais</h1>
       </div>
 
       {/* Botões de upload */}
       <Card>
         <CardContent className="p-5 space-y-3">
-          <p className="text-sm text-slate-600 font-medium">Selecione as fotos das NFs</p>
+          <p className="text-sm text-texto-fraco font-medium">Selecione as fotos das NFs</p>
           <div className="flex gap-3 flex-wrap">
             <Button
               variant="outline"
@@ -124,7 +124,7 @@ export default function NovaNotaFiscal() {
               <Camera className="w-4 h-4" /> Tirar Foto
             </Button>
           </div>
-          <p className="text-xs text-slate-400">Você pode selecionar várias fotos de uma vez da galeria.</p>
+          <p className="text-xs text-texto-apagado">Você pode selecionar várias fotos de uma vez da galeria.</p>
 
           {/* inputs escondidos */}
           <input
@@ -150,17 +150,17 @@ export default function NovaNotaFiscal() {
       {itens.length > 0 && (
         <div className="space-y-3">
           {itens.map((item) => (
-            <Card key={item.id} className={`border ${item.status === "ok" ? "border-green-300 bg-green-50" : item.status === "erro" ? "border-red-300 bg-red-50" : "border-slate-200"}`}>
+            <Card key={item.id} className={`border ${item.status === "ok" ? "border-ok bg-ok-suave" : item.status === "erro" ? "border-erro bg-erro-suave" : "border-borda"}`}>
               <CardContent className="p-4 flex gap-3 items-start">
                 {/* Preview */}
-                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
+                <div className="w-16 h-16 rounded-token overflow-hidden flex-shrink-0 bg-fundo">
                   {item.preview && (
                     <img src={item.preview} alt="" className="w-full h-full object-cover" />
                   )}
                 </div>
                 {/* Campo número */}
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs text-slate-500 font-medium">Número da NF</label>
+                  <label className="text-xs text-texto-fraco font-medium">Número da NF</label>
                   <Input
                     value={item.numero_nf}
                     onChange={e => atualizarNumero(item.id, e.target.value)}
@@ -168,16 +168,16 @@ export default function NovaNotaFiscal() {
                     disabled={item.status === "ok" || item.status === "enviando"}
                     className="h-9"
                   />
-                  <p className="text-xs text-slate-400 truncate">{item.file.name}</p>
+                  <p className="text-xs text-texto-apagado truncate">{item.file.name}</p>
                 </div>
                 {/* Status / remover */}
                 <div className="flex-shrink-0 flex items-center">
-                  {item.status === "ok" && <CheckCircle2 className="w-5 h-5 text-green-500" />}
-                  {item.status === "enviando" && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
-                  {item.status === "erro" && <span className="text-xs text-red-500">Erro</span>}
+                  {item.status === "ok" && <CheckCircle2 className="w-5 h-5 text-ok" />}
+                  {item.status === "enviando" && <Loader2 className="w-5 h-5 text-marca animate-spin" />}
+                  {item.status === "erro" && <span className="text-xs text-erro">Erro</span>}
                   {(item.status === "pendente" || item.status === "erro") && (
-                    <Button variant="ghost" size="icon" className="w-7 h-7 ml-1" onClick={() => remover(item.id)}>
-                      <X className="w-4 h-4 text-slate-400" />
+                    <Button variant="ghost" size="icon" className="w-7 h-12 ml-1" onClick={() => remover(item.id)}>
+                      <X className="w-4 h-4 text-texto-apagado" />
                     </Button>
                   )}
                 </div>
@@ -188,7 +188,7 @@ export default function NovaNotaFiscal() {
           {/* Ações */}
           <div className="flex gap-3 pt-1">
             {todosOk ? (
-              <Button className="flex-1 bg-green-600 hover:bg-green-700 gap-2" onClick={() => navigate("/NotasFiscais")}>
+              <Button className="flex-1 bg-ok hover:bg-ok gap-2" onClick={() => navigate("/NotasFiscais")}>
                 <CheckCircle2 className="w-4 h-4" /> Concluído — Ver arquivo
               </Button>
             ) : (
@@ -209,7 +209,7 @@ export default function NovaNotaFiscal() {
       {itens.length === 0 && (
         <Card>
           <CardContent className="p-5 space-y-3">
-            <p className="text-sm text-slate-600 font-medium">Ou arquive apenas pelo número (sem foto)</p>
+            <p className="text-sm text-texto-fraco font-medium">Ou arquive apenas pelo número (sem foto)</p>
             <SemFotoForm user={user} onSalvo={() => navigate("/NotasFiscais")} />
           </CardContent>
         </Card>

@@ -8,12 +8,26 @@ const Checkbox = React.forwardRef(({ className, ...props }, ref) => (
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      "peer h-4 w-4 shrink-0 rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+      // 22px de desenho dentro de 48px de area tocavel: o quadrado pequeno
+      // fica legivel e o dedo tem onde acertar. A marca pinta quando marcado.
+      //
+      // FUNDO BRANCO COM FIO DE BORDA, e nao `bg-fundo` liso: a caixa precisa
+      // aparecer em QUALQUER superficie. Com `bg-fundo` ela some quando o pai
+      // tambem e `bg-fundo` — foi o que aconteceu com "Pedido critico" no
+      // cartao de check-out, onde sobrava uma pilula vazia sem caixa nenhuma,
+      // e quem olhava nao tinha como saber se estava marcado.
+      "peer relative h-[22px] w-[22px] shrink-0 rounded-[7px] bg-cartao outline-none",
+      "ring-1 ring-inset ring-borda",
+      "before:absolute before:-inset-[13px] before:content-['']",
+      "transition-[background-color,box-shadow]",
+      "focus-visible:shadow-foco",
+      "disabled:cursor-not-allowed disabled:opacity-50",
+      "data-[state=checked]:bg-marca data-[state=checked]:text-white data-[state=checked]:ring-marca",
       className
     )}
     {...props}>
     <CheckboxPrimitive.Indicator className={cn("flex items-center justify-center text-current")}>
-      <Check className="h-4 w-4" />
+      <Check className="h-4 w-4" strokeWidth={3} />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ))

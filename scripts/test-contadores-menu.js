@@ -45,6 +45,17 @@ const diaRelativo = (n) => {
   return d.toISOString().slice(0, 10);
 };
 
+/** Todas as linhas de uma tabela, em páginas de 1.000 (o max_rows do PostgREST). */
+async function lerTudo(cliente, tabela) {
+  const todas = [];
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await cliente.from(tabela).select('*').order('id').range(de, de + 999);
+    if (error) throw new Error(`${tabela}: ${error.message}`);
+    todas.push(...data);
+    if (data.length < 1000) return todas;
+  }
+}
+
 async function limpar() {
   await db.from('empilha_ocorrencias').delete().like('descricao', `${MARCA}%`);
   await db.from('empilhadeira_paradas').delete().like('descricao', `${MARCA}%`);
@@ -226,16 +237,14 @@ try {
 
   // ------------------------------------------------------------- 2. PARIDADE
   console.log('\n[2] PARIDADE: banco x conta antiga do navegador, mesmos dados');
+  // Paginado, como o `list()` do adaptador que o menu antigo usava. Sem isto
+  // o PostgREST corta em 1.000 linhas (max_rows) e, com o banco no volume
+  // da Base44, o lado "navegador" contava só as primeiras 1.000.
   const [linhas, ocorrencias, paradas, empilhadeiras, limpezas, recebimentos, recOcorrencias] =
     await Promise.all([
-      admin.from('empilha_linhas').select('*'),
-      admin.from('empilha_ocorrencias').select('*'),
-      admin.from('empilhadeira_paradas').select('*'),
-      admin.from('empilhadeira_configs').select('*'),
-      admin.from('limpeza_programacoes').select('*'),
-      admin.from('recebimentos').select('*'),
-      admin.from('recebimento_ocorrencias').select('*'),
-    ]).then(rs => rs.map(r => r.data ?? []));
+      'empilha_linhas', 'empilha_ocorrencias', 'empilhadeira_paradas', 'empilhadeira_configs',
+      'limpeza_programacoes', 'recebimentos', 'recebimento_ocorrencias',
+    ].map(t => lerTudo(admin, t)));
 
   const antigo = contarComoAntes({ linhas, ocorrencias, paradas, empilhadeiras, limpezas, recebimentos, recOcorrencias });
 
@@ -323,7 +332,7 @@ try {
 
   // Direitos do invocador: o operador le pelas MESMAS regras de RLS. Se a
   // funcao fosse SECURITY DEFINER, ela contaria linhas que o RLS esconde.
-  const linhasOp = (await operador.from('empilha_linhas').select('*')).data ?? [];
+  const linhasOp = await lerTudo(operador, 'empilha_linhas');
   const esperadoOp = linhasOp.filter(l => l.status === 'Concluído' && !l.assinatura_lider).length;
   const doBancoOp = Array.isArray(rpcOp) ? rpcOp[0] : rpcOp;
   checar('operador: a contagem respeita o RLS dele (direitos do invocador)',

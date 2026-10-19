@@ -1,79 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Warehouse, User, MapPin, Package, Clock, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { MolduraTV, NumeroTV, MetaTV, StatusTV, GradeOperacoes, usePainelTV, u } from "@/components/fluxo/tv";
+import { anelSimples } from "@/lib/metaNaTela";
 
 export default function TelevisaoEmpilha() {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  // Re-renderiza a cada segundo: é o que faz o "tempo decorrido" andar.
+  const [, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const today = format(new Date(), "yyyy-MM-dd");
+  // O painel do dia vem pronto do banco — public.painel_televisao_empilha()
+  // (Etapa 2). Antes eram três consultas a cada 10–15 s, baixando TODAS as
+  // programações e TODAS as ocorrências para mostrar o dia de hoje. Se a
+  // função ainda não existir no banco, o adaptador calcula o mesmo painel no
+  // navegador (src/lib/painelEmpilha.js).
+  const { painel, atualizacao } = usePainelTV("empilha", () => base44.functions.painelTelevisaoEmpilha());
 
-  const { data: programacoes } = useQuery({
-    queryKey: ["empilha-prog-tv"],
-    queryFn: () => base44.entities.EmpilhaProgramacao.list(),
-    refetchInterval: 10000,
-    initialData: [],
-  });
-
-  const { data: allLinhas } = useQuery({
-    queryKey: ["empilha-linhas-tv"],
-    queryFn: () => base44.entities.EmpilhaLinha.list("-updated_date", 200),
-    refetchInterval: 10000,
-    initialData: [],
-  });
-
+  // Os operadores servem só para a FOTO. Mudam raramente e a URL assinada
+  // vale 24 h: recarregar a cada 30 min basta.
   const { data: operators } = useQuery({
     queryKey: ["operators-tv"],
     queryFn: () => base44.entities.Operator.list(),
-    refetchInterval: 60000,
+    refetchInterval: 30 * 60000,
     initialData: [],
   });
 
-  const { data: ocorrencias } = useQuery({
-    queryKey: ["empilha-ocorrencias-tv"],
-    queryFn: () => base44.entities.EmpilhaOcorrencia.list("-data"),
-    refetchInterval: 15000,
-    initialData: [],
-  });
+  const linhasEmAndamento = painel?.operacoes ?? [];
+  const ehCritica = (l) => l.tipo_linha === "Crítico";
 
-  const progHoje = programacoes.filter(p => p.data_programada === today);
-  const progHojeIds = progHoje.map(p => p.id);
-  const linhasHoje = allLinhas.filter(l => progHojeIds.includes(l.programacao_id));
-
-  const linhasEmAndamento = linhasHoje
-    .filter(l => l.status === "Em Andamento")
-    .sort((a, b) => (b.critico ? 1 : 0) - (a.critico ? 1 : 0));
-
-  const ocorrenciasHoje = ocorrencias.filter(o => o.data === today && !o.resolvido);
-
-  // KPIs
-  const totalLinhas = linhasHoje.length;
-  const concluidas = linhasHoje.filter(l => l.status === "Concluído").length;
-  const emAndamento = linhasHoje.filter(l => l.status === "Em Andamento").length;
-  const criticosPendentes = linhasHoje.filter(l => l.critico && l.status !== "Concluído").length;
-
-  // Tempo médio
-  const linhasComTempo = linhasHoje.filter(l => l.tempo_total && l.status === "Concluído");
-  let tempoMedioMin = 0;
-  if (linhasComTempo.length > 0) {
-    const totalMins = linhasComTempo.reduce((sum, l) => {
-      const [h, m] = l.tempo_total.split(":").map(Number);
-      return sum + h * 60 + m;
-    }, 0);
-    tempoMedioMin = Math.round(totalMins / linhasComTempo.length);
-  }
+  // KPIs — as mesmas regras de antes, agora calculadas no banco.
+  const totalLinhas = painel?.total ?? 0;
+  const concluidas = painel?.concluidas ?? 0;
+  const emAndamento = painel?.em_andamento ?? 0;
+  const criticosPendentes = painel?.criticos_pendentes ?? 0;
+  const ocorrenciasAbertas = painel?.ocorrencias_abertas ?? 0;
+  const tempoMedioMin = painel?.tempo_medio_min ?? 0;
   const tempoMedio = tempoMedioMin > 0 ? `${Math.floor(tempoMedioMin / 60)}h${(tempoMedioMin % 60).toString().padStart(2, "0")}m` : "—";
 
-  const getOperatorPhoto = (nome) => operators.find(o => o.nome === nome)?.foto_url || null;
+  // Pelo id primeiro: o nome falha com homônimos (CLAUDE.md §6).
+  const getOperatorPhoto = (l) =>
+    (operators.find(o => o.id === l.operador_empilhadeira_id)
+      || operators.find(o => o.nome === l.operador_empilhadeira))?.foto_url || null;
 
   const calculateElapsed = (startTime) => {
     if (!startTime) return "—";
@@ -86,200 +57,142 @@ export default function TelevisaoEmpilha() {
     return `${hours}h ${mins.toString().padStart(2, "0")}m`;
   };
 
+  // ---------------------------------------------------------------------
+  // Reconstruido sobre o prototipo TV-fabrica.html, com os mesmos componentes
+  // da TV de envase. Os DADOS acima nao mudaram — as mesmas consultas, os
+  // mesmos filtros, os mesmos KPIs.
+  //
+  // O anel mede as linhas concluídas contra a META do dia, quando o admin
+  // lançou uma (tabela metas_diarias, tela /Metas); sem meta, mostra a fração
+  // concluída do dia, como antes.
+  // ---------------------------------------------------------------------
+  const situacoes = [
+    {
+      nome: 'Em andamento',
+      situacao: emAndamento > 0 ? `${emAndamento} linha(s) agora` : 'nenhuma linha ativa',
+      tom: emAndamento > 0 ? 'ok' : 'neutro',
+    },
+    {
+      nome: 'Críticos',
+      situacao: criticosPendentes > 0 ? `${criticosPendentes} pendente(s)` : 'nenhum pendente',
+      tom: criticosPendentes > 0 ? 'erro' : 'ok',
+    },
+    {
+      nome: 'Ocorrências',
+      situacao: ocorrenciasAbertas > 0 ? `${ocorrenciasAbertas} aberta(s)` : 'nenhuma aberta',
+      tom: ocorrenciasAbertas > 0 ? 'erro' : 'ok',
+    },
+    {
+      nome: 'Tempo médio',
+      situacao: tempoMedioMin > 0 ? `${tempoMedio} por linha` : 'sem linha concluída',
+      tom: 'neutro',
+    },
+  ];
+
+  // Cada linha em andamento, com o que a TV antiga mostrava (git 4ccc811^):
+  // empilhador com foto, AJUDANTE, produto, item, rua/torre, depósito,
+  // quantidade, crítico e tempo decorrido. Ajudante, rua/torre, item e
+  // quantidade tinham sumido na reconstrução do módulo 1.
+  const operacoes = linhasEmAndamento.map((l) => {
+    const critica = ehCritica(l);
+    const pausada = l.status === "Pausado";
+    return {
+      id: l.id,
+      tom: critica ? "erro" : pausada ? "atencao" : "neutro",
+      foto: getOperatorPhoto(l),
+      operador: l.operador_empilhadeira,
+      verbo: `${pausada ? "Pausado" : "Movimentando"}${l.operador_ajudante ? ` · com ${l.operador_ajudante}` : ""}`,
+      principal: l.descricao_produto || l.codigo_produto || "Linha",
+      detalhe: [
+        l.numero_item ? `Item ${l.numero_item}` : null,
+        l.rua_torre ? `Rua/torre ${l.rua_torre}` : null,
+        l.deposito ? `Depósito ${l.deposito}` : null,
+        Number(l.quantidade) > 0 ? `${Number(l.quantidade).toLocaleString("pt-BR")} un.` : null,
+      ].filter(Boolean).join(" · ") || null,
+      etiquetas: l.tipo_linha && !critica ? [{ texto: l.tipo_linha }] : [],
+      tempo: calculateElapsed(l.hora_inicio),
+      desde: l.hora_inicio ? String(l.hora_inicio).slice(0, 5) : null,
+      alerta: critica ? { texto: "CRÍTICO", tom: "erro" } : pausada ? { texto: "PAUSADA", tom: "atencao" } : null,
+    };
+  });
+
+  // A ocorrência mais recente vai na pílula: a TV antiga listava as abertas
+  // com tipo e hora, e a reconstrução tinha reduzido isso a um número no
+  // rodapé. A descrição inteira continua na tela do módulo.
+  const ultimaOcorrencia = painel?.ultima_ocorrencia;
+  const numeros = [
+    {
+      rotulo: "Críticos pendentes", valor: criticosPendentes, tom: "erro",
+      pilula: criticosPendentes > 0 ? "prioridade" : "nenhum crítico",
+      pilulaTom: criticosPendentes > 0 ? "erro" : "atencao",
+    },
+    {
+      rotulo: "Ocorrências abertas", valor: ocorrenciasAbertas, tom: "erro",
+      pilula: ultimaOcorrencia
+        ? `${ultimaOcorrencia.tipo || "ocorrência"}${ultimaOcorrencia.hora ? ` · ${String(ultimaOcorrencia.hora).slice(0, 5)}` : ""}`
+        : "nenhuma aberta",
+      pilulaTom: ultimaOcorrencia ? "erro" : "atencao",
+    },
+  ];
+  // Com meta de linhas (tabela metas_diarias), o anel mede contra ela; sem
+  // meta, a fração concluída do dia, como antes (src/lib/metaNaTela.js).
+  const anel = anelSimples({
+    concluidos: concluidas, total: totalLinhas, meta: painel?.meta ?? null,
+    unidade: "linhas", emAberto: totalLinhas - concluidas, rotuloAberto: "em aberto",
+  });
+  const meta = {
+    rotulo: "Concluídas",
+    valor: anel.valor,
+    // `meta`, não `total`: é o nome que o MetaTV lê. Com `total` o anel ficava
+    // sempre em 0% (defeito do PR #24, achado pelo teste da Etapa 2).
+    meta: anel.total,
+    unidade: "linhas",
+    legenda: anel.legenda,
+  };
+
   return (
-    <div className="min-h-screen h-screen bg-gradient-to-br from-slate-950 via-amber-950 to-slate-950 p-3 overflow-hidden flex flex-col">
-      <style>{`
-        @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
-        .animate-pulse-slow { animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-slide-up { animation: slide-up 0.5s ease-out; }
-      `}</style>
-
-      <div className="max-w-[1920px] mx-auto w-full flex flex-col h-full gap-2">
-        {/* Header */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-amber-600 via-amber-700 to-orange-700 rounded-2xl p-3 shadow-xl flex-shrink-0">
-          <div className="relative flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <Warehouse className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-black text-white tracking-tight">Empilhadeira — Interlub</h1>
-                <p className="text-amber-100 text-sm font-medium">
-                  {format(currentTime, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                </p>
-              </div>
-            </div>
-            <div className="text-4xl font-black text-white font-mono tabular-nums">
-              {format(currentTime, "HH:mm:ss")}
+    <MolduraTV
+      titulo="Movimentação de hoje"
+      modulo="Empilhadeira"
+      atualizacao={atualizacao}
+      rodape={situacoes.map((s, i) => (
+        <StatusTV key={s.nome} nome={s.nome} situacao={s.situacao} tom={s.tom} atraso={0.45 + i * 0.05} />
+      ))}
+    >
+      {operacoes.length > 0 ? (
+        // Com linhas em andamento: elas no centro (2/3), anel e números ao lado.
+        <div
+          className="grid min-h-0 flex-1"
+          style={{ gap: u(1.3), gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" }}
+        >
+          <GradeOperacoes
+            titulo="Linhas em andamento"
+            contagem={`${operacoes.length} ${operacoes.length === 1 ? "linha" : "linhas"}`}
+            itens={operacoes}
+          />
+          <div
+            className="grid min-h-0 min-w-0"
+            style={{ gap: u(1.3), gridTemplateRows: "minmax(0, 1.15fr) minmax(0, 1fr)" }}
+          >
+            <MetaTV compacto {...meta} />
+            <div
+              className="grid min-h-0 min-w-0"
+              style={{ gap: u(1.3), gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)" }}
+            >
+              {numeros.map((n, i) => <NumeroTV key={n.rotulo} compacto {...n} atraso={0.15 + i * 0.1} />)}
             </div>
           </div>
         </div>
-
-        {/* KPIs */}
-        <div className="grid grid-cols-5 gap-2 flex-shrink-0">
-          {[
-            { label: "Total Linhas", value: totalLinhas, color: "from-slate-600 to-slate-700" },
-            { label: "Concluídas", value: concluidas, color: "from-emerald-500 to-emerald-600" },
-            { label: "Em Andamento", value: emAndamento, color: "from-blue-500 to-blue-600" },
-            { label: "Críticos Pend.", value: criticosPendentes, color: "from-red-500 to-red-600" },
-            { label: "Tempo Médio", value: tempoMedio, color: "from-purple-500 to-purple-600" },
-          ].map(({ label, value, color }) => (
-            <Card key={label} className={`bg-gradient-to-br ${color} border-0 shadow-lg`}>
-              <CardContent className="p-2">
-                <p className="text-white/80 text-[10px] font-semibold">{label}</p>
-                <p className="text-2xl font-black text-white tabular-nums">{value}</p>
-              </CardContent>
-            </Card>
-          ))}
+      ) : (
+        // Sem linhas: o layout grande do protótipo.
+        <div
+          className="grid min-h-0 flex-1"
+          style={{ gap: u(1.3), gridTemplateColumns: "minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr)" }}
+        >
+          <MetaTV {...meta} />
+          {numeros.map((n, i) => <NumeroTV key={n.rotulo} {...n} atraso={0.15 + i * 0.15} />)}
         </div>
-
-        {/* Linhas em andamento */}
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
-          <div className="flex items-center gap-2 px-1">
-            <div className="w-1 h-6 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
-            <h2 className="text-xl font-black text-white flex items-center gap-2">
-              <Warehouse className="w-5 h-5 text-amber-400" />
-              EM ANDAMENTO ({linhasEmAndamento.length})
-            </h2>
-          </div>
-
-          {linhasEmAndamento.length === 0 ? (
-            <Card className="bg-slate-900/50 border-slate-700">
-              <CardContent className="p-6 text-center">
-                <Warehouse className="w-10 h-10 mx-auto text-slate-600 mb-2" />
-                <p className="text-slate-400 font-semibold">Nenhuma linha em andamento</p>
-              </CardContent>
-            </Card>
-          ) : (
-            linhasEmAndamento.map((linha, index) => {
-              const foto1 = getOperatorPhoto(linha.operador_empilhadeira);
-              const foto2 = getOperatorPhoto(linha.operador_ajudante);
-              return (
-                <Card
-                  key={linha.id}
-                  className={`backdrop-blur-xl shadow-xl animate-slide-up ${
-                    linha.critico
-                      ? "bg-gradient-to-r from-red-900/90 to-red-800/90 border-l-4 border-red-500"
-                      : "bg-gradient-to-r from-slate-900/90 to-slate-800/90 border-l-4 border-amber-500"
-                  }`}
-                  style={{ animationDelay: `${index * 80}ms` }}
-                >
-                  <CardContent className="p-3">
-                    <div className="grid grid-cols-7 gap-3 items-center">
-                      {/* Status crítico */}
-                      <div>
-                        {linha.critico && (
-                          <Badge className="bg-red-600 text-white text-xs font-black flex items-center gap-1 animate-pulse-slow w-fit">
-                            <AlertCircle className="w-3 h-3" /> CRÍTICO
-                          </Badge>
-                        )}
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mt-1">Depósito</p>
-                        <p className="text-lg font-black text-white">{linha.deposito || "—"}</p>
-                        <p className="text-slate-300 text-sm flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {linha.rua_torre || "—"}
-                        </p>
-                      </div>
-
-                      {/* Produto */}
-                      <div className="col-span-2">
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Produto</p>
-                        <p className="text-xl font-bold text-white leading-tight">{linha.descricao_produto || "Sem descrição"}</p>
-                        {linha.numero_item && (
-                          <p className="text-slate-400 font-mono text-xs mt-1">{linha.numero_item}</p>
-                        )}
-                        {linha.quantidade && (
-                          <p className="text-amber-400 font-semibold text-sm">{linha.quantidade} un.</p>
-                        )}
-                      </div>
-
-                      {/* Empilhador */}
-                      <div>
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Empilhador</p>
-                        <div className="flex items-center gap-2">
-                          {foto1 ? (
-                            <img src={foto1} alt={linha.operador_empilhadeira} className="w-10 h-10 rounded-full object-cover border-2 border-amber-400" />
-                          ) : (
-                            <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center">
-                              <User className="w-5 h-5 text-amber-400" />
-                            </div>
-                          )}
-                          <p className="text-base font-black text-white leading-tight">{linha.operador_empilhadeira || "—"}</p>
-                        </div>
-                      </div>
-
-                      {/* Ajudante */}
-                      <div>
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Ajudante</p>
-                        {linha.operador_ajudante && linha.operador_ajudante !== "nenhum" ? (
-                          <div className="flex items-center gap-2">
-                            {foto2 ? (
-                              <img src={foto2} alt={linha.operador_ajudante} className="w-9 h-9 rounded-full object-cover border-2 border-slate-400" />
-                            ) : (
-                              <div className="w-9 h-9 bg-slate-500/20 rounded-full flex items-center justify-center">
-                                <User className="w-4 h-4 text-slate-400" />
-                              </div>
-                            )}
-                            <p className="text-base font-bold text-slate-300 leading-tight">{linha.operador_ajudante}</p>
-                          </div>
-                        ) : (
-                          <p className="text-slate-500 text-sm">—</p>
-                        )}
-                      </div>
-
-                      {/* Tempo */}
-                      <div className="col-span-2 text-right">
-                        <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Tempo Decorrido</p>
-                        <div className="flex items-center justify-end gap-2">
-                          <Clock className={`w-7 h-7 ${linha.critico ? "text-red-400" : "text-amber-400"} animate-pulse-slow`} />
-                          <div>
-                            <p className={`text-5xl font-black ${linha.critico ? "text-red-400" : "text-amber-400"} font-mono tabular-nums leading-tight`}>
-                              {calculateElapsed(linha.hora_inicio)}
-                            </p>
-                            {linha.hora_inicio && (
-                              <p className="text-slate-400 text-[10px] font-semibold mt-1">desde {linha.hora_inicio}</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-
-          {/* Ocorrências não resolvidas */}
-          {ocorrenciasHoje.length > 0 && (
-            <div className="mt-2">
-              <div className="flex items-center gap-2 px-1 mb-2">
-                <div className="w-1 h-5 bg-orange-500 rounded-full"></div>
-                <h2 className="text-base font-black text-orange-400 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" /> OCORRÊNCIAS NÃO RESOLVIDAS ({ocorrenciasHoje.length})
-                </h2>
-              </div>
-              <div className="grid gap-2">
-                {ocorrenciasHoje.slice(0, 3).map(o => (
-                  <Card key={o.id} className="bg-orange-900/40 border-l-4 border-orange-500 backdrop-blur-xl">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-3">
-                        <AlertTriangle className="w-5 h-5 text-orange-400 flex-shrink-0" />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-orange-700 text-white text-xs">{o.tipo}</Badge>
-                            <span className="text-orange-300 text-xs">{o.hora} — {o.registrado_por}</span>
-                          </div>
-                          <p className="text-white text-sm font-medium mt-0.5">{o.descricao}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+      )}
+    </MolduraTV>
   );
 }

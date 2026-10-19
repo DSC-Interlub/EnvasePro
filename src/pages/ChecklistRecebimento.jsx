@@ -16,6 +16,7 @@ import ChecklistNotaBadge from "@/components/checklist/ChecklistNotaBadge";
 import AbaBaseSAP from "@/components/checklist/AbaBaseSAP";
 import IndicadoresChecklist from "@/components/checklist/IndicadoresChecklist";
 import { corTexto } from "@/lib/checklist";
+import { PageHeader } from "@/components/fluxo";
 
 export default function ChecklistRecebimento() {
   const navigate = useNavigate();
@@ -69,25 +70,22 @@ export default function ChecklistRecebimento() {
   const inspetores = [...new Set(checklists.flatMap(c => c.inspecionado_por || []))].sort();
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-marca rounded-xl flex items-center justify-center">
-            <ClipboardCheck className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Checklist de Recebimento</h1>
-            <p className="text-sm text-slate-500">Controle de qualidade no recebimento de materiais</p>
-          </div>
-        </div>
-        <Button onClick={() => navigate("/NovoChecklist")} className="bg-marca hover:bg-marca-forte">
-          <Plus className="w-4 h-4 mr-2" />Novo Checklist
-        </Button>
-      </div>
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
+      <div className="mx-auto flex min-w-0 max-w-6xl flex-col gap-4">
+        <PageHeader
+          migalha={[{ rotulo: "Recebimento" }, { rotulo: "Checklist" }]}
+          titulo="Checklist de recebimento"
+          legenda="Controle de qualidade na entrada de materiais"
+          acoes={
+            <Button size="lg" onClick={() => navigate("/NovoChecklist")}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Novo checklist
+            </Button>
+          }
+        />
 
       <Tabs defaultValue="checklists">
-        <TabsList className="bg-white border border-slate-200">
+        <TabsList className="bg-cartao border border-borda">
           <TabsTrigger value="checklists" className="flex items-center gap-2">
             <ClipboardCheck className="w-4 h-4" /> Checklists
           </TabsTrigger>
@@ -108,39 +106,39 @@ export default function ChecklistRecebimento() {
           {/* Filtros de período */}
           <div className="flex flex-wrap gap-2 items-center">
             {[["semana", "Esta semana"], ["mes", "Este mês"], ["ano", "Este ano"]].map(([k, l]) => (
-              <Button key={k} size="sm" variant="outline" className="text-xs h-7 px-2" onClick={() => setFiltro(k)}>{l}</Button>
+              <Button key={k} size="sm" variant="outline" className="text-xs h-12 px-2" onClick={() => setFiltro(k)}>{l}</Button>
             ))}
-            <Input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-7 text-xs w-36" />
-            <span className="text-slate-400 text-xs">até</span>
-            <Input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="h-7 text-xs w-36" />
+            <Input aria-label="Data inicial" type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="h-12 text-xs w-36" />
+            <span className="text-texto-apagado text-xs">até</span>
+            <Input aria-label="Data final" type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="h-12 text-xs w-36" />
           </div>
 
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 text-center shadow-sm">
-              <p className="text-xs text-slate-500">Total de Checklists</p>
-              <p className="text-3xl font-bold text-slate-700">{totalChecklists}</p>
+            <div className="bg-cartao rounded-painel border border-borda p-4 text-center shadow-cartao">
+              <p className="text-xs text-texto-fraco">Total de Checklists</p>
+              <p className="text-3xl font-bold text-tinta-media">{totalChecklists}</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 text-center shadow-sm">
-              <p className="text-xs text-slate-500">Nota Média</p>
+            <div className="bg-cartao rounded-painel border border-borda p-4 text-center shadow-cartao">
+              <p className="text-xs text-texto-fraco">Nota Média</p>
               <p className={`text-3xl font-bold ${corTexto(notaMedia)}`}>{notaMedia}</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 text-center shadow-sm">
-              <p className="text-xs text-slate-500">% Conformidade</p>
-              <p className={`text-3xl font-bold ${percConformidade >= 80 ? "text-green-700" : percConformidade >= 60 ? "text-yellow-700" : "text-red-700"}`}>{percConformidade}%</p>
+            <div className="bg-cartao rounded-painel border border-borda p-4 text-center shadow-cartao">
+              <p className="text-xs text-texto-fraco">% Conformidade</p>
+              <p className={`text-3xl font-bold ${percConformidade >= 80 ? "text-ok" : percConformidade >= 60 ? "text-atencao" : "text-erro"}`}>{percConformidade}%</p>
             </div>
-            <div className="bg-white rounded-xl border border-red-200 bg-red-50 p-4 text-center shadow-sm">
-              <p className="text-xs text-red-600">Nota Negativa</p>
-              <p className="text-3xl font-bold text-red-700">{negativas}</p>
+            <div className="bg-cartao rounded-painel border border-erro bg-erro-suave p-4 text-center shadow-cartao">
+              <p className="text-xs text-erro">Nota Negativa</p>
+              <p className="text-3xl font-bold text-erro">{negativas}</p>
             </div>
           </div>
 
           {/* Filtros adicionais */}
           <div className="flex flex-wrap gap-2">
             <Input placeholder="Filtrar por fornecedor..." value={filterFornecedor}
-              onChange={e => setFilterFornecedor(e.target.value)} className="h-8 text-xs w-48" />
+              onChange={e => setFilterFornecedor(e.target.value)} className="h-12 text-xs w-48" />
             <Select value={filterMaterial} onValueChange={setFilterMaterial}>
-              <SelectTrigger className="h-8 text-xs w-44"><SelectValue placeholder="Material" /></SelectTrigger>
+              <SelectTrigger className="h-12 text-xs w-44"><SelectValue placeholder="Material" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="_all">Todos os materiais</SelectItem>
                 {["Spray", "Rótulo", "Embalagem", "Produto Interlub", "Matéria Prima (Terceiros)"].map(m => (
@@ -149,7 +147,7 @@ export default function ChecklistRecebimento() {
               </SelectContent>
             </Select>
             <Select value={filterInspetor} onValueChange={setFilterInspetor}>
-              <SelectTrigger className="h-8 text-xs w-44"><SelectValue placeholder="Inspetor" /></SelectTrigger>
+              <SelectTrigger className="h-12 text-xs w-44"><SelectValue placeholder="Inspetor" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="_all">Todos os inspetores</SelectItem>
                 {inspetores.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
@@ -158,36 +156,36 @@ export default function ChecklistRecebimento() {
           </div>
 
           {/* Lista */}
-          <Card className="shadow-sm">
-            <CardHeader className="border-b border-slate-100 pb-3">
+          <Card className="shadow-cartao">
+            <CardHeader className="border-b border-borda pb-3">
               <CardTitle className="text-base">Registros ({filtrados.length})</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-fundo">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500">Data Entrega</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500">Nº Pedido</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500">Fornecedor</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500">Material</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500">Inspetor(es)</th>
-                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-slate-500">Nota</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-texto-fraco">Data Entrega</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-texto-fraco">Nº Pedido</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-texto-fraco">Fornecedor</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-texto-fraco">Material</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-texto-fraco">Inspetor(es)</th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-texto-fraco">Nota</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtrados.map(c => (
-                      <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
+                      <tr key={c.id} className="border-t border-borda hover:bg-fundo cursor-pointer transition-colors"
                         onClick={() => navigate(`/ChecklistDetalhe?id=${c.id}`)}>
-                        <td className="px-4 py-3 text-xs text-slate-600">
+                        <td className="px-4 py-3 text-xs text-texto-fraco">
                           {c.data_entrega ? format(new Date(c.data_entrega + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                         </td>
                         <td className="px-4 py-3 font-mono text-xs font-semibold">{c.numero_pedido_compras}</td>
                         <td className="px-4 py-3 text-xs max-w-[180px] truncate">{c.nome_fornecedor}</td>
                         <td className="px-4 py-3 text-xs">
-                          <Badge className="text-[10px] bg-slate-100 text-slate-700">{c.material_recebimento}</Badge>
+                          <Badge className="text-[10px] bg-fundo text-tinta-media">{c.material_recebimento}</Badge>
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-600 max-w-[160px] truncate">
+                        <td className="px-4 py-3 text-xs text-texto-fraco max-w-[160px] truncate">
                           {(c.inspecionado_por || []).join(", ") || "—"}
                         </td>
                         <td className="px-4 py-3 text-center">
@@ -197,7 +195,7 @@ export default function ChecklistRecebimento() {
                     ))}
                     {filtrados.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="py-12 text-center text-slate-400">
+                        <td colSpan={6} className="py-12 text-center text-texto-apagado">
                           <ClipboardCheck className="w-8 h-8 mx-auto mb-2 opacity-30" />
                           Nenhum checklist encontrado no período
                         </td>
@@ -224,6 +222,7 @@ export default function ChecklistRecebimento() {
           </TabsContent>
         )}
       </Tabs>
+      </div>
     </div>
   );
 }

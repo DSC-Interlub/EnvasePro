@@ -107,7 +107,7 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PenLine className="w-5 h-5 text-blue-600" />
+            <PenLine className="w-5 h-5 text-marca" />
             Assinatura — {programacao.local_nome}
           </DialogTitle>
         </DialogHeader>
@@ -115,35 +115,35 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
         {/* Etapa responsáveis */}
         {etapa === "responsaveis" && (
           <div className="space-y-4 py-2">
-            <p className="text-sm text-slate-500">Cada responsável deve assinar individualmente.</p>
+            <p className="text-sm text-texto-fraco">Cada responsável deve assinar individualmente.</p>
 
             {/* Já assinaram */}
             {assinados.map(a => (
-              <div key={a.id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+              <div key={a.id} className="flex items-center gap-3 p-3 bg-ok-suave rounded-token border border-ok">
+                <CheckCircle className="w-4 h-4 text-ok shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-green-800">{a.nome}</p>
-                  <p className="text-xs text-green-600 flex items-center gap-1"><Clock className="w-3 h-3" />{a.hora}</p>
+                  <p className="text-sm font-medium text-ok">{a.nome}</p>
+                  <p className="text-xs text-ok flex items-center gap-1"><Clock className="w-3 h-3" />{a.hora}</p>
                 </div>
               </div>
             ))}
 
             {/* Pendentes */}
             {pendentes.map(a => (
-              <div key={a.id} className="border border-slate-200 rounded-lg overflow-hidden">
-                <div className="flex items-center justify-between p-3 bg-slate-50">
-                  <span className="text-sm font-medium text-slate-700">{a.nome}</span>
+              <div key={a.id} className="border border-borda rounded-token overflow-hidden">
+                <div className="flex items-center justify-between p-3 bg-fundo">
+                  <span className="text-sm font-medium text-tinta-media">{a.nome}</span>
                   {assinandoId !== a.id && (
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setAssinandoId(a.id); setConfirmado(false); }}>
+                    <Button size="sm" variant="outline" className="h-12 text-xs" onClick={() => { setAssinandoId(a.id); setConfirmado(false); }}>
                       Assinar
                     </Button>
                   )}
                 </div>
                 {assinandoId === a.id && (
-                  <div className="p-3 space-y-3 border-t border-slate-200">
-                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="p-3 space-y-3 border-t border-borda">
+                    <div className="flex items-center gap-3 p-3 bg-marca-suave rounded-token border border-marca-suave-2">
                       <Checkbox id={`confirma-${a.id}`} checked={confirmado} onCheckedChange={setConfirmado} />
-                      <label htmlFor={`confirma-${a.id}`} className="text-sm text-blue-800 cursor-pointer">
+                      <label htmlFor={`confirma-${a.id}`} className="text-sm text-marca cursor-pointer">
                         Confirmo que realizei a limpeza conforme programado.
                       </label>
                     </div>
@@ -169,24 +169,24 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
         {/* Etapa líder */}
         {etapa === "lider" && (
           <div className="space-y-4 py-2">
-            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="p-3 bg-ok-suave rounded-token border border-ok">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <p className="text-sm font-medium text-green-800">Todos os responsáveis assinaram</p>
+                <CheckCircle className="w-4 h-4 text-ok" />
+                <p className="text-sm font-medium text-ok">Todos os responsáveis assinaram</p>
               </div>
               {assinados.map(a => (
-                <p key={a.id} className="text-xs text-green-600 ml-6">{a.nome} — {a.hora}</p>
+                <p key={a.id} className="text-xs text-ok ml-6">{a.nome} — {a.hora}</p>
               ))}
             </div>
 
-            <p className="text-sm text-slate-600">Assinatura do líder (somente admin)</p>
+            <p className="text-sm text-texto-fraco">Assinatura do líder (somente admin)</p>
 
             {programacao.assinatura_lider ? (
-              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                <CheckCircle className="w-4 h-4 text-green-600" />
+              <div className="flex items-center gap-3 p-3 bg-ok-suave rounded-token border border-ok">
+                <CheckCircle className="w-4 h-4 text-ok" />
                 <div>
-                  <p className="text-sm font-medium text-green-800">Líder já assinou</p>
-                  <p className="text-xs text-green-600">{programacao.assinatura_lider_nome} — {programacao.assinatura_lider_hora}</p>
+                  <p className="text-sm font-medium text-ok">Líder já assinou</p>
+                  <p className="text-xs text-ok">{programacao.assinatura_lider_nome} — {programacao.assinatura_lider_hora}</p>
                 </div>
               </div>
             ) : isAdmin ? (
@@ -197,15 +197,15 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={onClose}>Fechar</Button>
-                  <Button className="bg-green-600 hover:bg-green-700" onClick={handleAssinarLider}
+                  <Button className="bg-ok hover:bg-ok" onClick={handleAssinarLider}
                     disabled={!nomeLider || mutation.isPending}>
                     Assinar como Líder
                   </Button>
                 </DialogFooter>
               </>
             ) : (
-              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <p className="text-sm text-amber-700">Aguardando assinatura do líder (somente admins podem assinar).</p>
+              <div className="p-3 bg-atencao-suave rounded-token border border-atencao">
+                <p className="text-sm text-atencao">Aguardando assinatura do líder (somente admins podem assinar).</p>
               </div>
             )}
 

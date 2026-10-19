@@ -59,26 +59,26 @@ export default function GerenciarUsuarios() {
   const roleLabel = (role) => role === "admin" ? "Admin" : "Operador";
   const roleBadge = (role) =>
     role === "admin"
-      ? "bg-blue-100 text-blue-800 border-blue-200"
-      : "bg-slate-100 text-slate-700 border-slate-200";
+      ? "bg-marca-suave text-marca border-marca-suave-2"
+      : "bg-fundo text-tinta-media border-borda";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-fundo p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-marca rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-marca rounded-painel flex items-center justify-center">
             <Settings className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Configurações</h1>
-            <p className="text-sm text-slate-500">Gerencie usuários, locais e programações de limpeza</p>
+            <h1 className="text-2xl font-bold text-tinta">Configurações</h1>
+            <p className="text-sm text-texto-fraco">Gerencie usuários, locais e programações de limpeza</p>
           </div>
         </div>
 
         <Tabs defaultValue={abaInicial}>
-          <TabsList className="bg-white border border-slate-200 flex-wrap h-auto gap-1">
+          <TabsList className="bg-cartao border border-borda flex-wrap h-auto gap-1">
             <TabsTrigger value="usuarios" className="flex items-center gap-2">
               <Users className="w-4 h-4" /> Usuários
             </TabsTrigger>
@@ -102,41 +102,41 @@ export default function GerenciarUsuarios() {
 
           {/* ABA USUÁRIOS */}
           <TabsContent value="usuarios" className="space-y-4 mt-4">
-            <Alert className="border-blue-200 bg-blue-50">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800 text-sm">
+            <Alert className="border-marca-suave-2 bg-marca-suave">
+              <Info className="h-4 w-4 text-marca" />
+              <AlertDescription className="text-marca text-sm">
                 <strong>Admin:</strong> Acesso total — criar programações, ver indicadores, assinar como líder, gerenciar configurações.<br />
                 <strong>Operador:</strong> Executar linhas, registrar ocorrências, assinar como operador/ajudante.
               </AlertDescription>
             </Alert>
-            <Card className="border-slate-200 shadow-md">
-              <CardHeader className="border-b border-slate-100">
+            <Card className="border-borda shadow-cartao">
+              <CardHeader className="border-b border-borda">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="w-5 h-5 text-blue-600" />
+                  <Users className="w-5 h-5 text-marca" />
                   Usuários ({users.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {isLoading ? (
                   <div className="flex justify-center py-10">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-marca"></div>
                   </div>
                 ) : users.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400">Nenhum usuário encontrado</div>
+                  <div className="text-center py-10 text-texto-apagado">Nenhum usuário encontrado</div>
                 ) : (
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-borda">
                     {users.map((u) => (
-                      <div key={u.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors">
+                      <div key={u.id} className="flex items-center justify-between px-6 py-4 hover:bg-fundo transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-marca flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             {(u.full_name || u.email || "?")[0].toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-900 text-sm">{u.full_name || "—"}</p>
-                            <p className="text-xs text-slate-500">{u.email}</p>
+                            <p className="font-semibold text-tinta text-sm">{u.full_name || "—"}</p>
+                            <p className="text-xs text-texto-fraco">{u.email}</p>
                           </div>
                           {u.id === currentUser?.id && (
-                            <Badge className="bg-green-100 text-green-700 text-xs ml-1">Você</Badge>
+                            <Badge className="bg-ok-suave text-ok text-xs ml-1">Você</Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export default function GerenciarUsuarios() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-xs h-8"
+                            className="text-xs h-12"
                             disabled={u.id === currentUser?.id && u.role === "admin"}
                             onClick={() => handleAlterarRole(u)}
                           >
@@ -197,22 +197,22 @@ export default function GerenciarUsuarios() {
             </DialogHeader>
             {confirmModal && (
               <div className="py-4 space-y-3">
-                <p className="text-slate-700">
+                <p className="text-tinta-media">
                   Deseja alterar <strong>{confirmModal.user.full_name || confirmModal.user.email}</strong> de{" "}
                   <Badge className={`border ${roleBadge(confirmModal.user.role)}`}>{roleLabel(confirmModal.user.role || "operator")}</Badge>
                   {" "}para{" "}
                   <Badge className={`border ${roleBadge(confirmModal.novoRole)}`}>{roleLabel(confirmModal.novoRole)}</Badge>?
                 </p>
                 {confirmModal.novoRole === "admin" && (
-                  <Alert className="border-blue-200 bg-blue-50">
-                    <AlertDescription className="text-blue-700 text-sm">
+                  <Alert className="border-marca-suave-2 bg-marca-suave">
+                    <AlertDescription className="text-marca text-sm">
                       Este usuário terá acesso total ao sistema.
                     </AlertDescription>
                   </Alert>
                 )}
                 {confirmModal.novoRole === "operator" && (
-                  <Alert className="border-amber-200 bg-amber-50">
-                    <AlertDescription className="text-amber-700 text-sm">
+                  <Alert className="border-atencao bg-atencao-suave">
+                    <AlertDescription className="text-atencao text-sm">
                       Este usuário perderá acesso às telas administrativas.
                     </AlertDescription>
                   </Alert>

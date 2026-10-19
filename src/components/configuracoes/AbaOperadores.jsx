@@ -46,12 +46,12 @@ export default function AbaOperadores() {
         />
       )}
 
-      <Card className="border-slate-200 shadow-md">
-        <CardHeader className="border-b border-slate-100">
+      <Card className="border-borda shadow-cartao">
+        <CardHeader className="border-b border-borda">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Operadores ({operators.length})</CardTitle>
             <div className="relative w-56">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-texto-apagado w-4 h-4" />
               <Input placeholder="Buscar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
           </div>
@@ -60,7 +60,7 @@ export default function AbaOperadores() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-fundo">
                   <TableHead>Nome</TableHead>
                   <TableHead>Matrícula</TableHead>
                   <TableHead>Sala</TableHead>
@@ -77,11 +77,11 @@ export default function AbaOperadores() {
                     <TableCell><Badge variant={op.ativo ? "default" : "outline"}>{op.ativo ? "Ativo" : "Inativo"}</Badge></TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingOperator(op); setShowForm(true); }}>
+                        <Button aria-label={`Editar o operador ${op.nome}`} variant="ghost" size="icon" onClick={() => { setEditingOperator(op); setShowForm(true); }}>
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => confirm("Excluir operador?") && deleteMutation.mutate(op.id)}>
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                        <Button aria-label={`Excluir o operador ${op.nome}`} variant="ghost" size="icon" onClick={() => confirm("Excluir operador?") && deleteMutation.mutate(op.id)}>
+                          <Trash2 className="w-4 h-4 text-erro" />
                         </Button>
                       </div>
                     </TableCell>
