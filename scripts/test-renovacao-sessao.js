@@ -99,7 +99,7 @@ console.log('\n[6] escrita recusada por sessao NAO grava nada (medido no banco)'
   const { createClient } = await import('@supabase/supabase-js');
   const URL = process.env.VITE_SUPABASE_URL;
   const servico = createClient(URL, process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false } });
+    { auth: { persistSession: false, autoRefreshToken: false } });
 
   const contar = async () => {
     const { count } = await servico
@@ -118,7 +118,7 @@ console.log('\n[6] escrita recusada por sessao NAO grava nada (medido no banco)'
   ].join('.');
 
   const comTokenRuim = createClient(URL, process.env.VITE_SUPABASE_ANON_KEY, {
-    auth: { persistSession: false },
+    auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${tokenInvalido}` } },
   });
 
@@ -144,4 +144,9 @@ console.log('\n' + '='.repeat(72));
 console.log(`RESULTADO: ${ok} OK, ${falhou} FALHA`);
 if (falhou) console.log('Falhas:\n  - ' + falhas.join('\n  - '));
 console.log('='.repeat(72));
-process.exit(falhou ? 1 : 0);
+// Sem process.exit(): sair à força com sockets do fetch ainda fechando
+// derruba o Node no Windows ("Assertion failed: !(handle->flags &
+// UV_HANDLE_CLOSING)", src/win/async.c) e o código de saída virava 127 mesmo
+// com tudo OK. Com exitCode o Node encerra sozinho, depois de soltar os
+// handles, e o código reflete o resultado.
+process.exitCode = falhou ? 1 : 0;
