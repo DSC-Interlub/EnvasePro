@@ -18,12 +18,16 @@ import { u } from "./unidade";
  *     painel está vivo, e a hora é o sinal mais barato disso — junto com o
  *     ponto "ao vivo", que pulsa.
  *
+ * `atualizacao` ({ em: Date, falhou: bool }, de usePainelTV): a linha "Ao
+ * vivo" passa a dizer "atualizado às HH:MM" — e, se a última busca falhou,
+ * troca o ponto verde por vermelho e diz desde quando o dado está parado.
+ *
  * As duas manchas de luz ao fundo (`glow`) são radiais, uma azul e uma verde,
  * com deriva de 14s. Elas dão profundidade ao fundo quase preto sem
  * competir com o dado — e param com `prefers-reduced-motion`.
  */
 export default function MolduraTV({
-  titulo, modulo, turno, children, rodape, acoes,
+  titulo, modulo, turno, children, rodape, acoes, atualizacao,
 }) {
   const [agora, setAgora] = useState(new Date());
 
@@ -78,12 +82,20 @@ export default function MolduraTV({
             >
               <span
                 aria-hidden="true"
-                className="ao-vivo flex-none rounded-full bg-ok"
+                className={`flex-none rounded-full ${atualizacao?.falhou ? "bg-erro" : "ao-vivo bg-ok"}`}
                 style={{ width: u(0.8), height: u(0.8) }}
               />
-              <span>
-                Ao vivo{modulo ? ` · ${modulo}` : ""}{turno ? ` · turno ${turno}` : ""}
-              </span>
+              {atualizacao?.falhou ? (
+                <span role="status" data-tv-atualizacao="falhou" className="text-erro">
+                  Sem atualizar{atualizacao.em ? ` desde ${format(atualizacao.em, "HH:mm")}` : ""}
+                  {" · "}verifique a rede{modulo ? ` · ${modulo}` : ""}
+                </span>
+              ) : (
+                <span data-tv-atualizacao={atualizacao?.em ? "ok" : undefined}>
+                  Ao vivo{modulo ? ` · ${modulo}` : ""}{turno ? ` · turno ${turno}` : ""}
+                  {atualizacao?.em ? ` · atualizado às ${format(atualizacao.em, "HH:mm")}` : ""}
+                </span>
+              )}
             </div>
             <h1
               className="num font-extrabold leading-[1.1] text-tinta"

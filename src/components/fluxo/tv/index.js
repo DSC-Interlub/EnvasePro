@@ -8,3 +8,4 @@ export { default as PainelImportacoes } from "./PainelImportacoes";
 export { default as CartaoOperacao } from "./CartaoOperacao";
 export { default as GradeOperacoes } from "./GradeOperacoes";
 export { u, fonteQueCabe } from "./unidade";
+export { usePainelTV, INTERVALO_TV } from "./usePainelTV";
