@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend,
 } from "recharts";
 import { BarChart2, Clock, User, OctagonX, AlertTriangle, TrendingUp } from "lucide-react";
-import { format, eachDayOfInterval, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   SectionCard, EmptyState, MiniKPI,
@@ -15,130 +15,47 @@ import {
  * Os cinco blocos de indicadores da empilhadeira: producao, operadores,
  * paradas, ocorrencias e OEE.
  *
- * POR QUE VIROU COMPONENTE
+ * Usado na página "IndicadoresEmpilha" e na aba "Indicadores" da página
+ * "Empilhadeira" — um componente só, para as duas não divergirem.
  *
- * Estes mesmos cinco blocos existiam DUAS VEZES, com as mesmas contas e o
- * mesmo desenho: na página "IndicadoresEmpilha" e na aba "Indicadores" da
- * página "Empilhadeira". Eram cerca de 210 linhas copiadas, e as duas cópias
- * já divergiam numa variável. Dois lugares para corrigir, e a certeza de que
- * um dia só um deles seria corrigido.
- *
- * As contas vem para DENTRO do componente de proposito: quem chama passa os
- * dados crus ja filtrados pelo periodo, e nao dezoito valores calculados.
+ * DESDE A ETAPA 2 O COMPONENTE SÓ DESENHA. As contas vêm prontas em `dados`,
+ * de public.indicadores_empilhadeira(de, ate) — ou, se a função ainda não
+ * existir no banco, de src/lib/indicadoresEmpilha.js, que tem a mesma regra.
+ * Antes, cada tela baixava TODO o histórico para contar um período.
  */
-function minsFromHHMM(str) {
-  if (!str) return 0;
-  // Formato "X:MM" ou "X min"
-  if (str.includes("min")) return parseInt(str) || 0;
-  const [h, m] = str.split(":").map(Number);
-  return (h || 0) * 60 + (m || 0);
-}
+const diaCurto = (dia) => format(parseISO(dia), "dd/MM", { locale: ptBR });
 
-export default function BlocosIndicadores({
-  // Filtradas pelo periodo, para os totais.
-  linhasFiltradas = [],
-  paradasFiltradas = [],
-  ocorrenciasFiltradas = [],
-  // COMPLETAS, para os graficos por dia: o grafico percorre cada dia do
-  // intervalo e precisa cruzar programacao com linha, o que nao da para fazer
-  // com a lista ja filtrada.
-  programacoes = [],
-  linhas = [],
-  empilhadeiraAtiva,
-  dataInicio,
-  dataFim,
-}) {
-  const duracaoTurnoMins = (empilhadeiraAtiva?.duracao_turno_horas || 8) * 60;
+export default function BlocosIndicadores({ dados, carregando = false }) {
+  if (!dados) {
+    return (
+      <div className="cartao-fluxo">
+        <EmptyState carregando={carregando} icone={BarChart2} titulo="Sem dados no período selecionado" />
+      </div>
+    );
+  }
+  const P = dados.producao;
+  const totalNormal = P.normal;
+  const totalCritico = P.critico;
+  const totalAvulso = P.avulso;
+  const totalConcluidas = P.concluidas;
+  const tempoMedioGeral = P.tempo_medio;
+  const tempoMedioTipo = P.por_tipo;
+  const linhasPorDia = P.por_dia.map((d) => ({ ...d, dia: diaCurto(d.dia) }));
+  const temLinhas = P.total > 0;
+  const duracaoTurnoMins = Number(dados.duracao_turno_horas) * 60;
 
-  // ---------- Bloco 1: Produção ----------
-  const totalNormal = linhasFiltradas.filter(l => l.tipo_linha === "Normal" || !l.tipo_linha).length;
-  const totalCritico = linhasFiltradas.filter(l => l.tipo_linha === "Crítico").length;
-  const totalAvulso = linhasFiltradas.filter(l => l.tipo_linha === "Avulso").length;
-  const totalConcluidas = linhasFiltradas.filter(l => l.status === "Concluído").length;
-  const totalPendentes = linhasFiltradas.length - totalConcluidas;
+  const totalTempoParado = Number(dados.paradas.minutos);
+  const paradaPorTipo = dados.paradas.por_tipo.map((x) => ({ ...x, value: Number(x.value) }));
+  const paradasPorDia = dados.paradas.por_dia.map((d) => ({ ...d, dia: diaCurto(d.dia), tempo: Number(d.tempo) }));
+  const totalParadas = dados.paradas.total;
 
-  const temposMins = linhasFiltradas
-    .filter(l => l.tempo_total && l.status === "Concluído")
-    .map(l => minsFromHHMM(l.tempo_total));
-  const tempoMedioGeral = temposMins.length > 0 ? Math.round(temposMins.reduce((a, b) => a + b, 0) / temposMins.length) : 0;
+  const ocorrPorTipo = dados.ocorrencias.por_tipo;
+  const rankOcorrencias = dados.ocorrencias.ranking;
+  const totalOcorrencias = dados.ocorrencias.total;
+  const ocorrResolvidas = dados.ocorrencias.resolvidas;
 
-  const tempoMedioTipo = ["Normal", "Crítico", "Avulso"].map(tipo => {
-    const ts = linhasFiltradas
-      .filter(l => (l.tipo_linha === tipo || (!l.tipo_linha && tipo === "Normal")) && l.status === "Concluído" && l.tempo_total)
-      .map(l => minsFromHHMM(l.tempo_total));
-    return { tipo, media: ts.length > 0 ? Math.round(ts.reduce((a, b) => a + b, 0) / ts.length) : 0, count: ts.length };
-  });
-
-  // Linhas por dia
-  const dias = dataInicio && dataFim
-    ? eachDayOfInterval({ start: parseISO(dataInicio), end: parseISO(dataFim) })
-    : [];
-
-  const linhasPorDia = dias.map(d => {
-    const dia = format(d, "yyyy-MM-dd");
-    const ps = programacoes.filter(p => p.data_programada === dia).map(p => p.id);
-    const ls = linhas.filter(l => ps.includes(l.programacao_id));
-    return {
-      dia: format(d, "dd/MM", { locale: ptBR }),
-      Normal: ls.filter(l => l.tipo_linha === "Normal" || !l.tipo_linha).length,
-      Crítico: ls.filter(l => l.tipo_linha === "Crítico").length,
-      Avulso: ls.filter(l => l.tipo_linha === "Avulso").length,
-    };
-  });
-
-  // ---------- Bloco 2: Operadores ----------
-  const rankingEmpilhador = {};
-  const rankingAjudante = {};
-  linhasFiltradas.filter(l => l.status === "Concluído").forEach(l => {
-    if (l.operador_empilhadeira) {
-      if (!rankingEmpilhador[l.operador_empilhadeira]) rankingEmpilhador[l.operador_empilhadeira] = { total: 0, mins: [] };
-      rankingEmpilhador[l.operador_empilhadeira].total++;
-      if (l.tempo_total) rankingEmpilhador[l.operador_empilhadeira].mins.push(minsFromHHMM(l.tempo_total));
-    }
-    if (l.operador_ajudante && l.operador_ajudante !== "nenhum") {
-      if (!rankingAjudante[l.operador_ajudante]) rankingAjudante[l.operador_ajudante] = { total: 0, mins: [] };
-      rankingAjudante[l.operador_ajudante].total++;
-      if (l.tempo_total) rankingAjudante[l.operador_ajudante].mins.push(minsFromHHMM(l.tempo_total));
-    }
-  });
-  const toRanking = (obj) => Object.entries(obj).map(([nome, d]) => ({
-    nome,
-    total: d.total,
-    media: d.mins.length > 0 ? Math.round(d.mins.reduce((a, b) => a + b, 0) / d.mins.length) : 0,
-  })).sort((a, b) => b.total - a.total);
-
-  // ---------- Bloco 3: Paradas ----------
-  const totalTempoParado = paradasFiltradas.reduce((acc, p) => acc + (parseInt(p.tempo_total) || 0), 0);
-  const paradaPorTipo = Object.entries(
-    paradasFiltradas.reduce((acc, p) => { acc[p.tipo] = (acc[p.tipo] || 0) + (parseInt(p.tempo_total) || 0); return acc; }, {})
-  ).map(([name, value]) => ({ name, value }));
-
-  const paradasPorDia = dias.map(d => {
-    const dia = format(d, "yyyy-MM-dd");
-    const ps = paradasFiltradas.filter(p => p.data === dia);
-    return { dia: format(d, "dd/MM", { locale: ptBR }), paradas: ps.length, tempo: ps.reduce((a, p) => a + (parseInt(p.tempo_total) || 0), 0) };
-  });
-
-  // ---------- Bloco 4: Ocorrências ----------
-  const ocorrPorTipo = Object.entries(
-    ocorrenciasFiltradas.reduce((acc, o) => { acc[o.tipo || "Outro"] = (acc[o.tipo || "Outro"] || 0) + 1; return acc; }, {})
-  ).map(([name, value]) => ({ name, value }));
-
-  const rankOcorrencias = Object.entries(
-    ocorrenciasFiltradas.reduce((acc, o) => { if (o.registrado_por) { acc[o.registrado_por] = (acc[o.registrado_por] || 0) + 1; } return acc; }, {})
-  ).map(([nome, total]) => ({ nome, total })).sort((a, b) => b.total - a.total);
-
-  // ---------- Bloco 5: OEE simplificado ----------
-  const oeeDias = dias.map(d => {
-    const dia = format(d, "yyyy-MM-dd");
-    const ps = programacoes.filter(p => p.data_programada === dia).map(p => p.id);
-    const ls = linhas.filter(l => ps.includes(l.programacao_id) && l.status === "Concluído" && l.tempo_total);
-    const produtivo = ls.reduce((a, l) => a + minsFromHHMM(l.tempo_total), 0);
-    const parado = paradasFiltradas.filter(p => p.data === dia).reduce((a, p) => a + (parseInt(p.tempo_total) || 0), 0);
-    const aproveitamento = duracaoTurnoMins > 0 ? Math.min(100, Math.round((produtivo / duracaoTurnoMins) * 100)) : 0;
-    return { dia: format(d, "dd/MM", { locale: ptBR }), aproveitamento, produtivo, parado };
-  });
-  const oeeMedio = oeeDias.length > 0 ? Math.round(oeeDias.reduce((a, d) => a + d.aproveitamento, 0) / oeeDias.length) : 0;
+  const oeeDias = dados.oee.dias.map((d) => ({ ...d, dia: diaCurto(d.dia) }));
+  const oeeMedio = dados.oee.medio;
 
   const cores = CORES_GRAFICO();
   const eixo = EIXO();
@@ -150,7 +67,7 @@ export default function BlocosIndicadores({
     <div className="flex min-w-0 flex-col gap-4">
       {/* ── PRODUÇÃO ─────────────────────────────────────────────────── */}
       <SectionCard titulo="Produção" legenda="Linhas movimentadas no período" icone={TrendingUp} atraso={0.05}>
-        {linhasFiltradas.length === 0 ? (
+        {!temLinhas ? (
           <EmptyState icone={BarChart2} titulo="Sem dados no período selecionado" />
         ) : (
           <div className="flex min-w-0 flex-col gap-5">
@@ -158,7 +75,7 @@ export default function BlocosIndicadores({
               <MiniKPI rotulo="Normal" valor={totalNormal} />
               <MiniKPI rotulo="Crítico" valor={totalCritico} tom="erro" />
               <MiniKPI rotulo="Avulso" valor={totalAvulso} tom="atencao" />
-              <MiniKPI rotulo="Concluídas" valor={`${totalConcluidas}/${linhasFiltradas.length}`} tom="ok" />
+              <MiniKPI rotulo="Concluídas" valor={`${totalConcluidas}/${P.total}`} tom="ok" />
             </div>
 
             <div className="grid min-w-0 gap-5 md:grid-cols-2">
@@ -209,25 +126,25 @@ export default function BlocosIndicadores({
 
       {/* ── OPERADORES ───────────────────────────────────────────────── */}
       <SectionCard titulo="Operadores" legenda="Quem movimentou mais linhas" icone={User} atraso={0.1}>
-        {linhasFiltradas.length === 0 ? (
+        {!temLinhas ? (
           <EmptyState icone={BarChart2} titulo="Sem dados no período selecionado" />
         ) : (
           <div className="grid min-w-0 gap-5 md:grid-cols-2">
-            <Ranking titulo="Empilhadores" itens={toRanking(rankingEmpilhador)} />
-            <Ranking titulo="Ajudantes" itens={toRanking(rankingAjudante)} />
+            <Ranking titulo="Empilhadores" itens={dados.operadores.empilhadores} />
+            <Ranking titulo="Ajudantes" itens={dados.operadores.ajudantes} />
           </div>
         )}
       </SectionCard>
 
       {/* ── PARADAS ──────────────────────────────────────────────────── */}
       <SectionCard titulo="Paradas" legenda="Tempo em que a empilhadeira ficou parada" icone={OctagonX} atraso={0.15}>
-        {paradasFiltradas.length === 0 ? (
+        {totalParadas === 0 ? (
           <EmptyState icone={OctagonX} titulo="Nenhuma parada registrada no período"
             legenda="Nada a relatar é um bom resultado." />
         ) : (
           <div className="flex min-w-0 flex-col gap-5">
             <div className="grid min-w-0 grid-cols-3 gap-2.5">
-              <MiniKPI rotulo="Total de paradas" valor={paradasFiltradas.length} tom="atencao" />
+              <MiniKPI rotulo="Total de paradas" valor={totalParadas} tom="atencao" />
               <MiniKPI rotulo="Tempo parado" valor={`${totalTempoParado} min`} tom="erro" />
               <MiniKPI
                 rotulo="% do turno perdido"
@@ -285,16 +202,16 @@ export default function BlocosIndicadores({
 
       {/* ── OCORRÊNCIAS ──────────────────────────────────────────────── */}
       <SectionCard titulo="Ocorrências" legenda="Registradas no período" icone={AlertTriangle} atraso={0.2}>
-        {ocorrenciasFiltradas.length === 0 ? (
+        {totalOcorrencias === 0 ? (
           <EmptyState icone={AlertTriangle} titulo="Nenhuma ocorrência no período" />
         ) : (
           <div className="grid min-w-0 gap-5 md:grid-cols-2">
             <div className="min-w-0">
               <div className="mb-4 grid grid-cols-2 gap-2.5">
-                <MiniKPI rotulo="Total" valor={ocorrenciasFiltradas.length} tom="atencao" />
+                <MiniKPI rotulo="Total" valor={totalOcorrencias} tom="atencao" />
                 <MiniKPI
                   rotulo="Resolvidas"
-                  valor={ocorrenciasFiltradas.filter((o) => o.resolvido).length}
+                  valor={ocorrResolvidas}
                   tom="ok"
                 />
               </div>
@@ -329,7 +246,7 @@ export default function BlocosIndicadores({
       {/* ── OEE ──────────────────────────────────────────────────────── */}
       <SectionCard
         titulo="OEE simplificado"
-        legenda={`Turno de ${empilhadeiraAtiva?.duracao_turno_horas || 8}h`}
+        legenda={`Turno de ${Number(dados.duracao_turno_horas)}h`}
         icone={Clock}
         atraso={0.25}
       >
