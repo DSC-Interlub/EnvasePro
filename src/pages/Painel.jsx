@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-import { format, startOfWeek } from "date-fns";
+import { usePainelTV } from "@/components/fluxo/tv";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   PageHeader, StatCard, SectionCard, SegmentoPeriodo, ListaAcoes, CartaoAoVivo, EmptyState,
@@ -44,15 +45,6 @@ function calcElapsed(startTime) {
   return `${horas}:${String(mins).padStart(2, "0")}`;
 }
 
-function useIsVisible() {
-  const [visible, setVisible] = useState(() => (typeof document !== "undefined" ? !document.hidden : true));
-  useEffect(() => {
-    const handleVisibility = () => setVisible(!document.hidden);
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, []);
-  return visible;
-}
 
 /**
  * PAINEL GERAL — padrão "Painel" do protótipo.
@@ -77,75 +69,42 @@ export default function Painel() {
   const role = user?.role === "user" ? "operator" : (user?.role || "operator");
   const isAdmin = role === "admin";
   const now = useNow();
-  const isVisible = useIsVisible();
+  // O painel inteiro vem pronto do banco — public.painel_geral() (Etapa 2).
+  // Antes eram 16 consultas, cada uma com teto (100, 50, 30 ou 10 linhas), e
+  // "semana" e pendências eram contadas DENTRO desses tetos: com ~150 envases
+  // por semana, os números saíam truncados sem aviso. Se a função ainda não
+  // existir no banco, o adaptador calcula o mesmo painel no navegador
+  // (src/lib/painelGeral.js). Pausa com a aba oculta, como antes.
+  const { painel: dados, atualizacao } = usePainelTV("geral", () => base44.functions.painelGeral(), { pausarOculto: true });
 
-  // Polling consolidado com pausa em aba oculta (document.hidden)
-  const pollAtivo = isVisible ? 60000 : false;   // 60s para operações ativas
-  const pollLento = isVisible ? 300000 : false;  // 300s (5 min) para cadastros e KPIs lentos
+  // Só para a FOTO. Muda raramente e a URL assinada vale 24 h.
+  const { data: operators = [] } = useQuery({
+    queryKey: ["painel-operators"], queryFn: () => base44.entities.Operator.list(), refetchInterval: 30 * 60000,
+  });
 
-  const hoje = format(now, "yyyy-MM-dd");
-  const semanaInicio = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const loading = !dados;
+  // Pelo id primeiro: o nome falha com homônimos (CLAUDE.md §6).
+  const getPhoto = (id, nome) =>
+    (operators.find((op) => op.id === id) || operators.find((op) => op.nome === nome))?.foto_url || null;
 
-  /* ── Queries operacionais ativas (polling a cada 60s, pausa em background) ── */
-  const { data: envases = [], isLoading: l1 } = useQuery({ queryKey: ["painel-envases"], queryFn: () => base44.entities.EnvaseRecord.list("-data", 100), refetchInterval: pollAtivo });
-  const { data: checkoutItems = [] } = useQuery({ queryKey: ["painel-checkout-items"], queryFn: () => base44.entities.CheckoutItem.list("-created_date", 100), refetchInterval: pollAtivo });
-  const { data: checkoutProgs = [] } = useQuery({ queryKey: ["painel-checkout-progs"], queryFn: () => base44.entities.CheckoutProgramacao.list("-data_programada", 10), refetchInterval: pollAtivo });
-  const { data: empilhaLinhas = [] } = useQuery({ queryKey: ["painel-empilha-linhas"], queryFn: () => base44.entities.EmpilhaLinha.list("-created_date", 100), refetchInterval: pollAtivo });
-  const { data: empilhaParadas = [] } = useQuery({ queryKey: ["painel-empilha-paradas"], queryFn: () => base44.entities.EmpilhadeiraParada.list("-created_date", 30), refetchInterval: pollAtivo });
-  const { data: empilhaProgs = [] } = useQuery({ queryKey: ["painel-empilha-progs"], queryFn: () => base44.entities.EmpilhaProgramacao.list("-data_programada", 10), refetchInterval: pollAtivo });
-  const { data: recebimentos = [] } = useQuery({ queryKey: ["painel-recebimentos"], queryFn: () => base44.entities.Recebimento.list("-created_date", 50), refetchInterval: pollAtivo });
-  const { data: empilhaOcorrencias = [] } = useQuery({ queryKey: ["painel-empilha-ocorr"], queryFn: () => base44.entities.EmpilhaOcorrencia.list("-created_date", 50), refetchInterval: pollAtivo });
-  const { data: recOcorrencias = [] } = useQuery({ queryKey: ["painel-rec-ocorr"], queryFn: () => base44.entities.RecebimentoOcorrencia.list("-created_date", 50), refetchInterval: pollAtivo });
-  const { data: recebimentoParticipantes = [] } = useQuery({ queryKey: ["painel-rec-participantes"], queryFn: () => base44.entities.RecebimentoParticipante.list("-created_date", 100), refetchInterval: pollAtivo });
+  const H = dados?.hoje ?? {};
+  const S = dados?.semana ?? {};
+  const P = dados?.pendencias ?? {};
+  const V = dados?.ao_vivo ?? {};
+  const n = (x) => Number(x) || 0;
 
-  /* ── Queries de cadastros e KPIs lentos (polling a cada 300s, pausa em background) ── */
-  const { data: operators = [] } = useQuery({ queryKey: ["painel-operators"], queryFn: () => base44.entities.Operator.list(), refetchInterval: pollLento });
-  const { data: checklists = [] } = useQuery({ queryKey: ["painel-checklists"], queryFn: () => base44.entities.ChecklistRecebimento.list("-created_date", 100), refetchInterval: pollLento });
-  const { data: limpezas = [] } = useQuery({ queryKey: ["painel-limpezas"], queryFn: () => base44.entities.LimpezaProgramacao.list("-data_prevista", 100), refetchInterval: pollLento });
-  const { data: nfs = [] } = useQuery({ queryKey: ["painel-nfs"], queryFn: () => base44.entities.NotaFiscalArquivo.list("-created_date", 50), refetchInterval: pollLento });
-  const { data: empilhaConfig = [] } = useQuery({ queryKey: ["painel-empilha-config"], queryFn: () => base44.entities.EmpilhadeiraConfig.list(), refetchInterval: pollLento });
-
-  const loading = l1;
-
-  const getPhoto = (nome) => operators.find(op => op.nome === nome)?.foto_url || null;
-
-  /* ── KPIs ── */
-  const checklistsHoje = checklists.filter(c => c.created_date?.startsWith(hoje));
-  const notaMedia = checklistsHoje.length > 0 ? Math.round(checklistsHoje.reduce((s, c) => s + (c.nota_final || 0), 0) / checklistsHoje.length) : null;
-  const limpezasHoje = limpezas.filter(l => l.data_prevista === hoje);
-  const limpezasConclHoje = limpezasHoje.filter(l => l.status === "Concluído");
-  const limpezasAtrasadas = limpezas.filter(l => l.data_prevista < hoje && l.status !== "Concluído");
-  const nfsHoje = nfs.filter(n => n.created_date?.startsWith(hoje));
-
-  const envasesSemana = envases.filter(e => e.data >= semanaInicio);
-  const checkoutSemana = checkoutItems.filter(e => e.status === "Concluído" && e.updated_date >= semanaInicio);
-  const empilhaSemana = empilhaLinhas.filter(e => e.status === "Concluído" && e.updated_date >= semanaInicio);
-  const recSemana = recebimentos.filter(r => r.created_date >= semanaInicio);
-  const checklistsSemana = checklists.filter(c => c.created_date >= semanaInicio);
-  const notaMediaSemana = checklistsSemana.length > 0 ? Math.round(checklistsSemana.reduce((s, c) => s + (c.nota_final || 0), 0) / checklistsSemana.length) : null;
-  const limpezasSemana = limpezas.filter(l => l.data_prevista >= semanaInicio);
-  const limpezasConclSemana = limpezasSemana.filter(l => l.status === "Concluído");
-  const nfsSemana = nfs.filter(n => n.created_date >= semanaInicio);
-
-  const assEmpilha = empilhaLinhas.filter(l => l.status === "Concluído" && !l.assinatura_lider).length;
-  const assLimpeza = limpezas.filter(l => l.status === "Concluído" && l.assinatura_responsavel && !l.assinatura_lider).length;
-  const assRecebimento = recebimentos.filter(r => r.status === "Concluído" && !r.assinatura_lider).length;
-  const totalAssinaturas = assEmpilha + assLimpeza + assRecebimento;
-  const ocAbertasEmpilha = empilhaOcorrencias.filter(o => !o.resolvido).length;
-  const ocAbertasRec = recOcorrencias.filter(o => !o.resolvido).length;
-  const totalOcorrencias = ocAbertasEmpilha + ocAbertasRec;
-  const alertasManut = empilhaConfig.filter(e => e.data_proxima_manutencao && Math.ceil((new Date(e.data_proxima_manutencao) - now) / (1000 * 60 * 60 * 24)) <= 7).length;
-  const checklistsReprovHoje = checklistsHoje.filter(c => (c.nota_final || 0) < 0).length;
-  const nfsPendentes3dias = nfs.filter(n => !n.arquivo_url && (now - new Date(n.created_date)) > 3 * 24 * 60 * 60 * 1000).length;
-  const temPendencias = totalAssinaturas + alertasManut + limpezasAtrasadas.length + nfsPendentes3dias + checklistsReprovHoje > 0;
+  const totalAssinaturas = n(P.assinaturas);
+  const totalOcorrencias = n(P.ocorrencias);
+  const limpezasAtrasadas = n(P.limpezas_atrasadas);
+  const alertasManut = n(P.manutencao);
+  const checklistsReprovHoje = n(P.checklists_reprovados_hoje);
+  const nfsPendentes3dias = n(P.nfs_sem_arquivo_3dias);
+  const notaMedia = H.nota_media ?? null;
+  const notaMediaSemana = S.nota_media ?? null;
 
   const diaSemanaCapit = (() => { const s = format(now, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }); return s.charAt(0).toUpperCase() + s.slice(1); })();
   /* ── Período dos indicadores ───────────────────────────────────────────── */
   const [periodo, setPeriodo] = useState("hoje");
-
-  const envasesHoje = envases.filter((e) => e.data === hoje);
-  const producaoHoje = envasesHoje.reduce((s, e) => s + (e.quantidade_produzida || 0), 0);
-  const producaoSemana = envasesSemana.reduce((s, e) => s + (e.quantidade_produzida || 0), 0);
 
   /** O `corNome` do checklist devolve nome de cor; o StatCard fala em tom. */
   const tomDaNota = (nota) => {
@@ -157,143 +116,128 @@ export default function Painel() {
   const INDICADORES = periodo === "hoje"
     ? [
         {
-          rotulo: "Envases hoje", valor: envasesHoje.length, destaque: true, icone: Factory,
-          legenda: `${envasesHoje.filter((e) => e.termino).length} concluídos`,
+          rotulo: "Envases hoje", valor: n(H.envases), destaque: true, icone: Factory,
+          legenda: `${n(H.envases_concluidos)} concluídos`,
         },
         {
-          rotulo: "Produção hoje", valor: producaoHoje.toLocaleString("pt-BR"), icone: Package,
+          rotulo: "Produção hoje", valor: n(H.producao).toLocaleString("pt-BR"), icone: Package,
           legenda: "unidades",
         },
         {
-          rotulo: "Checklists", valor: checklistsHoje.length, icone: ClipboardCheck,
+          rotulo: "Checklists", valor: n(H.checklists), icone: ClipboardCheck,
           tom: tomDaNota(notaMedia),
           legenda: notaMedia !== null ? `nota média ${notaMedia}` : "nenhum hoje",
         },
         {
           rotulo: "Limpeza hoje", icone: Sparkles,
-          valor: `${limpezasConclHoje.length}/${limpezasHoje.length}`,
-          tom: limpezasAtrasadas.length > 0 ? "erro" : "ok",
-          legenda: limpezasAtrasadas.length > 0
-            ? `${limpezasAtrasadas.length} atrasada(s)` : "em dia",
+          valor: `${n(H.limpezas_concluidas)}/${n(H.limpezas)}`,
+          tom: limpezasAtrasadas > 0 ? "erro" : "ok",
+          legenda: limpezasAtrasadas > 0 ? `${limpezasAtrasadas} atrasada(s)` : "em dia",
         },
       ]
     : [
         {
-          rotulo: "Envases na semana", valor: envasesSemana.length, destaque: true, icone: Factory,
-          legenda: `${producaoSemana.toLocaleString("pt-BR")} un.`,
+          rotulo: "Envases na semana", valor: n(S.envases), destaque: true, icone: Factory,
+          legenda: `${n(S.producao).toLocaleString("pt-BR")} un.`,
         },
-        { rotulo: "Check-outs concluídos", valor: checkoutSemana.length, icone: ShoppingCart },
-        { rotulo: "Linhas movimentadas", valor: empilhaSemana.length, icone: Warehouse },
-        { rotulo: "Recebimentos", valor: recSemana.length, icone: Truck },
+        { rotulo: "Check-outs concluídos", valor: n(S.checkouts_concluidos), icone: ShoppingCart },
+        { rotulo: "Linhas movimentadas", valor: n(S.linhas_movimentadas), icone: Warehouse },
+        { rotulo: "Recebimentos", valor: n(S.recebimentos), icone: Truck },
         {
-          rotulo: "Checklists", valor: checklistsSemana.length, icone: ClipboardCheck,
+          rotulo: "Checklists", valor: n(S.checklists), icone: ClipboardCheck,
           tom: tomDaNota(notaMediaSemana),
           legenda: notaMediaSemana !== null ? `nota média ${notaMediaSemana}` : "—",
         },
         {
+          // Correção 3 da migration: só segunda a domingo. Antes entravam as
+          // limpezas programadas para as semanas seguintes.
           rotulo: "Limpezas realizadas", icone: Sparkles,
-          valor: `${limpezasConclSemana.length}/${limpezasSemana.length}`,
-          legenda: limpezasSemana.length > 0
-            ? `${Math.round((limpezasConclSemana.length / limpezasSemana.length) * 100)}% concluído`
+          valor: `${n(S.limpezas_concluidas)}/${n(S.limpezas)}`,
+          legenda: n(S.limpezas) > 0
+            ? `${Math.round((n(S.limpezas_concluidas) / n(S.limpezas)) * 100)}% concluído`
             : "nada programado",
         },
-        { rotulo: "NFs arquivadas", valor: nfsSemana.length, icone: FileText },
+        { rotulo: "NFs arquivadas", valor: n(S.nfs), icone: FileText },
       ];
 
   /* ── "Precisa de você": a MESMA regra dos cartões de alerta anteriores ─── */
   const PENDENCIAS = [
     { rotulo: "Assinaturas do líder pendentes", contagem: totalAssinaturas, url: "/Empilhadeira", tom: "atencao" },
     { rotulo: "Ocorrências em aberto", contagem: totalOcorrencias, url: "/Empilhadeira", tom: "erro" },
-    { rotulo: "Limpezas atrasadas", contagem: limpezasAtrasadas.length, url: "/Dashboard", tom: "erro" },
+    { rotulo: "Limpezas atrasadas", contagem: limpezasAtrasadas, url: "/Dashboard", tom: "erro" },
     { rotulo: "Checklists reprovados hoje", contagem: checklistsReprovHoje, url: "/ChecklistRecebimento", tom: "erro" },
     { rotulo: "NFs sem foto há mais de 3 dias", contagem: nfsPendentes3dias, url: "/NotasFiscais", tom: "atencao" },
     { rotulo: "Manutenção de empilhadeira próxima", contagem: alertasManut, url: "/Empilhadeira", tom: "atencao" },
   ];
 
   /* ── Cartões ao vivo: só o mapeamento dos dados muda entre eles ────────── */
-  const envaseAtivos = envases
-    .filter((r) => {
-      if (!r.inicio || r.data !== hoje) return false;
-      return r.sala === "Bio" ? !r.material_retirado : !r.termino;
-    })
-    .slice(0, 4)
-    .map((r) => ({
-      id: r.id,
-      operador: r.operador,
-      foto: getPhoto(r.operador),
-      principal: r.descricao_produto || "Produto não especificado",
-      secundario: `${r.operador} · Sala ${r.sala}`,
-      direita: calcElapsed(r.inicio),
-      direitaLegenda: r.quantidade_produzida > 0 ? `${r.quantidade_produzida} un.` : null,
-    }));
+  const envaseAtivos = (V.envase?.itens ?? []).map((r) => ({
+    id: r.id,
+    operador: r.operador,
+    foto: getPhoto(r.operator_id, r.operador),
+    principal: r.descricao_produto || "Produto não especificado",
+    secundario: `${r.operador} · Sala ${r.sala}`,
+    direita: calcElapsed(r.inicio),
+    direitaLegenda: n(r.quantidade_produzida) > 0 ? `${n(r.quantidade_produzida)} un.` : null,
+  }));
 
-  const checkoutIdsHoje = checkoutProgs.filter((p) => p.data_programada === hoje).map((p) => p.id);
-  const checkoutCriticos = checkoutItems.filter(
-    (i) => i.critico && i.status !== "Concluído" && checkoutIdsHoje.includes(i.programacao_id));
-  const checkoutAtivos = checkoutItems
-    .filter((i) => i.hora_inicio && !i.hora_termino && i.status === "Em Andamento"
-      && checkoutIdsHoje.includes(i.programacao_id))
-    .slice(0, 4)
-    .map((i) => ({
-      id: i.id,
-      operador: i.operador,
-      foto: getPhoto(i.operador),
-      tom: i.critico ? "erro" : "neutro",
-      principal: i.numero_pedido,
-      marcas: i.critico ? [{ texto: "CRÍTICO", tom: "erro" }] : [],
-      secundario: [i.cliente, i.operador].filter(Boolean).join(" · "),
-      direita: calcElapsed(i.hora_inicio),
-      direitaLegenda: i.data_entrega
-        ? `entrega ${format(new Date(i.data_entrega + "T00:00:00"), "dd/MM")}` : null,
-    }));
+  const checkoutCriticos = n(V.checkout?.criticos);
+  const checkoutAtivos = (V.checkout?.itens ?? []).map((i) => ({
+    id: i.id,
+    operador: i.operador,
+    foto: getPhoto(i.operator_id, i.operador),
+    tom: i.critico ? "erro" : "neutro",
+    principal: i.numero_pedido,
+    marcas: i.critico ? [{ texto: "CRÍTICO", tom: "erro" }] : [],
+    secundario: [i.cliente, i.operador].filter(Boolean).join(" · "),
+    direita: calcElapsed(i.hora_inicio),
+    direitaLegenda: i.data_entrega
+      ? `entrega ${format(new Date(i.data_entrega + "T00:00:00"), "dd/MM")}` : null,
+  }));
 
-  const empilhaIdsHoje = empilhaProgs.filter((p) => p.data_programada === hoje).map((p) => p.id);
-  const paradaAberta = empilhaParadas.find((p) => p.data === hoje && !p.hora_fim);
-  const empilhaAtivas = [
-    ...empilhaLinhas.filter((l) => empilhaIdsHoje.includes(l.programacao_id)
-      && l.tipo_linha === "Crítico" && l.status === "Em Andamento"),
-    ...empilhaLinhas.filter((l) => empilhaIdsHoje.includes(l.programacao_id)
-      && l.tipo_linha !== "Crítico" && l.status === "Em Andamento"),
-  ].slice(0, 4).map((l) => ({
+  const paradaAberta = V.empilha?.parada ?? null;
+  // Correção 6: `numero_linha` e `descricao` não existem em empilha_linhas —
+  // todo cartão dizia só "Linha". O item e o produto são numero_item e
+  // descricao_produto.
+  const empilhaAtivas = (V.empilha?.itens ?? []).map((l) => ({
     id: l.id,
     operador: l.operador_empilhadeira,
-    foto: getPhoto(l.operador_empilhadeira),
+    foto: getPhoto(l.operador_empilhadeira_id, l.operador_empilhadeira),
     tom: l.tipo_linha === "Crítico" ? "erro" : "neutro",
-    principal: l.numero_linha ? `Linha ${l.numero_linha}` : (l.descricao || "Linha"),
+    principal: l.numero_item ? `Item ${l.numero_item}` : (l.descricao_produto || l.codigo_produto || "Linha"),
     marcas: l.tipo_linha === "Crítico" ? [{ texto: "CRÍTICO", tom: "erro" }] : [],
-    secundario: l.operador_empilhadeira,
+    secundario: [l.descricao_produto, l.operador_empilhadeira].filter(Boolean).join(" · "),
     direita: calcElapsed(l.hora_inicio),
   }));
 
-  const partPorRecebimento = {};
-  for (const p of recebimentoParticipantes) {
-    if (!partPorRecebimento[p.recebimento_id]) partPorRecebimento[p.recebimento_id] = [];
-    partPorRecebimento[p.recebimento_id].push(p);
-  }
-  const recebimentoAtivos = recebimentos
-    .filter((r) => r.status === "Em andamento")
-    .slice(0, 4)
-    .map((r) => {
-      const parts = partPorRecebimento[r.id] || [];
-      const marcas = [{ texto: r.tipo, tom: "neutro" }];
-      if (r.prioridade === "Urgente") marcas.push({ texto: "URGENTE", tom: "erro" });
-      if (r.prioridade === "Alta") marcas.push({ texto: "ALTA", tom: "atencao" });
-      return {
-        id: r.id,
-        operador: parts[0]?.operador_nome,
-        foto: getPhoto(parts[0]?.operador_nome),
-        principal: r.numero_documento,
-        marcas,
-        secundario: [r.fornecedor_nome, parts.length ? `${parts.length} participante(s)` : null]
-          .filter(Boolean).join(" · "),
-        direita: calcElapsed(r.datetime_inicio?.split("T")[1]?.slice(0, 5)),
-      };
-    });
+  // Correção 5: o participante é `operator_nome` (a tela lia `operador_nome`,
+  // que não existe, e o nome nunca aparecia). A hora de início é a de
+  // Brasília — antes saía do texto UTC, três horas adiantada.
+  const horaLocal = (iso) => (iso ? format(new Date(iso), "HH:mm") : null);
+  const recebimentoAtivos = (V.recebimento?.itens ?? []).map((r) => {
+    const marcas = [{ texto: r.tipo, tom: "neutro" }];
+    if (r.prioridade === "Urgente") marcas.push({ texto: "URGENTE", tom: "erro" });
+    if (r.prioridade === "Alta") marcas.push({ texto: "ALTA", tom: "atencao" });
+    return {
+      id: r.id,
+      operador: r.primeiro?.nome,
+      foto: getPhoto(r.primeiro?.id, r.primeiro?.nome),
+      principal: r.numero_documento,
+      marcas,
+      secundario: [r.fornecedor_nome, r.participantes ? `${r.participantes} participante(s)` : null]
+        .filter(Boolean).join(" · "),
+      direita: calcElapsed(horaLocal(r.datetime_inicio)),
+    };
+  });
 
-  const ocorrenciasAbertas = [
-    ...empilhaOcorrencias.filter((o) => !o.resolvido).map((o) => ({ ...o, modulo: "Empilhadeira" })),
-    ...recOcorrencias.filter((o) => !o.resolvido).map((o) => ({ ...o, modulo: "Recebimento" })),
-  ].slice(0, 5);
+  // Correção 4: as pílulas "N ativo(s)" mostram o TOTAL, não o que coube nos
+  // 4 cartões.
+  const totalAtivos = {
+    envase: n(V.envase?.total), checkout: n(V.checkout?.total),
+    empilha: n(V.empilha?.total), recebimento: n(V.recebimento?.total),
+  };
+
+  const ocorrenciasAbertas = dados?.ocorrencias ?? [];
 
   return (
     <div className="min-h-screen bg-fundo p-4 md:p-8">
@@ -302,7 +246,17 @@ export default function Painel() {
           aoVivo
           migalha={[{ rotulo: "Acompanhar" }, { rotulo: "Painel geral" }]}
           titulo="Painel geral"
-          legenda={diaSemanaCapit}
+          legenda={
+            atualizacao.falhou ? (
+              <span role="status" data-tv-atualizacao="falhou" className="text-erro">
+                Sem atualizar{atualizacao.em ? ` desde ${format(atualizacao.em, "HH:mm")}` : ""} · verifique a rede
+              </span>
+            ) : (
+              <span data-tv-atualizacao={atualizacao.em ? "ok" : undefined}>
+                {diaSemanaCapit}{atualizacao.em ? ` · atualizado às ${format(atualizacao.em, "HH:mm")}` : ""}
+              </span>
+            )
+          }
           acoes={
             <>
               {/* O relógio fica: este painel costuma ficar aberto numa tela de
@@ -339,7 +293,7 @@ export default function Painel() {
             url="/NovoRegistro"
             itens={envaseAtivos}
             vazio="Nenhum envase em andamento"
-            pilula={{ texto: `${envaseAtivos.length} ativo(s)` }}
+            pilula={{ texto: `${totalAtivos.envase} ativo(s)` }}
             atraso={0.1}
           />
           <CartaoAoVivo
@@ -348,9 +302,9 @@ export default function Painel() {
             url="/Checkout"
             itens={checkoutAtivos}
             vazio="Nenhum check-out em andamento"
-            pilula={checkoutCriticos.length > 0
-              ? { texto: `${checkoutCriticos.length} crítico(s)`, tom: "erro" }
-              : { texto: `${checkoutAtivos.length} ativo(s)` }}
+            pilula={checkoutCriticos > 0
+              ? { texto: `${checkoutCriticos} crítico(s)`, tom: "erro" }
+              : { texto: `${totalAtivos.checkout} ativo(s)` }}
             atraso={0.15}
           />
           <CartaoAoVivo
@@ -362,7 +316,7 @@ export default function Painel() {
             aviso={paradaAberta ? `Parada: ${paradaAberta.tipo} desde ${paradaAberta.hora_inicio}` : null}
             pilula={paradaAberta
               ? { texto: "parada", tom: "erro" }
-              : { texto: `${empilhaAtivas.length} ativo(s)` }}
+              : { texto: `${totalAtivos.empilha} ativo(s)` }}
             atraso={0.2}
           />
           <CartaoAoVivo
@@ -371,7 +325,7 @@ export default function Painel() {
             url="/Recebimento"
             itens={recebimentoAtivos}
             vazio="Nenhum recebimento em andamento"
-            pilula={{ texto: `${recebimentoAtivos.length} ativo(s)` }}
+            pilula={{ texto: `${totalAtivos.recebimento} ativo(s)` }}
             atraso={0.25}
           />
         </div>

@@ -1,82 +1,49 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { MolduraTV, NumeroTV, MetaTV, StatusTV, GradeOperacoes, u } from "@/components/fluxo/tv";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { MolduraTV, NumeroTV, MetaTV, StatusTV, GradeOperacoes, usePainelTV, u } from "@/components/fluxo/tv";
 
 export default function TelevisaoEmpilha() {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  // Re-renderiza a cada segundo: é o que faz o "tempo decorrido" andar.
+  const [, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const today = format(new Date(), "yyyy-MM-dd");
+  // O painel do dia vem pronto do banco — public.painel_televisao_empilha()
+  // (Etapa 2). Antes eram três consultas a cada 10–15 s, baixando TODAS as
+  // programações e TODAS as ocorrências para mostrar o dia de hoje. Se a
+  // função ainda não existir no banco, o adaptador calcula o mesmo painel no
+  // navegador (src/lib/painelEmpilha.js).
+  const { painel, atualizacao } = usePainelTV("empilha", () => base44.functions.painelTelevisaoEmpilha());
 
-  const { data: programacoes } = useQuery({
-    queryKey: ["empilha-prog-tv"],
-    queryFn: () => base44.entities.EmpilhaProgramacao.list(),
-    refetchInterval: 10000,
-    initialData: [],
-  });
-
-  const { data: allLinhas } = useQuery({
-    queryKey: ["empilha-linhas-tv"],
-    queryFn: () => base44.entities.EmpilhaLinha.list("-updated_date", 200),
-    refetchInterval: 10000,
-    initialData: [],
-  });
-
+  // Os operadores servem só para a FOTO. Mudam raramente e a URL assinada
+  // vale 24 h: recarregar a cada 30 min basta.
   const { data: operators } = useQuery({
     queryKey: ["operators-tv"],
     queryFn: () => base44.entities.Operator.list(),
-    refetchInterval: 60000,
+    refetchInterval: 30 * 60000,
     initialData: [],
   });
 
-  const { data: ocorrencias } = useQuery({
-    queryKey: ["empilha-ocorrencias-tv"],
-    queryFn: () => base44.entities.EmpilhaOcorrencia.list("-data"),
-    refetchInterval: 15000,
-    initialData: [],
-  });
-
-  const progHoje = programacoes.filter(p => p.data_programada === today);
-  const progHojeIds = progHoje.map(p => p.id);
-  const linhasHoje = allLinhas.filter(l => progHojeIds.includes(l.programacao_id));
-
-  // `tipo_linha === "Crítico"`, e NÃO `l.critico`: a tabela empilha_linhas não
-  // tem coluna `critico` (conferido no banco). Esta tela filtrava por ela desde
-  // antes do módulo 1 — o contador "Críticos pendentes" era SEMPRE zero e a
-  // linha crítica nunca ia para o topo nem ficava vermelha.
+  const linhasEmAndamento = painel?.operacoes ?? [];
   const ehCritica = (l) => l.tipo_linha === "Crítico";
-  const linhasEmAndamento = linhasHoje
-    .filter(l => l.status === "Em Andamento")
-    .sort((a, b) => (ehCritica(b) ? 1 : 0) - (ehCritica(a) ? 1 : 0));
 
-  const ocorrenciasHoje = ocorrencias.filter(o => o.data === today && !o.resolvido);
-
-  // KPIs
-  const totalLinhas = linhasHoje.length;
-  const concluidas = linhasHoje.filter(l => l.status === "Concluído").length;
-  const emAndamento = linhasHoje.filter(l => l.status === "Em Andamento").length;
-  const criticosPendentes = linhasHoje.filter(l => ehCritica(l) && l.status !== "Concluído").length;
-
-  // Tempo médio
-  const linhasComTempo = linhasHoje.filter(l => l.tempo_total && l.status === "Concluído");
-  let tempoMedioMin = 0;
-  if (linhasComTempo.length > 0) {
-    const totalMins = linhasComTempo.reduce((sum, l) => {
-      const [h, m] = l.tempo_total.split(":").map(Number);
-      return sum + h * 60 + m;
-    }, 0);
-    tempoMedioMin = Math.round(totalMins / linhasComTempo.length);
-  }
+  // KPIs — as mesmas regras de antes, agora calculadas no banco.
+  const totalLinhas = painel?.total ?? 0;
+  const concluidas = painel?.concluidas ?? 0;
+  const emAndamento = painel?.em_andamento ?? 0;
+  const criticosPendentes = painel?.criticos_pendentes ?? 0;
+  const ocorrenciasAbertas = painel?.ocorrencias_abertas ?? 0;
+  const tempoMedioMin = painel?.tempo_medio_min ?? 0;
   const tempoMedio = tempoMedioMin > 0 ? `${Math.floor(tempoMedioMin / 60)}h${(tempoMedioMin % 60).toString().padStart(2, "0")}m` : "—";
 
-  const getOperatorPhoto = (nome) => operators.find(o => o.nome === nome)?.foto_url || null;
+  // Pelo id primeiro: o nome falha com homônimos (CLAUDE.md §6).
+  const getOperatorPhoto = (l) =>
+    (operators.find(o => o.id === l.operador_empilhadeira_id)
+      || operators.find(o => o.nome === l.operador_empilhadeira))?.foto_url || null;
 
   const calculateElapsed = (startTime) => {
     if (!startTime) return "—";
@@ -110,8 +77,8 @@ export default function TelevisaoEmpilha() {
     },
     {
       nome: 'Ocorrências',
-      situacao: ocorrenciasHoje.length > 0 ? `${ocorrenciasHoje.length} aberta(s)` : 'nenhuma aberta',
-      tom: ocorrenciasHoje.length > 0 ? 'erro' : 'ok',
+      situacao: ocorrenciasAbertas > 0 ? `${ocorrenciasAbertas} aberta(s)` : 'nenhuma aberta',
+      tom: ocorrenciasAbertas > 0 ? 'erro' : 'ok',
     },
     {
       nome: 'Tempo médio',
@@ -130,7 +97,7 @@ export default function TelevisaoEmpilha() {
     return {
       id: l.id,
       tom: critica ? "erro" : pausada ? "atencao" : "neutro",
-      foto: getOperatorPhoto(l.operador_empilhadeira),
+      foto: getOperatorPhoto(l),
       operador: l.operador_empilhadeira,
       verbo: `${pausada ? "Pausado" : "Movimentando"}${l.operador_ajudante ? ` · com ${l.operador_ajudante}` : ""}`,
       principal: l.descricao_produto || l.codigo_produto || "Linha",
@@ -150,7 +117,7 @@ export default function TelevisaoEmpilha() {
   // A ocorrência mais recente vai na pílula: a TV antiga listava as abertas
   // com tipo e hora, e a reconstrução tinha reduzido isso a um número no
   // rodapé. A descrição inteira continua na tela do módulo.
-  const ultimaOcorrencia = ocorrenciasHoje[0];
+  const ultimaOcorrencia = painel?.ultima_ocorrencia;
   const numeros = [
     {
       rotulo: "Críticos pendentes", valor: criticosPendentes, tom: "erro",
@@ -158,7 +125,7 @@ export default function TelevisaoEmpilha() {
       pilulaTom: criticosPendentes > 0 ? "erro" : "atencao",
     },
     {
-      rotulo: "Ocorrências abertas", valor: ocorrenciasHoje.length, tom: "erro",
+      rotulo: "Ocorrências abertas", valor: ocorrenciasAbertas, tom: "erro",
       pilula: ultimaOcorrencia
         ? `${ultimaOcorrencia.tipo || "ocorrência"}${ultimaOcorrencia.hora ? ` · ${String(ultimaOcorrencia.hora).slice(0, 5)}` : ""}`
         : "nenhuma aberta",
@@ -168,7 +135,9 @@ export default function TelevisaoEmpilha() {
   const meta = {
     rotulo: "Concluídas",
     valor: concluidas,
-    total: totalLinhas,
+    // `meta`, não `total`: é o nome que o MetaTV lê. Com `total` o anel ficava
+    // sempre em 0% (defeito do PR #24, achado pelo teste da Etapa 2).
+    meta: totalLinhas,
     unidade: "linhas",
     legenda: totalLinhas > 0 ? `${totalLinhas - concluidas} em aberto · ${totalLinhas} no dia` : "sem linhas",
   };
@@ -177,6 +146,7 @@ export default function TelevisaoEmpilha() {
     <MolduraTV
       titulo="Movimentação de hoje"
       modulo="Empilhadeira"
+      atualizacao={atualizacao}
       rodape={situacoes.map((s, i) => (
         <StatusTV key={s.nome} nome={s.nome} situacao={s.situacao} tom={s.tom} atraso={0.45 + i * 0.05} />
       ))}

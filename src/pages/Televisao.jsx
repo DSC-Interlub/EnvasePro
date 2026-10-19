@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  MolduraTV, NumeroTV, MetaTV, StatusTV, PainelImportacoes, GradeOperacoes, u,
+  MolduraTV, NumeroTV, MetaTV, StatusTV, PainelImportacoes, GradeOperacoes, usePainelTV, u,
 } from "@/components/fluxo/tv";
 import { format } from "date-fns";
 import { formatarData } from '@/lib/datas';
@@ -50,11 +50,11 @@ const hhmm = (t) => (t ? String(t).slice(0, 5) : null);
 function operacoesEnvase(records, { getOperatorPhoto, getProductCertifications, markMaterialAsRetirado }) {
   return records.map((r) => {
     const pronto = r.sala === 'Bio' && r.termino && !r.material_retirado;
-    const qtd = r.quantidade_produzida > 0 ? `${r.quantidade_produzida.toLocaleString('pt-BR')} un. produzidas` : null;
+    const qtd = Number(r.quantidade_produzida) > 0 ? `${Number(r.quantidade_produzida).toLocaleString('pt-BR')} un. produzidas` : null;
     return {
       id: r.id,
       tom: pronto ? 'ok' : 'neutro',
-      foto: getOperatorPhoto(r.operador),
+      foto: getOperatorPhoto(r.operator_id, r.operador),
       operador: r.operador,
       verbo: pronto ? 'Terminou — aguardando retirada' : 'Envasando',
       principal: r.descricao_produto || 'Produto não especificado',
@@ -63,7 +63,7 @@ function operacoesEnvase(records, { getOperatorPhoto, getProductCertifications, 
         { texto: `OP ${r.op || '—'}` },
         { texto: `Sala ${r.sala || '—'}`, tom: r.sala === 'Bio' ? 'ok' : undefined },
       ],
-      certificacoes: getProductCertifications(r.codigo_produto),
+      certificacoes: getProductCertifications(r),
       tempo: calcElapsed(r.inicio),
       desde: hhmm(r.inicio),
       alerta: pronto ? { texto: 'PRONTO', tom: 'ok' } : null,
@@ -81,7 +81,7 @@ function operacoesCheckout(itens, { getOperatorPhoto, hoje }) {
     return {
       id: i.id,
       tom: i.critico || atrasada ? 'erro' : 'neutro',
-      foto: getOperatorPhoto(i.operador),
+      foto: getOperatorPhoto(i.operator_id, i.operador),
       operador: i.operador,
       verbo: 'Em check-out',
       principal: `Pedido ${i.numero_pedido || '—'}`,
@@ -104,7 +104,7 @@ function operacoesEmpilha(linhas, { getOperatorPhoto }) {
     return {
       id: l.id,
       tom: critica ? 'erro' : pausada ? 'atencao' : 'neutro',
-      foto: getOperatorPhoto(l.operador_empilhadeira),
+      foto: getOperatorPhoto(l.operador_empilhadeira_id, l.operador_empilhadeira),
       operador: l.operador_empilhadeira,
       verbo: `${pausada ? 'Pausado' : 'Movimentando'}${l.operador_ajudante ? ` · com ${l.operador_ajudante}` : ''}`,
       principal: l.descricao_produto || l.codigo_produto || 'Linha',
@@ -152,193 +152,68 @@ export default function Televisao() {
     }
   };
 
-  const { data: allEnvaseRecords = [], isLoading: loadingEnvase } = useQuery({
-    queryKey: ['envase-live'],
-    queryFn: () => base44.entities.EnvaseRecord.list("-updated_date", 100),
-    refetchInterval: 30000,
-  });
+  // Envase, check-out, empilhadeira e mês vêm prontos do banco —
+  // public.painel_televisao() (Etapa 2). Antes eram 11 consultas com oito
+  // intervalos diferentes, três delas baixando tabelas inteiras a cada minuto.
+  // Se a função ainda não existir no banco, o adaptador calcula o mesmo painel
+  // no navegador (src/lib/painelTelevisao.js).
+  const { painel: dados, atualizacao } = usePainelTV("principal", () => base44.functions.painelTelevisao());
 
-  const { data: allCheckoutItems = [], isLoading: loadingCheckout } = useQuery({
-    queryKey: ['checkout-live'],
-    queryFn: () => base44.entities.CheckoutItem.list("-updated_date", 100),
-    refetchInterval: 35000,
-  });
-
-  const { data: checkoutProgramacoes = [] } = useQuery({
-    queryKey: ['checkout-programacoes-tv'],
-    queryFn: () => base44.entities.CheckoutProgramacao.list(),
-    refetchInterval: 60000,
-  });
-
-  const { data: products = [] } = useQuery({
-    queryKey: ['products-tv'],
-    queryFn: () => base44.entities.Product.list(),
-    refetchInterval: 300000,
-  });
-
+  // Só para a FOTO. Muda raramente e a URL assinada vale 24 h.
   const { data: operators = [] } = useQuery({
     queryKey: ['operators-tv'],
     queryFn: () => base44.entities.Operator.list(),
-    refetchInterval: 120000,
+    refetchInterval: 30 * 60000,
   });
 
-  const { data: monthlyKpis = { total: 0, bio: 0, industrial: 0, totalRegistros: 0, bioRegistros: 0, industrialRegistros: 0 } } = useQuery({
-    queryKey: ['monthly-kpis-tv'],
-    queryFn: async () => {
-      const currentMonth = format(new Date(), "yyyy-MM");
-      const all = await base44.entities.EnvaseRecord.list("-data", 2000);
-      const monthRecords = all.filter(r => {
-        if (!r.data) return false;
-        return r.data.startsWith(currentMonth);
-      });
-      const bioRecs = monthRecords.filter(r => r.sala === "Bio");
-      const indRecs = monthRecords.filter(r => r.sala === "Industrial");
-      // Produção do mês por código de produto: a categoria (óleo, graxa,
-      // pasta) é resolvida no render com a lista de produtos que a TV já
-      // carrega. A TV antiga baixava os mesmos 2.000 registros uma SEGUNDA vez
-      // só para isso.
-      const porCodigo = {};
-      for (const r of monthRecords) {
-        if (!r.codigo_produto) continue;
-        porCodigo[r.codigo_produto] = (porCodigo[r.codigo_produto] || 0) + (r.quantidade_produzida || 0);
-      }
-      return {
-        total: monthRecords.reduce((s, r) => s + (r.quantidade_produzida || 0), 0),
-        bio: bioRecs.reduce((s, r) => s + (r.quantidade_produzida || 0), 0),
-        industrial: indRecs.reduce((s, r) => s + (r.quantidade_produzida || 0), 0),
-        totalRegistros: monthRecords.length,
-        bioRegistros: bioRecs.length,
-        industrialRegistros: indRecs.length,
-        porCodigo,
-      };
-    },
-    refetchInterval: 120000,
-  });
-
-
-  const { data: todayStats = { envaseTotal: 0, envaseConcluidos: 0, checkoutConcluidos: 0, checkoutPendentes: 0 } } = useQuery({
-    queryKey: ['today-stats'],
-    queryFn: async () => {
-      const today = format(new Date(), "yyyy-MM-dd");
-      const allRecords = await base44.entities.EnvaseRecord.list();
-      const todayRecords = allRecords.filter(r => r.data === today);
-      const allProgramacoes = await base44.entities.CheckoutProgramacao.list();
-      const todayProgramacoes = allProgramacoes.filter(p => p.data_programada === today);
-      const todayProgramacaoIds = todayProgramacoes.map(p => p.id);
-      const allCheckouts = await base44.entities.CheckoutItem.list();
-      const todayCheckouts = allCheckouts.filter(item => todayProgramacaoIds.includes(item.programacao_id));
-      return {
-        envaseTotal: todayRecords.reduce((sum, r) => sum + (r.quantidade_produzida || 0), 0),
-        envaseConcluidos: todayRecords.filter(r => r.termino).length,
-        checkoutConcluidos: todayCheckouts.filter(item => item.status === "Concluído").length,
-        checkoutPendentes: todayCheckouts.length,
-      };
-    },
-    refetchInterval: 60000,
-  });
-
-  /* ---- Dados Empilhadeira ---- */
-  const { data: empilhaProgramacoes = [] } = useQuery({
-    queryKey: ['empilha-prog-tv'],
-    queryFn: () => base44.entities.EmpilhaProgramacao.list("-data_programada"),
-    refetchInterval: 60000,
-  });
-
-  const { data: empilhaLinhas = [] } = useQuery({
-    queryKey: ['empilha-linhas-tv'],
-    queryFn: () => base44.entities.EmpilhaLinha.list(),
-    refetchInterval: 40000,
-  });
-
-  const { data: empilhaParadas = [] } = useQuery({
-    queryKey: ['empilha-paradas-tv'],
-    queryFn: () => base44.entities.EmpilhadeiraParada.list("-data"),
-    refetchInterval: 45000,
-  });
-
-  const { data: empilhaOcorrencias = [] } = useQuery({
-    queryKey: ['empilha-ocorr-tv'],
-    queryFn: () => base44.entities.EmpilhaOcorrencia.list("-data"),
-    refetchInterval: 50000,
-  });
-
-  const { data: empilhadeiras = [] } = useQuery({
-    queryKey: ['empilhadeiras-tv'],
-    queryFn: () => base44.entities.EmpilhadeiraConfig.list(),
-    refetchInterval: 300000,
-  });
-
-
-  // Importacoes (SAP): voltou como o quarto painel do carrossel, a pedido do
-  // dono. Mesma consulta de antes.
+  // Importacoes (SAP): outra fonte, muda uma vez por importação. Fica fora do
+  // painel, com recarga longa.
   const { data: importacoes = [], isLoading: loadingImportacoes } = useQuery({
     queryKey: ['importacoes-tv'],
     queryFn: () => base44.entities.SapPedido.list(),
-    refetchInterval: 300000,
+    refetchInterval: 10 * 60000,
     initialData: [],
   });
 
   const markMaterialAsRetirado = useMutation({
     mutationFn: async (recordId) => base44.entities.EnvaseRecord.update(recordId, { material_retirado: true }),
-    onSuccess: () => queryClient.invalidateQueries(['envase-live']),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['painel-tv', 'principal'] }),
   });
 
-  const today = format(new Date(), "yyyy-MM-dd");
+  const today = dados?.dia || format(new Date(), "yyyy-MM-dd");
+  const envase = dados?.envase ?? { producao_dia: 0, concluidos: 0, lancados: 0, em_andamento: 0, operacoes: [] };
+  const checkout = dados?.checkout ?? { total_dia: 0, concluidos: 0, pendentes: 0, em_andamento: 0, criticos: 0, operacoes: [] };
+  const empilha = dados?.empilha ?? {
+    total: 0, concluidas: 0, criticos_pendentes: 0, tempo_medio_min: 0, em_andamento: 0,
+    ocorrencias_abertas: 0, parada_ativa: false, empilhadeira: null, operacoes: [],
+  };
+  const mes = dados?.mes ?? {
+    total: 0, bio: 0, industrial: 0, registros: 0, bio_registros: 0, industrial_registros: 0, oleo: 0, graxa: 0, pasta: 0,
+  };
 
-  const envaseRecords = allEnvaseRecords.filter(r => {
-    if (!r.inicio) return false;
-    if (r.sala === "Bio") { if (r.material_retirado) return false; }
-    else { if (r.termino) return false; }
-    return r.data === today;
-  });
+  const envaseRecords = envase.operacoes;
+  const checkoutItems = checkout.operacoes;
+  const linhasAtivas = empilha.operacoes;
 
-  const todayProgramacoes = checkoutProgramacoes.filter(p => p.data_programada === today);
-  const todayProgramacaoIds = todayProgramacoes.map(p => p.id);
-  const checkoutItems = allCheckoutItems
-    .filter(item => item.hora_inicio && !item.hora_termino && item.status === "Em Andamento" && todayProgramacaoIds.includes(item.programacao_id))
-    .sort((a, b) => (b.hora_inicio || "").localeCompare(a.hora_inicio || ""));
-
-  const getProductCertifications = (codigoProduto) => {
-    if (!products || !codigoProduto) return [];
-    const product = products.find(p => p.codigo === codigoProduto);
-    if (!product) return [];
+  // Os selos vêm da RPC, já resolvidos pelo produto de cada operação — a TV
+  // não baixa mais o catálogo inteiro (1.599 produtos) para isso.
+  const getProductCertifications = (r) => {
     const certs = [];
     // Com o logo, como a TV antiga: o selo é reconhecido pela imagem antes
     // de o nome ser lido.
-    if (product.halal) certs.push({ nome: 'HALAL', logo: '/certificacoes/halal.png' });
-    if (product.kosher) certs.push({ nome: 'KOSHER', logo: '/certificacoes/kosher.png' });
-    if (product.nsf_3h) certs.push({ nome: 'NSF 3H', logo: '/certificacoes/nsf.png' });
-    if (product.nsf_h1) certs.push({ nome: 'NSF H1', logo: '/certificacoes/nsf.png' });
+    if (r.halal) certs.push({ nome: 'HALAL', logo: '/certificacoes/halal.png' });
+    if (r.kosher) certs.push({ nome: 'KOSHER', logo: '/certificacoes/kosher.png' });
+    if (r.nsf_3h) certs.push({ nome: 'NSF 3H', logo: '/certificacoes/nsf.png' });
+    if (r.nsf_h1) certs.push({ nome: 'NSF H1', logo: '/certificacoes/nsf.png' });
     return certs;
   };
-  const getOperatorPhoto = (nome) => operators.find(op => op.nome === nome)?.foto_url || null;
+  // Pelo id primeiro: o nome falha com homônimos (CLAUDE.md §6).
+  const getOperatorPhoto = (id, nome) =>
+    (operators.find(op => op.id === id) || operators.find(op => op.nome === nome))?.foto_url || null;
 
-  const todayProgIds = empilhaProgramacoes.filter(p => p.data_programada === today).map(p => p.id);
-  const todayLinhas = empilhaLinhas.filter(l => todayProgIds.includes(l.programacao_id));
-  const linhasAtivas = [
-    ...todayLinhas.filter(l => l.tipo_linha === "Crítico" && l.status === "Em Andamento"),
-    ...todayLinhas.filter(l => l.tipo_linha === "Avulso" && l.status === "Em Andamento"),
-    ...todayLinhas.filter(l => (l.tipo_linha === "Normal" || !l.tipo_linha) && l.status === "Em Andamento"),
-  ];
-  const paradaAtiva = empilhaParadas.find(p => p.data === today && !p.hora_fim);
-  const ocorrenciasAtivas = empilhaOcorrencias.filter(o => o.data === today && !o.resolvido);
-  const temposMins = todayLinhas.filter(l => l.status === "Concluído" && l.tempo_total)
-    .map(l => { const [h, m] = (l.tempo_total || "0:0").split(":").map(Number); return h * 60 + (m || 0); });
-  const tempoMedio = temposMins.length > 0 ? Math.round(temposMins.reduce((a, b) => a + b, 0) / temposMins.length) : 0;
-  const empilhadeiraAtiva = empilhadeiras.find(e => e.ativa);
-
-  const empilhadeiraData = {
-    linhasAtivas,
-    empilhadeira: empilhadeiraAtiva,
-    paradaAtiva,
-    ocorrencias: ocorrenciasAtivas,
-    kpis: {
-      total: todayLinhas.length,
-      concluidas: todayLinhas.filter(l => l.status === "Concluído").length,
-      criticos: todayLinhas.filter(l => l.tipo_linha === "Crítico" && l.status !== "Concluído").length,
-      tempoMedio,
-    },
-  };
+  const ocorrenciasAbertas = empilha.ocorrencias_abertas;
+  const empilhadeiraAtiva = empilha.empilhadeira;
+  const tempoMedio = empilha.tempo_medio_min;
 
   const prevSlide = () => resetAutoPlay((slideIndex - 1 + NUM_SLIDES) % NUM_SLIDES);
   const nextSlide = () => resetAutoPlay((slideIndex + 1) % NUM_SLIDES);
@@ -355,28 +230,23 @@ export default function Televisao() {
   // que foi lancado hoje. Se o dono quiser meta de verdade, ela precisa de
   // coluna — esta anotado no relatorio.
   // ---------------------------------------------------------------------
-  const emAndamentoEnvase = envaseRecords.length;
-  const totalEnvaseHoje = todayStats.envaseConcluidos + emAndamentoEnvase;
-  const totalCheckoutHoje = todayStats.checkoutConcluidos + todayStats.checkoutPendentes;
+  const emAndamentoEnvase = envase.em_andamento;
+  // Correção 3 da migration: "lançados" conta cada envase uma vez. Antes era
+  // concluídos + em andamento, e o Bio terminado aguardando retirada entrava
+  // nos dois.
+  const totalEnvaseHoje = envase.lancados;
+  // Correção 2: o total do dia é o total; antes somava concluídos + total.
+  const totalCheckoutHoje = checkout.total_dia;
 
-  // Mesma regra da TV antiga: a categoria vem de products.categoria.
-  const categoriaDe = {};
-  for (const p of products) if (p.codigo && p.categoria) categoriaDe[p.codigo] = p.categoria;
-  const porCategoria = { oleo: 0, graxa: 0, pasta: 0 };
-  for (const [codigo, qtd] of Object.entries(monthlyKpis.porCodigo || {})) {
-    const cat = categoriaDe[codigo];
-    if (cat === 'Óleo') porCategoria.oleo += qtd;
-    else if (cat === 'Graxa') porCategoria.graxa += qtd;
-    else if (cat === 'Pasta') porCategoria.pasta += qtd;
-  }
-
+  // Óleo, graxa e pasta: a categoria vem de products.categoria, agora
+  // somada no banco (mes.oleo / mes.graxa / mes.pasta).
   const PAINEIS = [
     {
       modulo: 'Envase',
       titulo: 'Produção de hoje',
       meta: {
         rotulo: 'Concluídos',
-        valor: todayStats.envaseConcluidos,
+        valor: envase.concluidos,
         total: totalEnvaseHoje,
         unidade: 'envases',
         legenda: totalEnvaseHoje > 0
@@ -384,14 +254,14 @@ export default function Televisao() {
           : 'sem lançamentos',
       },
       numeros: [
-        { rotulo: 'Produção de hoje', valor: todayStats.envaseTotal.toLocaleString('pt-BR'),
-          pilula: `${monthlyKpis.totalRegistros} registros no mês`, pilulaTom: 'atencao' },
-        { rotulo: 'Ocorrências abertas', valor: ocorrenciasAtivas.length, tom: 'erro',
-          pilula: ocorrenciasAtivas.length > 0 ? 'precisa de atenção' : 'nenhuma aberta',
-          pilulaTom: ocorrenciasAtivas.length > 0 ? 'erro' : 'atencao' },
+        { rotulo: 'Produção de hoje', valor: Number(envase.producao_dia).toLocaleString('pt-BR'),
+          pilula: `${mes.registros} registros no mês`, pilulaTom: 'atencao' },
+        { rotulo: 'Ocorrências abertas', valor: ocorrenciasAbertas, tom: 'erro',
+          pilula: ocorrenciasAbertas > 0 ? 'precisa de atenção' : 'nenhuma aberta',
+          pilulaTom: ocorrenciasAbertas > 0 ? 'erro' : 'atencao' },
       ],
       tituloOperacoes: 'Envase em andamento',
-      contagemOperacoes: `${envaseRecords.length} ${envaseRecords.length === 1 ? 'operação' : 'operações'}`,
+      contagemOperacoes: `${envase.em_andamento} ${envase.em_andamento === 1 ? 'operação' : 'operações'}`,
       operacoes: operacoesEnvase(envaseRecords, { getOperatorPhoto, getProductCertifications, markMaterialAsRetirado }),
     },
     {
@@ -399,22 +269,22 @@ export default function Televisao() {
       titulo: 'Expedição de hoje',
       meta: {
         rotulo: 'Concluídos',
-        valor: todayStats.checkoutConcluidos,
+        valor: checkout.concluidos,
         total: totalCheckoutHoje,
         unidade: 'pedidos',
         legenda: totalCheckoutHoje > 0
-          ? `${todayStats.checkoutPendentes} pendentes · ${totalCheckoutHoje} no dia`
+          ? `${checkout.pendentes} pendentes · ${totalCheckoutHoje} no dia`
           : 'sem pedidos',
       },
       numeros: [
-        { rotulo: 'Em andamento', valor: checkoutItems.length,
-          pilula: `${todayStats.checkoutPendentes} pendentes`, pilulaTom: 'atencao' },
-        { rotulo: 'Pedidos críticos', valor: checkoutItems.filter((i) => i.critico).length, tom: 'erro',
-          pilula: checkoutItems.filter((i) => i.critico).length > 0 ? 'prioridade' : 'nenhum crítico',
-          pilulaTom: checkoutItems.filter((i) => i.critico).length > 0 ? 'erro' : 'atencao' },
+        { rotulo: 'Em andamento', valor: checkout.em_andamento,
+          pilula: `${checkout.pendentes} pendentes`, pilulaTom: 'atencao' },
+        { rotulo: 'Pedidos críticos', valor: checkout.criticos, tom: 'erro',
+          pilula: checkout.criticos > 0 ? 'prioridade' : 'nenhum crítico',
+          pilulaTom: checkout.criticos > 0 ? 'erro' : 'atencao' },
       ],
       tituloOperacoes: 'Check-out em andamento',
-      contagemOperacoes: `${checkoutItems.length} ${checkoutItems.length === 1 ? 'pedido' : 'pedidos'}`,
+      contagemOperacoes: `${checkout.em_andamento} ${checkout.em_andamento === 1 ? 'pedido' : 'pedidos'}`,
       operacoes: operacoesCheckout(checkoutItems, { getOperatorPhoto, hoje: today }),
     },
     {
@@ -422,23 +292,23 @@ export default function Televisao() {
       titulo: 'Movimentação de hoje',
       meta: {
         rotulo: 'Concluídas',
-        valor: empilhadeiraData.kpis.concluidas,
-        total: empilhadeiraData.kpis.total,
+        valor: empilha.concluidas,
+        total: empilha.total,
         unidade: 'linhas',
-        legenda: empilhadeiraData.kpis.total > 0
-          ? `${empilhadeiraData.kpis.total - empilhadeiraData.kpis.concluidas} em aberto · ${empilhadeiraData.kpis.total} no dia`
+        legenda: empilha.total > 0
+          ? `${empilha.total - empilha.concluidas} em aberto · ${empilha.total} no dia`
           : 'sem linhas',
       },
       numeros: [
         { rotulo: 'Tempo médio por linha',
-          valor: empilhadeiraData.kpis.tempoMedio > 0 ? `${empilhadeiraData.kpis.tempoMedio}m` : '—',
-          pilula: `${empilhadeiraData.linhasAtivas.length} em andamento`, pilulaTom: 'atencao' },
-        { rotulo: 'Críticos pendentes', valor: empilhadeiraData.kpis.criticos, tom: 'erro',
-          pilula: empilhadeiraData.kpis.criticos > 0 ? 'prioridade' : 'nenhum crítico',
-          pilulaTom: empilhadeiraData.kpis.criticos > 0 ? 'erro' : 'atencao' },
+          valor: tempoMedio > 0 ? `${tempoMedio}m` : '—',
+          pilula: `${empilha.em_andamento} em andamento`, pilulaTom: 'atencao' },
+        { rotulo: 'Críticos pendentes', valor: empilha.criticos_pendentes, tom: 'erro',
+          pilula: empilha.criticos_pendentes > 0 ? 'prioridade' : 'nenhum crítico',
+          pilulaTom: empilha.criticos_pendentes > 0 ? 'erro' : 'atencao' },
       ],
       tituloOperacoes: 'Movimentação em andamento',
-      contagemOperacoes: `${linhasAtivas.length} ${linhasAtivas.length === 1 ? 'linha' : 'linhas'}`,
+      contagemOperacoes: `${empilha.em_andamento} ${empilha.em_andamento === 1 ? 'linha' : 'linhas'}`,
       operacoes: operacoesEmpilha(linhasAtivas, { getOperatorPhoto }),
     },
     {
@@ -458,15 +328,15 @@ export default function Televisao() {
             gridTemplateRows: 'repeat(2, minmax(0, 1fr))',
           }}
         >
-          <NumeroTV rotulo="Produção total" valor={monthlyKpis.total.toLocaleString('pt-BR')}
-            pilula={`${monthlyKpis.totalRegistros} registros`} atraso={0.05} />
-          <NumeroTV rotulo="Sala Bio" valor={monthlyKpis.bio.toLocaleString('pt-BR')} tom="ok"
-            pilula={`${monthlyKpis.bioRegistros} registros`} atraso={0.1} />
-          <NumeroTV rotulo="Sala Industrial" valor={monthlyKpis.industrial.toLocaleString('pt-BR')}
-            pilula={`${monthlyKpis.industrialRegistros} registros`} atraso={0.15} />
-          <NumeroTV rotulo="Óleo" valor={porCategoria.oleo.toLocaleString('pt-BR')} pilula="unidades no mês" atraso={0.2} />
-          <NumeroTV rotulo="Graxa" valor={porCategoria.graxa.toLocaleString('pt-BR')} pilula="unidades no mês" atraso={0.25} />
-          <NumeroTV rotulo="Pasta" valor={porCategoria.pasta.toLocaleString('pt-BR')} pilula="unidades no mês" atraso={0.3} />
+          <NumeroTV rotulo="Produção total" valor={Number(mes.total).toLocaleString('pt-BR')}
+            pilula={`${mes.registros} registros`} atraso={0.05} />
+          <NumeroTV rotulo="Sala Bio" valor={Number(mes.bio).toLocaleString('pt-BR')} tom="ok"
+            pilula={`${mes.bio_registros} registros`} atraso={0.1} />
+          <NumeroTV rotulo="Sala Industrial" valor={Number(mes.industrial).toLocaleString('pt-BR')}
+            pilula={`${mes.industrial_registros} registros`} atraso={0.15} />
+          <NumeroTV rotulo="Óleo" valor={Number(mes.oleo).toLocaleString('pt-BR')} pilula="unidades no mês" atraso={0.2} />
+          <NumeroTV rotulo="Graxa" valor={Number(mes.graxa).toLocaleString('pt-BR')} pilula="unidades no mês" atraso={0.25} />
+          <NumeroTV rotulo="Pasta" valor={Number(mes.pasta).toLocaleString('pt-BR')} pilula="unidades no mês" atraso={0.3} />
         </div>
       ),
     },
@@ -495,24 +365,24 @@ export default function Televisao() {
     },
     {
       nome: 'Check-out',
-      situacao: todayStats.checkoutPendentes > 0
-        ? `${todayStats.checkoutPendentes} pendentes` : 'tudo concluído',
-      tom: todayStats.checkoutPendentes > 0 ? 'atencao' : 'ok',
+      situacao: checkout.pendentes > 0
+        ? `${checkout.pendentes} pendentes` : 'tudo concluído',
+      tom: checkout.pendentes > 0 ? 'atencao' : 'ok',
     },
     {
       nome: empilhadeiraAtiva?.nome || 'Empilhadeira',
-      situacao: empilhadeiraData.paradaAtiva ? 'parada agora'
+      situacao: empilha.parada_ativa ? 'parada agora'
         : diasAteManutencao != null && diasAteManutencao <= 7
           ? `manutenção em ${Math.max(0, diasAteManutencao)} dias`
           : 'operando',
-      tom: empilhadeiraData.paradaAtiva ? 'erro'
+      tom: empilha.parada_ativa ? 'erro'
         : diasAteManutencao != null && diasAteManutencao <= 7 ? 'atencao' : 'ok',
     },
     {
       nome: 'Ocorrências',
-      situacao: ocorrenciasAtivas.length > 0
-        ? `${ocorrenciasAtivas.length} aberta(s) hoje` : 'nenhuma aberta',
-      tom: ocorrenciasAtivas.length > 0 ? 'erro' : 'ok',
+      situacao: ocorrenciasAbertas > 0
+        ? `${ocorrenciasAbertas} aberta(s) hoje` : 'nenhuma aberta',
+      tom: ocorrenciasAbertas > 0 ? 'erro' : 'ok',
     },
   ];
 
@@ -523,6 +393,7 @@ export default function Televisao() {
     <MolduraTV
       titulo={painel.titulo}
       modulo={painel.modulo}
+      atualizacao={atualizacao}
       acoes={
         <div className="flex items-center" style={{ gap: u(0.8) }}>
           <button

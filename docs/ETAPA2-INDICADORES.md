@@ -1,8 +1,8 @@
 # Etapa 2 — indicadores no banco
 
-**Status: planejamento. Nada aqui está implementado, e nenhuma linha de SQL
-de banco foi escrita.** Este documento serve para o dono decidir o que entra,
-em que ordem.
+**Status (19/10/2026): passos 1 a 3 do §4.1 implementados e provados no
+banco LOCAL — as três telas de parede. NADA aplicado em produção.** Resultado e
+provas na seção 7. Os passos 4 e 5 (telas de admin) seguem como plano.
 
 Escrito para quem for implementar a Etapa 2 e para quem precisar aprovar o
 gasto de tráfego.
@@ -328,3 +328,90 @@ Três cuidados, aprendidos nas medições anteriores:
   B), que é pré-requisito do go-live.
 - **Nomes das funções.** Seguem o padrão em português do resto do código; se a
   preferência for inglês, é renomear.
+
+---
+
+## 7. Execução — 19/10/2026 (banco LOCAL; produção intocada)
+
+### 7.1 O que foi feito
+
+| Passo | Migration (nova, idempotente) | Substitui |
+|---|---|---|
+| 1 | `20261019000001_painel_televisao_empilha.sql` | 4 consultas a cada 10–60 s em `/TelevisaoEmpilha` |
+| 2 | `20261019000002_painel_televisao.sql` | 11 consultas, oito intervalos, em `/Televisao` |
+| 3 | `20261019000003_painel_geral.sql` | 16 consultas com teto em `/Painel` |
+
+As três funções: `STABLE`, **sem** `SECURITY DEFINER` (o RLS vale), `search_path`
+fixo, `EXECUTE` só para `authenticated` (anon e service_role recusados, provado),
+"hoje" e "semana" de Brasília. Cada migration cria os índices que a função usa
+— o banco não tinha nenhum índice além das chaves primárias e dos UNIQUE.
+
+No navegador: um intervalo só (30 s, `usePainelTV`); "atualizado às HH:MM" e
+"Sem atualizar desde HH:MM" quando a busca falha, mantendo o último painel;
+e um **recuo**: se a função não existe no banco (o código pode subir antes da
+migration), a tela calcula o mesmo painel com consultas **filtradas por dia**
+(`src/lib/painel*.js`). O recuo é exigido igual à RPC, objeto inteiro.
+
+### 7.2 Tráfego — medido, mesma sessão, mesmo banco, com controle
+
+Banco local carregado por `scripts/semear-volume.mjs` no volume da Base44. Base
+medida num worktree limpo do `main` (porta 5174), depois na mesma sessão. Regime
+= depois de 20 s assentando. Controle (o mesmo código antigo medido duas vezes):
+diferença < 0,5% nas três telas.
+
+| Tela | Antes | Depois | Redução |
+|---|---|---|---|
+| `/Televisao` | 20,9 req/min · 9.449 KB/min | 1,8 req/min · 28,1 KB/min | −91% · −99,7% |
+| `/TelevisaoEmpilha` | 16,2 · 1.928 | 1,8 · 5,2 | −89% · −99,7% |
+| `/Painel` | 6,0 · 211,8 | 1,8 · 10,3 | −70% · −95% |
+| **3 telas** | **43,1 req/min · 11,6 MB/min** | **5,4 req/min · 43,6 KB/min** | **−87% · −99,6%** |
+
+As três ficam dentro da meta do §5.1 (≤ 2 req/min, ≤ 50 KB/min por tela). E o
+que importa mais que o número: o tráfego **não cresce mais com o histórico** — o
+painel tem o tamanho do dia, não da tabela.
+
+Fora da conta: `operators` a cada 30 min (fotos; a URL assinada vale 24 h) e
+`sap_pedidos` a cada 10 min na `/Televisao`.
+
+### 7.3 Correções que vieram junto — declaradas, cada uma com antes × depois no teste
+
+As funções reproduzem as regras das telas, menos onde a regra estava errada. Nada
+disso foi escondido: cada teste imprime o valor que a tela antiga mostrava ao lado
+do novo.
+
+| Tela | Defeito | Efeito no volume carregado |
+|---|---|---|
+| Empilha | dia filtrado dentro das 200 linhas mais recentes | mostrava **0 de 12** linhas do dia |
+| Empilha | anel lia `total`, o `MetaTV` lê `meta` (PR #24) | anel sempre em **0%** |
+| Televisao | operações em andamento dentro das 100 mais recentes | envase **0 de 20**, check-out **0 de 11** |
+| Televisao | "pendentes" do check-out era o total do dia | rodapé dizia 31 pendentes; são 21 |
+| Televisao | anel do check-out contava concluídos duas vezes | "41 no dia"; são 31 |
+| Televisao | "lançados" contava duas vezes o Bio pronto | 31; são 23 |
+| Painel | contagens dentro de tetos de 100/50 | assinaturas pendentes **120**; são 2.996 |
+| Painel | "hoje" do checklist em UTC | checklist das 22:30 de ontem contava como hoje |
+| Painel | limpezas da semana incluíam as semanas seguintes | 30; são 14 |
+| Painel | pílula "N ativo(s)" contava depois do corte de 4 | 4; são 20 |
+| Painel | participante do recebimento: `operador_nome` não existe | nome nunca aparecia |
+| Painel | linha da empilhadeira: `numero_linha`/`descricao` não existem | todo cartão dizia "Linha" |
+
+### 7.4 Provas
+
+| Script | O que prova |
+|---|---|
+| `test-painel-empilha.mjs` | 6 indicadores iguais à fórmula da tela, nenhum zerado; recuo idêntico; linha crítica ao vivo; quem executa |
+| `test-painel-televisao.mjs` | 23 indicadores iguais, nenhum zerado; 4 correções com antes × depois; parada ativa nos dois valores |
+| `test-painel-geral.mjs` | como TV **e** como admin: 25 iguais, 4 diferenças só por correção declarada; fuso das 22:30 |
+| `test-tv-paineis-ui.mjs` | Playwright nas 3 telas: com a função, **sem** a função (recuo) e com a rede caindo |
+| `test-tv-layout.mjs` | 228/228 com o volume carregado; 116/116 com o banco sem ele (0, 1 e 12 operações de verdade) |
+| mutantes | 7 mutações nas funções, todas pegas; anel com o defeito de volta, pego |
+
+### 7.5 O que falta
+
+- Passos 4 e 5 (indicadores de admin e Dashboard).
+- **Aplicar em produção** as três migrations — só com autorização escrita do
+  dono. Até lá o código publicado roda no recuo, que é correto mas não economiza
+  o tráfego. O tráfego do recuo **não foi medido**; ele lê só o dia, a semana e
+  o mês (e só os produtos desses códigos), então é limitado, mas maior que o
+  da RPC.
+- O PR #11 (fuso) tem migration `20261013000001`, **anterior** a estas. Se for
+  aplicado depois delas, o `supabase db push` vai exigir `--include-all`.

@@ -17,6 +17,9 @@
 import { supabase } from '../lib/supabaseClient.js';
 import { validarUpload, tipoRealDoArquivo, ErroDeUpload, mensagemDeErroSegura, registrarErro } from '@/lib/uploadSeguro';
 import { executarComRenovacao as repetirSeSessao } from '@/lib/sessaoRetry';
+import { calcularPainelEmpilha, hojeEmBrasilia } from '@/lib/painelEmpilha';
+import { calcularPainelTelevisao, limitesDoMes } from '@/lib/painelTelevisao';
+import { calcularPainelGeral, limitesDaSemana } from '@/lib/painelGeral';
 
 /**
  * Colunas que sao chave estrangeira de TEXTO (referenciam `products.codigo`,
@@ -295,6 +298,36 @@ function parseOrderBy(orderBy) {
  */
 const executarComRenovacao = (construir) =>
   repetirSeSessao(construir, () => supabase.auth.refreshSession());
+
+/**
+ * A função SQL não existe no banco? (PGRST202: o PostgREST não a encontrou;
+ * 42883: existe com outra assinatura.) É o único caso em que as telas de TV
+ * recuam para o cálculo no navegador. Falta de permissão (42501) NÃO é: essa
+ * tem de aparecer como falha.
+ */
+const funcaoAusente = (error) => error?.code === 'PGRST202' || error?.code === '42883';
+
+/** Lê todas as páginas de uma consulta (o PostgREST corta em 1.000 linhas). */
+async function lerTudo(construir) {
+  const linhas = [];
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await executarComRenovacao(() => construir().range(de, de + 999));
+    if (error) throw error;
+    linhas.push(...data);
+    if (data.length < 1000) return linhas;
+  }
+}
+
+/** O painel da empilhadeira calculado no navegador — recuo das duas TVs. */
+async function painelEmpilhaNoNavegador(dia) {
+  const progs = await lerTudo(() => supabase.from('empilha_programacoes').select('id').eq('data_programada', dia));
+  const ids = progs.map((p) => p.id);
+  const [linhas, ocorr] = await Promise.all([
+    ids.length ? lerTudo(() => supabase.from('empilha_linhas').select('*').in('programacao_id', ids)) : [],
+    lerTudo(() => supabase.from('empilha_ocorrencias').select('tipo, hora, resolvido, created_at').eq('data', dia)),
+  ]);
+  return calcularPainelEmpilha(linhas, ocorr, dia);
+}
 
 function createEntityAdapter(entityName) {
   const table = TABELAS_MAPEAMENTO[entityName] || entityName.toLowerCase();
@@ -653,6 +686,146 @@ const functionsAdapter = {
     const linha = Array.isArray(data) ? data[0] : data;
     if (!linha) throw new Error('contadores_do_menu não devolveu nenhuma linha');
     return linha;
+  },
+
+  /**
+   * Painel da TV de empilhadeira, calculado NO BANCO (Etapa 2).
+   *
+   * Antes a tela baixava todas as programações, 200 linhas e todas as
+   * ocorrências a cada 10–15s. Agora é uma chamada só.
+   *
+   * RECUO: se a função ainda não existe no banco (o código pode ser publicado
+   * antes da migration), calcula o mesmo painel no navegador a partir das
+   * linhas do DIA, já filtradas. Qualquer OUTRO erro é lançado: a TV precisa
+   * saber que falhou para avisar, em vez de mostrar número velho como atual.
+   */
+  async painelTelevisaoEmpilha() {
+    const { data, error } = await executarComRenovacao(() =>
+      supabase.rpc('painel_televisao_empilha'));
+    if (!error) return { ...data, calculado_no: 'banco' };
+    if (!funcaoAusente(error)) throw error;
+
+    return painelEmpilhaNoNavegador(hojeEmBrasilia());
+  },
+
+  /**
+   * Painel da TV principal (/Televisao), calculado NO BANCO (Etapa 2):
+   * envase, check-out, empilhadeira e mês numa chamada. Antes eram 12
+   * consultas, três delas de tabelas inteiras a cada minuto.
+   *
+   * Mesmo recuo da empilhadeira: só quando a função não existe no banco.
+   */
+  async painelTelevisao() {
+    const { data, error } = await executarComRenovacao(() => supabase.rpc('painel_televisao'));
+    if (!error) return { ...data, calculado_no: 'banco' };
+    if (!funcaoAusente(error)) throw error;
+
+    const dia = hojeEmBrasilia();
+    const { inicio, fim } = limitesDoMes(dia);
+    const progs = await lerTudo(() => supabase.from('checkout_programacoes').select('id').eq('data_programada', dia));
+    const ids = progs.map((p) => p.id);
+    const [envaseHoje, envaseMes, checkoutHoje, painelEmpilha, paradasHoje, empilhadeiras] = await Promise.all([
+      lerTudo(() => supabase.from('envase_records').select('*').eq('data', dia)),
+      lerTudo(() => supabase.from('envase_records').select('sala, quantidade_produzida, codigo_produto')
+        .gte('data', inicio).lt('data', fim)),
+      ids.length ? lerTudo(() => supabase.from('checkout_itens').select('*').in('programacao_id', ids)) : [],
+      painelEmpilhaNoNavegador(dia),
+      lerTudo(() => supabase.from('empilhadeira_paradas').select('hora_fim').eq('data', dia)),
+      lerTudo(() => supabase.from('empilhadeira_configs').select('nome, ativa, data_proxima_manutencao, created_at')),
+    ]);
+    // Só os produtos que aparecem no dia e no mês — não o catálogo inteiro
+    // (1.599 linhas) a cada 30 s. Em lotes de 150 códigos, para a URL caber.
+    const codigos = [...new Set([...envaseHoje, ...envaseMes].map((r) => r.codigo_produto).filter(Boolean))];
+    const produtos = [];
+    for (let i = 0; i < codigos.length; i += 150) {
+      produtos.push(...await lerTudo(() => supabase.from('products')
+        .select('codigo, categoria, halal, kosher, nsf_3h, nsf_h1').in('codigo', codigos.slice(i, i + 150))));
+    }
+    return calcularPainelTelevisao({
+      dia, envaseHoje, envaseMes, checkoutHoje, produtos, painelEmpilha, paradasHoje, empilhadeiras,
+    });
+  },
+
+  /**
+   * Painel geral (/Painel), calculado NO BANCO (Etapa 2). Antes eram 16
+   * consultas, cada uma com um teto de linhas, e "semana" era contada dentro
+   * desses tetos. Mesmo recuo das TVs: só quando a função não existe.
+   */
+  async painelGeral() {
+    const { data, error } = await executarComRenovacao(() => supabase.rpc('painel_geral'));
+    if (!error) return { ...data, calculado_no: 'banco' };
+    if (!funcaoAusente(error)) throw error;
+
+    const dia = hojeEmBrasilia();
+    const { semana, semanaFim } = limitesDaSemana(dia);
+    // Meia-noite de segunda em Brasília, como instante. Brasília não tem
+    // horário de verão desde 2019; a função SQL usa o fuso nomeado.
+    const desdeSegunda = `${semana}T00:00:00-03:00`;
+    const ha3dias = new Date(Date.now() - 3 * 86400000).toISOString();
+    const contar = async (construir) => {
+      const { count, error: e } = await executarComRenovacao(() => construir());
+      if (e) throw e;
+      return count ?? 0;
+    };
+    const cabeca = { count: 'exact', head: true };
+
+    const [progsCk, progsEmp] = await Promise.all([
+      lerTudo(() => supabase.from('checkout_programacoes').select('id').eq('data_programada', dia)),
+      lerTudo(() => supabase.from('empilha_programacoes').select('id').eq('data_programada', dia)),
+    ]);
+    const idsCk = progsCk.map((x) => x.id);
+    const idsEmp = progsEmp.map((x) => x.id);
+
+    const [
+      envaseSemana, checkoutHoje, checkoutConcluidosSemana, linhasConcluidasSemana, empilhaAtivasHoje,
+      linhasSemAssinatura, recSemana, recAtivos, recSemLider, checklistsSemana,
+      limpSemana, limpAtrasadas, limpAguardando, nfsSemana, nfsSemArquivo3dias,
+      ocorrenciasEmpilha, ocorrenciasRecebimento, paradasHoje, empilhadeiras,
+    ] = await Promise.all([
+      lerTudo(() => supabase.from('envase_records').select('*').gte('data', semana).lte('data', dia)),
+      idsCk.length ? lerTudo(() => supabase.from('checkout_itens').select('*').in('programacao_id', idsCk)) : [],
+      lerTudo(() => supabase.from('checkout_itens').select('id').eq('status', 'Concluído').gte('updated_at', desdeSegunda)),
+      lerTudo(() => supabase.from('empilha_linhas').select('id').eq('status', 'Concluído').gte('updated_at', desdeSegunda)),
+      idsEmp.length
+        ? lerTudo(() => supabase.from('empilha_linhas').select('*').in('programacao_id', idsEmp).eq('status', 'Em Andamento'))
+        : [],
+      contar(() => supabase.from('empilha_linhas').select('id', cabeca).eq('status', 'Concluído').not('assinatura_lider', 'is', true)),
+      lerTudo(() => supabase.from('recebimentos').select('*').gte('created_at', desdeSegunda)),
+      lerTudo(() => supabase.from('recebimentos').select('*').eq('status', 'Em andamento')),
+      lerTudo(() => supabase.from('recebimentos').select('*').eq('status', 'Concluído').not('assinatura_lider', 'is', true)),
+      lerTudo(() => supabase.from('checklist_recebimentos').select('id, nota_final, created_at').gte('created_at', desdeSegunda)),
+      lerTudo(() => supabase.from('limpeza_programacoes').select('*').gte('data_prevista', semana).lte('data_prevista', semanaFim)),
+      lerTudo(() => supabase.from('limpeza_programacoes').select('*').lt('data_prevista', dia).neq('status', 'Concluído')),
+      lerTudo(() => supabase.from('limpeza_programacoes').select('*').eq('status', 'Concluído')
+        .eq('assinatura_responsavel', true).not('assinatura_lider', 'is', true)),
+      contar(() => supabase.from('nota_fiscal_arquivos').select('id', cabeca).gte('created_at', desdeSegunda)),
+      // Sem arquivo = NULL ou texto vazio. Duas contagens em vez de .or():
+      // a revisão de injeção (CLAUDE.md §2.2) registrou zero .or() no app.
+      Promise.all([
+        contar(() => supabase.from('nota_fiscal_arquivos').select('id', cabeca)
+          .is('arquivo_url', null).lt('created_at', ha3dias)),
+        contar(() => supabase.from('nota_fiscal_arquivos').select('id', cabeca)
+          .eq('arquivo_url', '').lt('created_at', ha3dias)),
+      ]).then(([a, b]) => a + b),
+      lerTudo(() => supabase.from('empilha_ocorrencias').select('id, tipo, descricao, registrado_por, created_at').not('resolvido', 'is', true)),
+      lerTudo(() => supabase.from('recebimento_ocorrencias').select('id, tipo, descricao, registrado_por, created_at').not('resolvido', 'is', true)),
+      lerTudo(() => supabase.from('empilhadeira_paradas').select('tipo, hora_inicio, hora_fim, created_at').eq('data', dia)),
+      lerTudo(() => supabase.from('empilhadeira_configs').select('data_proxima_manutencao')),
+    ]);
+
+    // Junta as três buscas de recebimento sem repetir linha.
+    const recebimentos = [...new Map([...recSemana, ...recAtivos, ...recSemLider].map((r) => [r.id, r])).values()];
+    const limpezas = [...new Map([...limpSemana, ...limpAtrasadas, ...limpAguardando].map((l) => [l.id, l])).values()];
+    const idsAtivos = recAtivos.map((r) => r.id);
+    const participantes = idsAtivos.length
+      ? await lerTudo(() => supabase.from('recebimento_participantes').select('*').in('recebimento_id', idsAtivos))
+      : [];
+
+    return calcularPainelGeral({
+      dia, envaseSemana, checkoutHoje, checkoutConcluidosSemana, linhasConcluidasSemana, empilhaAtivasHoje,
+      linhasSemAssinatura, recebimentos, participantes, checklistsSemana, limpezas, nfsSemana,
+      nfsSemArquivo3dias, ocorrenciasEmpilha, ocorrenciasRecebimento, paradasHoje, empilhadeiras,
+    });
   },
 
   /**

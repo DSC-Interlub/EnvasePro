@@ -49,13 +49,16 @@ from (values
 where not exists (select 1 from public.operators o where o.nome = v.nome);
 
 -- --- Produtos -----------------------------------------------------------------
-insert into public.products (codigo, nome, consistencia)
-select v.codigo, v.nome, v.consistencia
+-- Com categoria: a TV soma a produção do mês por óleo / graxa / pasta, e o
+-- teste de paridade (scripts/test-painel-televisao.mjs) recusa indicador
+-- zerado — sem categoria, as três somas seriam 0 e não provariam nada.
+insert into public.products (codigo, nome, consistencia, categoria)
+select v.codigo, v.nome, v.consistencia, v.categoria::public.produto_categoria
 from (values
-  ('SEED-PRD-001', 'SEED Graxa Teste Bio',        'NLGI 2'),
-  ('SEED-PRD-002', 'SEED Oleo Teste Industrial',  'ISO VG 68'),
-  ('SEED-PRD-003', 'SEED Pasta Teste',            'NLGI 1')
-) as v(codigo, nome, consistencia)
+  ('SEED-PRD-001', 'SEED Graxa Teste Bio',        'NLGI 2',    'Graxa'),
+  ('SEED-PRD-002', 'SEED Oleo Teste Industrial',  'ISO VG 68', 'Óleo'),
+  ('SEED-PRD-003', 'SEED Pasta Teste',            'NLGI 1',    'Pasta')
+) as v(codigo, nome, consistencia, categoria)
 where not exists (select 1 from public.products p where p.codigo = v.codigo);
 
 -- --- Embalagens ---------------------------------------------------------------
