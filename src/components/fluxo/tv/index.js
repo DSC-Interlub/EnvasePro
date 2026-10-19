@@ -5,3 +5,6 @@ export { default as MetaTV } from './MetaTV';
 export { default as StatusTV } from './StatusTV';
 export { default as ListaTV } from "./ListaTV";
 export { default as PainelImportacoes } from "./PainelImportacoes";
+export { default as CartaoOperacao } from "./CartaoOperacao";
+export { default as GradeOperacoes } from "./GradeOperacoes";
+export { u, fonteQueCabe } from "./unidade";

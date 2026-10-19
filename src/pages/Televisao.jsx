@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MolduraTV, CartaoVidro, NumeroTV, MetaTV, StatusTV, ListaTV, PainelImportacoes } from "@/components/fluxo/tv";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Factory, Package, Clock, User, TrendingUp, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Warehouse, AlertTriangle, OctagonX, BarChart2, Droplets, Layers, Circle } from "lucide-react";
+import {
+  MolduraTV, NumeroTV, MetaTV, StatusTV, PainelImportacoes, GradeOperacoes, u,
+} from "@/components/fluxo/tv";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { formatarData } from '@/lib/datas';
 
 /* ===================== UTILITÁRIOS ===================== */
@@ -23,86 +20,106 @@ function calcElapsed(startTime) {
   return `${hours}h ${mins.toString().padStart(2, '0')}m`;
 }
 
-/* ===================== SLIDE 1: ENVASE ===================== */
-/**
- * As listas de cada modulo, na gramatica de vidro da TV.
+/** "08:10:00" -> "08:10" */
+const hhmm = (t) => (t ? String(t).slice(0, 5) : null);
+
+/* ===================== AS OPERAÇÕES DE CADA MÓDULO =====================
  *
- * O QUE MUDOU
+ * O que cada cartão mostra, campo a campo, comparado com a TV ANTERIOR ao
+ * módulo 1 (git 4ccc811^) — inventário completo no PR:
  *
- * Cada slide tinha a sua lista, com cartao de gradiente colorido, borda
- * esquerda de 4px e texto de 10px. A 4 metros 10px nao se le, e um gradiente
- * por linha fazia a tela parecer um semaforo. Agora e `ListaTV`: linha de
- * vidro, texto principal de 28px, estado por ponto de cor MAIS a palavra.
+ *  ENVASE: foto + nome do operador (grande), sala, produto, OP, quantidade
+ *    produzida, certificações COM logo, tempo decorrido + "desde HH:MM", e o
+ *    "PRONTO" da sala Bio aguardando retirada, com o botão de retirar.
+ *    Tempo decorrido, "desde" e os logos tinham sumido na reconstrução.
  *
- * Os painels de KPI do mes sairam daqui: eles duplicavam o que os cartoes
- * grandes do topo ja mostram, e competiam com eles.
+ *  CHECK-OUT: foto + nome, número do pedido, cliente, data de entrega,
+ *    "CRÍTICO", tempo decorrido. A reconstrução tinha trocado pedido e
+ *    cliente por `descricao_produto`/`quantidade` — colunas que NÃO EXISTEM
+ *    em checkout_itens — e a linha mostrava só "Item".
  *
- * NENHUM DADO MUDOU — as mesmas consultas, os mesmos campos.
+ *  EMPILHADEIRA: foto + nome do empilhador, AJUDANTE, produto, item,
+ *    rua/torre, depósito, quantidade, "CRÍTICO", tempo decorrido. Ajudante,
+ *    rua/torre, depósito, item e tempo tinham sumido.
+ *
+ * NOVO, pedido pelo dono: o alerta de atraso. Só onde há dado para isso — no
+ * check-out, pela data de entrega. Envase e empilhadeira não têm prazo
+ * gravado em lugar nenhum, então não há "atrasado" a calcular; inventar um
+ * limite de tempo seria regra de negócio nova.
  */
-function SlideEnvase({ envaseRecords, loadingEnvase, getProductCertifications, getOperatorPhoto, markMaterialAsRetirado }) {
-  return (
-    <ListaTV
-      titulo="Envase em andamento"
-      contagem={`${envaseRecords.length} ${envaseRecords.length === 1 ? 'operação ativa' : 'operações ativas'}`}
-      carregando={loadingEnvase}
-      vazio="Nenhum envase em andamento agora"
-      itens={envaseRecords.map((r) => ({
-        id: r.id,
-        tom: r.sala === 'Bio' ? 'ok' : 'neutro',
-        foto: getOperatorPhoto(r.operador),
-        principal: r.descricao_produto || 'Produto não especificado',
-        secundario: `OP ${r.op || 'N/A'} · ${r.operador || 'sem operador'} · sala ${r.sala || '—'}`,
-        etiquetas: (getProductCertifications(r.codigo_produto) || []).map((c) => c.name),
-        direita: r.quantidade_produzida > 0 ? r.quantidade_produzida.toLocaleString('pt-BR') : null,
-        direitaLegenda: r.quantidade_produzida > 0 ? 'produzido' : null,
-        // A unica acao da TV: a sala Bio marca que o material foi retirado.
-        // Mesma regra de antes — so aparece em linha Bio ja concluida.
-        acao: r.sala === 'Bio' && r.termino && !r.material_retirado
-          ? { rotulo: 'Material retirado', aoClicar: () => markMaterialAsRetirado.mutate(r.id) }
-          : null,
-      }))}
-    />
-  );
+function operacoesEnvase(records, { getOperatorPhoto, getProductCertifications, markMaterialAsRetirado }) {
+  return records.map((r) => {
+    const pronto = r.sala === 'Bio' && r.termino && !r.material_retirado;
+    const qtd = r.quantidade_produzida > 0 ? `${r.quantidade_produzida.toLocaleString('pt-BR')} un. produzidas` : null;
+    return {
+      id: r.id,
+      tom: pronto ? 'ok' : 'neutro',
+      foto: getOperatorPhoto(r.operador),
+      operador: r.operador,
+      verbo: pronto ? 'Terminou — aguardando retirada' : 'Envasando',
+      principal: r.descricao_produto || 'Produto não especificado',
+      detalhe: [r.codigo_produto, qtd].filter(Boolean).join(' · ') || null,
+      etiquetas: [
+        { texto: `OP ${r.op || '—'}` },
+        { texto: `Sala ${r.sala || '—'}`, tom: r.sala === 'Bio' ? 'ok' : undefined },
+      ],
+      certificacoes: getProductCertifications(r.codigo_produto),
+      tempo: calcElapsed(r.inicio),
+      desde: hhmm(r.inicio),
+      alerta: pronto ? { texto: 'PRONTO', tom: 'ok' } : null,
+      // A única ação da TV: a sala Bio marca que o material foi retirado.
+      // Mesma regra de antes — só em linha Bio já concluída.
+      acao: pronto ? { rotulo: 'Material retirado', aoClicar: () => markMaterialAsRetirado.mutate(r.id) } : null,
+    };
+  });
 }
 
-function SlideCheckout({ checkoutItems, loadingCheckout, getOperatorPhoto }) {
-  return (
-    <ListaTV
-      titulo="Check-out em andamento"
-      contagem={`${checkoutItems.length} ${checkoutItems.length === 1 ? 'item ativo' : 'itens ativos'}`}
-      carregando={loadingCheckout}
-      vazio="Nenhum check-out em andamento agora"
-      itens={checkoutItems.map((i) => ({
-        id: i.id,
-        tom: i.critico ? 'erro' : 'neutro',
-        foto: getOperatorPhoto(i.operador),
-        principal: i.descricao_produto || i.codigo_produto || 'Item',
-        secundario: `${i.operador || 'sem operador'}${i.status ? ` · ${i.status}` : ''}${i.critico ? ' · crítico' : ''}`,
-        direita: i.quantidade > 0 ? Number(i.quantidade).toLocaleString('pt-BR') : null,
-        direitaLegenda: i.quantidade > 0 ? 'unidades' : null,
-      }))}
-    />
-  );
+function operacoesCheckout(itens, { getOperatorPhoto, hoje }) {
+  return itens.map((i) => {
+    const atrasada = i.data_entrega && i.data_entrega < hoje;
+    const entregaHoje = i.data_entrega === hoje;
+    return {
+      id: i.id,
+      tom: i.critico || atrasada ? 'erro' : 'neutro',
+      foto: getOperatorPhoto(i.operador),
+      operador: i.operador,
+      verbo: 'Em check-out',
+      principal: `Pedido ${i.numero_pedido || '—'}`,
+      detalhe: i.cliente || null,
+      etiquetas: i.data_entrega ? [{ texto: `entrega ${formatarData(i.data_entrega, 'dd/MM')}` }] : [],
+      tempo: calcElapsed(i.hora_inicio),
+      desde: hhmm(i.hora_inicio),
+      alerta: i.critico ? { texto: 'CRÍTICO', tom: 'erro' }
+        : atrasada ? { texto: 'ENTREGA ATRASADA', tom: 'erro' }
+        : entregaHoje ? { texto: 'ENTREGA HOJE', tom: 'atencao' }
+        : null,
+    };
+  });
 }
 
-function SlideEmpilha({ empilhadeiraData, getOperatorPhoto }) {
-  const linhas = empilhadeiraData.linhasAtivas || [];
-  return (
-    <ListaTV
-      titulo="Movimentação em andamento"
-      contagem={`${linhas.length} ${linhas.length === 1 ? 'linha ativa' : 'linhas ativas'}`}
-      vazio="Nenhuma movimentação em andamento agora"
-      itens={linhas.map((l) => ({
-        id: l.id,
-        tom: l.tipo_linha === 'Crítico' ? 'erro' : l.status === 'Pausado' ? 'atencao' : 'neutro',
-        foto: getOperatorPhoto(l.operador_empilhadeira),
-        principal: l.descricao_produto || l.codigo_produto || 'Linha',
-        secundario: `${l.operador_empilhadeira || 'sem operador'}${l.status ? ` · ${l.status}` : ''}${l.tipo_linha ? ` · ${l.tipo_linha}` : ''}`,
-        direita: l.quantidade > 0 ? Number(l.quantidade).toLocaleString('pt-BR') : null,
-        direitaLegenda: l.quantidade > 0 ? 'unidades' : null,
-      }))}
-    />
-  );
+function operacoesEmpilha(linhas, { getOperatorPhoto }) {
+  return linhas.map((l) => {
+    const critica = l.tipo_linha === 'Crítico';
+    const pausada = l.status === 'Pausado';
+    return {
+      id: l.id,
+      tom: critica ? 'erro' : pausada ? 'atencao' : 'neutro',
+      foto: getOperatorPhoto(l.operador_empilhadeira),
+      operador: l.operador_empilhadeira,
+      verbo: `${pausada ? 'Pausado' : 'Movimentando'}${l.operador_ajudante ? ` · com ${l.operador_ajudante}` : ''}`,
+      principal: l.descricao_produto || l.codigo_produto || 'Linha',
+      detalhe: [
+        l.numero_item ? `Item ${l.numero_item}` : null,
+        l.rua_torre ? `Rua/torre ${l.rua_torre}` : null,
+        l.deposito ? `Depósito ${l.deposito}` : null,
+        Number(l.quantidade) > 0 ? `${Number(l.quantidade).toLocaleString('pt-BR')} un.` : null,
+      ].filter(Boolean).join(' · ') || null,
+      etiquetas: l.tipo_linha && !critica ? [{ texto: l.tipo_linha }] : [],
+      tempo: calcElapsed(l.hora_inicio),
+      desde: hhmm(l.hora_inicio),
+      alerta: critica ? { texto: 'CRÍTICO', tom: 'erro' } : pausada ? { texto: 'PAUSADA', tom: 'atencao' } : null,
+    };
+  });
 }
 
 export default function Televisao() {
@@ -117,8 +134,8 @@ export default function Televisao() {
     return () => clearInterval(timer);
   }, []);
 
-  // Quatro paineis: Envase, Check-out, Empilhadeira e Importacoes.
-  const NUM_SLIDES = 4;
+  // Cinco paineis: Envase, Check-out, Empilhadeira, Mes e Importacoes.
+  const NUM_SLIDES = 5;
 
   useEffect(() => {
     if (autoPlay) {
@@ -176,6 +193,15 @@ export default function Televisao() {
       });
       const bioRecs = monthRecords.filter(r => r.sala === "Bio");
       const indRecs = monthRecords.filter(r => r.sala === "Industrial");
+      // Produção do mês por código de produto: a categoria (óleo, graxa,
+      // pasta) é resolvida no render com a lista de produtos que a TV já
+      // carrega. A TV antiga baixava os mesmos 2.000 registros uma SEGUNDA vez
+      // só para isso.
+      const porCodigo = {};
+      for (const r of monthRecords) {
+        if (!r.codigo_produto) continue;
+        porCodigo[r.codigo_produto] = (porCodigo[r.codigo_produto] || 0) + (r.quantidade_produzida || 0);
+      }
       return {
         total: monthRecords.reduce((s, r) => s + (r.quantidade_produzida || 0), 0),
         bio: bioRecs.reduce((s, r) => s + (r.quantidade_produzida || 0), 0),
@@ -183,6 +209,7 @@ export default function Televisao() {
         totalRegistros: monthRecords.length,
         bioRegistros: bioRecs.length,
         industrialRegistros: indRecs.length,
+        porCodigo,
       };
     },
     refetchInterval: 120000,
@@ -263,24 +290,25 @@ export default function Televisao() {
     if (r.sala === "Bio") { if (r.material_retirado) return false; }
     else { if (r.termino) return false; }
     return r.data === today;
-  }).slice(0, 4);
+  });
 
   const todayProgramacoes = checkoutProgramacoes.filter(p => p.data_programada === today);
   const todayProgramacaoIds = todayProgramacoes.map(p => p.id);
   const checkoutItems = allCheckoutItems
     .filter(item => item.hora_inicio && !item.hora_termino && item.status === "Em Andamento" && todayProgramacaoIds.includes(item.programacao_id))
-    .sort((a, b) => (b.hora_inicio || "").localeCompare(a.hora_inicio || ""))
-    .slice(0, 2);
+    .sort((a, b) => (b.hora_inicio || "").localeCompare(a.hora_inicio || ""));
 
   const getProductCertifications = (codigoProduto) => {
     if (!products || !codigoProduto) return [];
     const product = products.find(p => p.codigo === codigoProduto);
     if (!product) return [];
     const certs = [];
-    if (product.halal) certs.push({ name: 'HALAL' });
-    if (product.kosher) certs.push({ name: 'KOSHER' });
-    if (product.nsf_3h) certs.push({ name: 'NSF 3H' });
-    if (product.nsf_h1) certs.push({ name: 'NSF H1' });
+    // Com o logo, como a TV antiga: o selo é reconhecido pela imagem antes
+    // de o nome ser lido.
+    if (product.halal) certs.push({ nome: 'HALAL', logo: '/certificacoes/halal.png' });
+    if (product.kosher) certs.push({ nome: 'KOSHER', logo: '/certificacoes/kosher.png' });
+    if (product.nsf_3h) certs.push({ nome: 'NSF 3H', logo: '/certificacoes/nsf.png' });
+    if (product.nsf_h1) certs.push({ nome: 'NSF H1', logo: '/certificacoes/nsf.png' });
     return certs;
   };
   const getOperatorPhoto = (nome) => operators.find(op => op.nome === nome)?.foto_url || null;
@@ -331,6 +359,17 @@ export default function Televisao() {
   const totalEnvaseHoje = todayStats.envaseConcluidos + emAndamentoEnvase;
   const totalCheckoutHoje = todayStats.checkoutConcluidos + todayStats.checkoutPendentes;
 
+  // Mesma regra da TV antiga: a categoria vem de products.categoria.
+  const categoriaDe = {};
+  for (const p of products) if (p.codigo && p.categoria) categoriaDe[p.codigo] = p.categoria;
+  const porCategoria = { oleo: 0, graxa: 0, pasta: 0 };
+  for (const [codigo, qtd] of Object.entries(monthlyKpis.porCodigo || {})) {
+    const cat = categoriaDe[codigo];
+    if (cat === 'Óleo') porCategoria.oleo += qtd;
+    else if (cat === 'Graxa') porCategoria.graxa += qtd;
+    else if (cat === 'Pasta') porCategoria.pasta += qtd;
+  }
+
   const PAINEIS = [
     {
       modulo: 'Envase',
@@ -351,17 +390,9 @@ export default function Televisao() {
           pilula: ocorrenciasAtivas.length > 0 ? 'precisa de atenção' : 'nenhuma aberta',
           pilulaTom: ocorrenciasAtivas.length > 0 ? 'erro' : 'atencao' },
       ],
-      temLinhas: envaseRecords.length > 0,
-      detalhe: (
-        <SlideEnvase
-          envaseRecords={envaseRecords}
-          loadingEnvase={loadingEnvase}
-          getProductCertifications={getProductCertifications}
-          getOperatorPhoto={getOperatorPhoto}
-          markMaterialAsRetirado={markMaterialAsRetirado}
-          monthlyKpis={monthlyKpis}
-        />
-      ),
+      tituloOperacoes: 'Envase em andamento',
+      contagemOperacoes: `${envaseRecords.length} ${envaseRecords.length === 1 ? 'operação' : 'operações'}`,
+      operacoes: operacoesEnvase(envaseRecords, { getOperatorPhoto, getProductCertifications, markMaterialAsRetirado }),
     },
     {
       modulo: 'Check-out',
@@ -382,14 +413,9 @@ export default function Televisao() {
           pilula: checkoutItems.filter((i) => i.critico).length > 0 ? 'prioridade' : 'nenhum crítico',
           pilulaTom: checkoutItems.filter((i) => i.critico).length > 0 ? 'erro' : 'atencao' },
       ],
-      temLinhas: checkoutItems.length > 0,
-      detalhe: (
-        <SlideCheckout
-          checkoutItems={checkoutItems}
-          loadingCheckout={loadingCheckout}
-          getOperatorPhoto={getOperatorPhoto}
-        />
-      ),
+      tituloOperacoes: 'Check-out em andamento',
+      contagemOperacoes: `${checkoutItems.length} ${checkoutItems.length === 1 ? 'pedido' : 'pedidos'}`,
+      operacoes: operacoesCheckout(checkoutItems, { getOperatorPhoto, hoje: today }),
     },
     {
       modulo: 'Empilhadeira',
@@ -411,12 +437,37 @@ export default function Televisao() {
           pilula: empilhadeiraData.kpis.criticos > 0 ? 'prioridade' : 'nenhum crítico',
           pilulaTom: empilhadeiraData.kpis.criticos > 0 ? 'erro' : 'atencao' },
       ],
-      temLinhas: (empilhadeiraData.linhasAtivas || []).length > 0,
-      detalhe: (
-        <SlideEmpilha
-          empilhadeiraData={empilhadeiraData}
-          getOperatorPhoto={getOperatorPhoto}
-        />
+      tituloOperacoes: 'Movimentação em andamento',
+      contagemOperacoes: `${linhasAtivas.length} ${linhasAtivas.length === 1 ? 'linha' : 'linhas'}`,
+      operacoes: operacoesEmpilha(linhasAtivas, { getOperatorPhoto }),
+    },
+    {
+      // OS NUMEROS DO MES, de volta. A TV anterior ao modulo 1 os mostrava no
+      // topo do painel de envase; a reconstrucao tirou-os dizendo que
+      // "duplicavam os cartoes grandes" — mas os cartoes grandes mostram o
+      // DIA. Voltam como painel proprio, porque nao cabem ao lado das
+      // operacoes sem espremer o que a fabrica le.
+      modulo: 'Mês',
+      titulo: 'Produção do mês',
+      proprio: (
+        <div
+          className="grid min-h-0 flex-1"
+          style={{
+            gap: u(1.3),
+            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            gridTemplateRows: 'repeat(2, minmax(0, 1fr))',
+          }}
+        >
+          <NumeroTV rotulo="Produção total" valor={monthlyKpis.total.toLocaleString('pt-BR')}
+            pilula={`${monthlyKpis.totalRegistros} registros`} atraso={0.05} />
+          <NumeroTV rotulo="Sala Bio" valor={monthlyKpis.bio.toLocaleString('pt-BR')} tom="ok"
+            pilula={`${monthlyKpis.bioRegistros} registros`} atraso={0.1} />
+          <NumeroTV rotulo="Sala Industrial" valor={monthlyKpis.industrial.toLocaleString('pt-BR')}
+            pilula={`${monthlyKpis.industrialRegistros} registros`} atraso={0.15} />
+          <NumeroTV rotulo="Óleo" valor={porCategoria.oleo.toLocaleString('pt-BR')} pilula="unidades no mês" atraso={0.2} />
+          <NumeroTV rotulo="Graxa" valor={porCategoria.graxa.toLocaleString('pt-BR')} pilula="unidades no mês" atraso={0.25} />
+          <NumeroTV rotulo="Pasta" valor={porCategoria.pasta.toLocaleString('pt-BR')} pilula="unidades no mês" atraso={0.3} />
+        </div>
       ),
     },
     {
@@ -473,17 +524,18 @@ export default function Televisao() {
       titulo={painel.titulo}
       modulo={painel.modulo}
       acoes={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center" style={{ gap: u(0.8) }}>
           <button
             type="button"
             onClick={() => setAutoPlay((a) => !a)}
             aria-label={autoPlay ? 'Pausar rotação' : 'Retomar rotação'}
-            className="press rounded-token border border-white/15 bg-cartao/5 px-3 py-2
-                       text-sm font-bold text-texto-fraco hover:bg-cartao/10 hover:text-tinta"
+            className="press rounded-full border border-white/15 bg-cartao/5 font-bold text-texto-fraco
+                       hover:bg-cartao/10 hover:text-tinta"
+            style={{ padding: `${u(0.5)} ${u(1)}`, fontSize: u(0.95) }}
           >
             {autoPlay ? 'Pausar' : 'Retomar'}
           </button>
-          <div className="flex items-center gap-1.5" role="tablist" aria-label="Painel">
+          <div className="flex items-center" style={{ gap: u(0.45) }} role="tablist" aria-label="Painel">
             {PAINEIS.map((pnl, i) => (
               <button
                 key={pnl.modulo}
@@ -492,8 +544,12 @@ export default function Televisao() {
                 aria-selected={i === slideIndex}
                 aria-label={pnl.modulo}
                 onClick={() => resetAutoPlay(i)}
-                className={`press h-3 rounded-full transition-all ${
-                  i === slideIndex ? 'w-8 bg-marca' : 'w-3 bg-cartao/25 hover:bg-cartao/40'}`}
+                className="press rounded-full transition-all"
+                style={{
+                  height: u(0.65),
+                  width: i === slideIndex ? u(2) : u(0.65),
+                  background: i === slideIndex ? 'rgb(var(--marca))' : 'rgb(255 255 255 / .25)',
+                }}
               />
             ))}
           </div>
@@ -503,44 +559,72 @@ export default function Televisao() {
         <StatusTV key={s.nome} nome={s.nome} situacao={s.situacao} tom={s.tom} atraso={0.45 + i * 0.05} />
       ))}
     >
-      {/* Painel que monta a propria faixa de cima (Importacoes) */}
+      {/* Painel que monta o proprio miolo (Importacoes) */}
       {painel.proprio}
 
-      {/* A faixa de cima e a do prototipo: anel da meta (1.25fr) + dois numeros */}
-      {!painel.proprio && (
-      <div
-        className="grid min-h-0 flex-1 lg:grid-cols-[1.25fr_1fr_1fr]"
-        style={{ gap: 'clamp(14px, 1.5vw, 28px)' }}
-      >
-        <MetaTV
-          rotulo={painel.meta.rotulo}
-          valor={painel.meta.valor}
-          meta={painel.meta.total}
-          unidade={painel.meta.unidade}
-          legenda={painel.meta.legenda}
-        />
-        {painel.numeros.map((n, i) => (
-          <NumeroTV key={n.rotulo} {...n} atraso={0.15 + i * 0.15} />
-        ))}
-      </div>
-      )}
+      {!painel.proprio && (painel.operacoes.length > 0 ? (
+        /*
+          COM OPERACOES EM ANDAMENTO: elas sao o centro.
 
-      {/*
-        ESTA FAIXA NAO ESTA NO PROTOTIPO, e e uma decisao declarada.
+          A versao anterior punha o anel e os dois numeros GIGANTES em cima e
+          espremia a lista numa faixa embaixo; numa tela baixa os numeros
+          transbordavam e cobriam a lista. Mas quem esta fazendo o que, em
+          cada linha, e o que a fabrica realmente le na TV. Agora: operacoes em
+          2/3, anel e numeros compactos em 1/3.
+        */
+        <div
+          className="grid min-h-0 flex-1"
+          style={{ gap: u(1.3), gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)' }}
+        >
+          <GradeOperacoes
+            titulo={painel.tituloOperacoes}
+            contagem={painel.contagemOperacoes}
+            itens={painel.operacoes}
+          />
 
-        O prototipo mostra so agregado. Mas a lista de envases EM ANDAMENTO, com
-        foto do operador e certificacao do produto, e o que a fabrica de fato
-        olha na TV — tirar isso para ganhar fidelidade visual seria trocar
-        funcao por aparencia. Fica aqui, com a mesma gramatica de vidro, e
-        esta na lista de divergencias do relatorio.
-      */}
-      {painel.detalhe && painel.temLinhas && (
-        <CartaoVidro atraso={0.35} className="min-h-0 flex-1 overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-y-auto" style={{ padding: 'clamp(14px, 1.5vw, 28px)' }}>
-            {painel.detalhe}
+          <div
+            className="grid min-h-0 min-w-0"
+            style={{ gap: u(1.3), gridTemplateRows: 'minmax(0, 1.15fr) minmax(0, 1fr)' }}
+          >
+            <MetaTV
+              compacto
+              rotulo={painel.meta.rotulo}
+              valor={painel.meta.valor}
+              meta={painel.meta.total}
+              unidade={painel.meta.unidade}
+              legenda={painel.meta.legenda}
+            />
+            <div
+              className="grid min-h-0 min-w-0"
+              style={{ gap: u(1.3), gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)' }}
+            >
+              {painel.numeros.map((n, i) => (
+                <NumeroTV key={n.rotulo} compacto {...n} atraso={0.15 + i * 0.1} />
+              ))}
+            </div>
           </div>
-        </CartaoVidro>
-      )}
+        </div>
+      ) : (
+        /* SEM OPERACOES: o layout grande do prototipo — anel + dois numeros. */
+        <div
+          className="grid min-h-0 flex-1"
+          style={{
+            gap: u(1.3),
+            gridTemplateColumns: 'minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr)',
+          }}
+        >
+          <MetaTV
+            rotulo={painel.meta.rotulo}
+            valor={painel.meta.valor}
+            meta={painel.meta.total}
+            unidade={painel.meta.unidade}
+            legenda={painel.meta.legenda}
+          />
+          {painel.numeros.map((n, i) => (
+            <NumeroTV key={n.rotulo} {...n} atraso={0.15 + i * 0.15} />
+          ))}
+        </div>
+      ))}
     </MolduraTV>
   );
 }

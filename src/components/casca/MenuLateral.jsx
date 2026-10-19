@@ -57,7 +57,7 @@ function Item({ item, ativo, contador, modo, aoNavegar }) {
         <>
           <span className="flex items-center gap-3 min-w-0">
             <item.icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span className="truncate">{item.title}</span>
+            <span className="min-w-0 leading-tight [overflow-wrap:anywhere]">{item.title}</span>
           </span>
           {contador > 0 && (
             <span
@@ -179,7 +179,7 @@ export default function MenuLateral({
               <RefreshCw className="w-3 h-3" aria-hidden="true" /> Trocar
             </button>
           </div>
-          <p className="text-sm font-bold text-tinta truncate">
+          <p className="text-sm font-bold leading-tight text-tinta [overflow-wrap:anywhere]">
             {currentOperator?.nome || "Nenhum selecionado"}
           </p>
           {currentOperator?.sala && (
@@ -207,7 +207,7 @@ export default function MenuLateral({
             {(user?.email || "?").slice(0, 2).toUpperCase()}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-bold text-tinta truncate" title={user?.email}>
+            <span className="block text-[13px] font-bold leading-tight text-tinta [overflow-wrap:anywhere]">
               {user?.email || "Conectado"}
             </span>
             <span className="block text-[11px] font-semibold text-texto-fraco">

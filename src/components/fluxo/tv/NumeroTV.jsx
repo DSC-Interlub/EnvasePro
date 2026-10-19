@@ -1,16 +1,18 @@
 import React from "react";
 import CartaoVidro from "./CartaoVidro";
+import { u, fonteQueCabe } from "./unidade";
 
 /**
- * O número gigante da TV, com rótulo em cima e pílula embaixo.
+ * Número grande da TV — rótulo em cima, número no meio, pílula embaixo.
  *
- * O tamanho do protótipo é **240px**. Aqui ele é `clamp`, porque a mesma tela
- * roda em 1920 e em 1366: um `font-size` fixo em 240 num monitor de 1366
- * estoura o cartão. O `clamp` mantém a proporção — o número continua sendo o
- * assunto da tela em qualquer largura.
+ * O número era `clamp(56px, 12.5vw, 240px)`: crescia pela largura da janela,
+ * não pelo cartão. Numa tela baixa ele passava da altura e cobria o que
+ * estivesse embaixo — foi a primeira coisa que o dono viu na foto.
  *
- * `tabular-nums` via `.num`: na TV, que atualiza sozinha, um número que muda
- * de largura a cada atualização "dança" e aparece de longe.
+ * Agora o cartão é um contêiner de tamanho e o número se mede por ele: cabe na
+ * largura (calculado pelo comprimento do texto, "7" e "12.345" não têm o
+ * mesmo corpo) e na altura (`cqh`). `compacto` é a forma da coluna lateral,
+ * quando a lista de operações ocupa o centro do painel.
  */
 const COR = {
   neutro: "text-tinta",
@@ -21,37 +23,43 @@ const COR = {
 
 export default function NumeroTV({
   rotulo, valor, pilula, pilulaTom = "atencao", tom = "neutro",
-  tomCartao, atraso = 0, className = "",
+  tomCartao, compacto = false, atraso = 0, className = "",
 }) {
+  const texto = String(valor ?? "");
+
   return (
     <CartaoVidro
-      tom={tomCartao || (tom === "erro" ? "erro" : "neutro")}
+      conteiner
+      tom={tomCartao || (tom === "erro" && Number(valor) > 0 ? "erro" : "neutro")}
       atraso={atraso}
       className={`flex-col justify-between ${className}`}
-      style={{ padding: "clamp(18px, 2.3vw, 44px)" }}
+      style={{ padding: compacto ? u(1.3) : u(2.2) }}
     >
       <div
-        className="font-bold text-texto-fraco"
-        style={{ fontSize: "clamp(15px, 1.56vw, 30px)" }}
+        className="flex-none font-bold leading-[1.15] text-texto-fraco"
+        style={{ fontSize: compacto ? u(1.1) : u(1.5) }}
       >
         {rotulo}
       </div>
 
       <div
-        className={`num font-extrabold leading-[.95] ${COR[tom] || COR.neutro}`}
-        style={{ fontSize: "clamp(56px, 12.5vw, 240px)", letterSpacing: "-.05em" }}
+        className={`num min-h-0 flex-none font-extrabold leading-[1] ${COR[tom] || COR.neutro}`}
+        style={{
+          fontSize: fonteQueCabe(texto, { teto: compacto ? 6 : 12, alturaMax: compacto ? 40 : 50 }),
+          letterSpacing: "-.04em",
+        }}
       >
-        {valor}
+        {texto}
       </div>
 
       {pilula ? (
         <span
-          className="inline-flex self-start items-center gap-2 rounded-full font-extrabold"
+          className="inline-flex flex-none self-start items-center rounded-full font-extrabold leading-[1.15]"
           style={{
             background: pilulaTom === "erro" ? "rgb(var(--erro) / .18)" : "rgb(var(--atencao) / .16)",
             color: pilulaTom === "erro" ? "rgb(var(--erro))" : "rgb(var(--atencao))",
-            padding: "clamp(6px, .62vw, 12px) clamp(12px, 1.35vw, 26px)",
-            fontSize: "clamp(14px, 1.45vw, 28px)",
+            padding: compacto ? `${u(0.3)} ${u(0.8)}` : `${u(0.45)} ${u(1.2)}`,
+            fontSize: compacto ? u(0.95) : u(1.3),
           }}
         >
           {pilula}
