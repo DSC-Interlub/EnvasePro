@@ -24,7 +24,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local', quiet: true });
 enforceNonProductionGuard('test-rollbacks');
 
-const ORDEM = ['20261019000007', '20261019000006', '20261019000005', '20261019000004', '20261019000003',
+const ORDEM = ['20261019000008', '20261019000007', '20261019000006', '20261019000005', '20261019000004', '20261019000003',
   '20261019000002', '20261019000001', '20261013000001'];
 let falhas = 0;
 const ok = (c, m) => { console.log(`  ${c ? 'OK   ' : 'FALHA'} ${m}`); if (!c) falhas += 1; };
@@ -48,6 +48,10 @@ select coalesce(json_agg(x order by x.k), '[]'::json) from (
   select 'politica ' || tablename || '.' || policyname,
          md5(cmd || coalesce(qual, '') || coalesce(with_check, '') || roles::text)
     from pg_policies where schemaname = 'public'
+  union all
+  select 'privpadrao ' || pg_get_userbyid(defaclrole) || ' ' || defaclobjtype::text,
+         coalesce((select string_agg(a, ',' order by a) from unnest(defaclacl::text[]) a), '')
+    from pg_default_acl where defaclnamespace = 'public'::regnamespace
   union all
   select 'padrao ' || table_name || '.' || column_name, coalesce(column_default, '')
     from information_schema.columns where table_schema = 'public' and column_default is not null
@@ -106,7 +110,12 @@ if (!process.argv.includes('--sem-producao')) {
   //    service_role (dado à mão em produção; o repositório não concede);
   //  - rls_auto_enable: função da PLATAFORMA Supabase (gatilho de evento),
   //    não deste repositório; a versão da nuvem é mais nova que a local.
-  const CONHECIDAS = ['difere: funcao contadores_do_menu()', 'difere: funcao rls_auto_enable()'];
+  //  - privpadrao postgres f / S: em PRODUÇÃO, função nova criada pelo papel
+  //    postgres nasce com EXECUTE para anon e authenticated, e sequence com
+  //    rwU para anon; no local, não. As migrations novas revogam o EXECUTE
+  //    explicitamente (conferido uma a uma). Achado registrado para o dono.
+  const CONHECIDAS = ['difere: funcao contadores_do_menu()', 'difere: funcao rls_auto_enable()',
+    'difere: privpadrao postgres f', 'difere: privpadrao postgres S'];
   const todas = diferencas(desfeito, prod);
   const d = todas.filter((x) => !CONHECIDAS.includes(x));
   for (const x of todas.filter((y) => CONHECIDAS.includes(y))) console.log(`      (conhecida) ${x}`);

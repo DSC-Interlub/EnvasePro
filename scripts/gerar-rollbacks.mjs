@@ -53,6 +53,27 @@ COMMIT;
 
 const R = {};
 
+// As 24 tabelas que existiam em produção antes das migrations de 19/10/2026
+// (lidas em produção). metas_diarias NÃO entra: nasceu já com o mínimo.
+const TABELAS_ANTIGAS = ['checklist_recebimentos', 'checkout_itens', 'checkout_programacoes', 'embalagens',
+  'empilha_linhas', 'empilha_ocorrencias', 'empilha_programacoes', 'empilhadeira_configs',
+  'empilhadeira_manutencoes', 'empilhadeira_paradas', 'envase_records', 'limpeza_locais',
+  'limpeza_programacoes', 'nota_fiscal_arquivos', 'notificacao_destinatarios', 'operators', 'products',
+  'recebimento_fornecedores', 'recebimento_itens', 'recebimento_ocorrencias', 'recebimento_participantes',
+  'recebimentos', 'sap_pedidos', 'user_profiles'];
+
+R['20261019000008'] = cabecalho('20261019000008_privilegios_minimos_tabelas',
+  `Devolve o que havia antes: REFERENCES, TRIGGER e MAINTAIN ao authenticated e
+-- MAINTAIN ao anon nas 24 tabelas antigas, e o privilégio padrão anterior do
+-- papel postgres. (O TRUNCATE não volta: já tinha saído na 20261007000002.)
+-- ATENÇÃO: isso REABRE privilégios que o app não usa.`) + `
+${TABELAS_ANTIGAS.map((t) => `GRANT REFERENCES, TRIGGER, MAINTAIN ON public.${t} TO authenticated;
+GRANT MAINTAIN ON public.${t} TO anon;`).join('\n')}
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT REFERENCES, TRIGGER, MAINTAIN ON TABLES TO authenticated;
+` + rodape('20261019000008');
+
 R['20261019000007'] = cabecalho('20261019000007_status_completo_so_admin',
   `Tira os três gatilhos e a função protect_status_completo(). ATENÇÃO: isso
 -- REABRE o buraco (operador volta a conseguir marcar 'Completo' sem o líder).`) + `

@@ -40,8 +40,9 @@ if (!ENSAIO && (!process.argv.includes('--allow-production') || !process.argv.in
 const ref = fs.readFileSync('supabase/.temp/project-ref', 'utf8').trim();
 if (!ENSAIO && ref !== REF) { console.error(`Recusado: o projeto vinculado é ${ref}, não ${REF}`); process.exit(2); }
 
+// 000007 e 000008: autorizadas pelo dono por escrito na segunda mensagem de 19/10/2026.
 const AUTORIZADAS = ['20261013000001', '20261019000001', '20261019000002', '20261019000003',
-  '20261019000004', '20261019000005', '20261019000006'];
+  '20261019000004', '20261019000005', '20261019000006', '20261019000007', '20261019000008'];
 if (!ENSAIO && !AUTORIZADAS.includes(versao)) { console.error(`Recusado: ${versao} não está na autorização do dono`); process.exit(2); }
 
 const arquivo = fs.readdirSync('supabase/migrations').find((f) => f.startsWith(`${versao}_`));
@@ -81,6 +82,7 @@ const ESPERADO = {
   '20261019000005': { funcoes: ['indicadores_recebimento(de date, ate date)'], indices: ['idx_recebimento_ocorrencias_recebimento', 'idx_checklist_recebimentos_entrega'], tabelas: [] },
   '20261019000006': { funcoes: ['metas_do_dia(dia date)', 'painel_televisao_empilha()', 'painel_televisao()'], indices: ['uq_metas_item_vigencia'], tabelas: ['metas_diarias'], extra: 'metas' },
   '20261019000007': { funcoes: [], indices: [], tabelas: [], extra: 'status' },
+  '20261019000008': { funcoes: [], indices: [], tabelas: [], extra: 'privilegios' },
 }[versao];
 
 let falhas = 0;
@@ -168,6 +170,20 @@ if (ESPERADO.extra === 'status') {
   ok(r[0]?.gatilhos === 3, `os 3 gatilhos de status Completo existem (${r[0]?.gatilhos})`);
   ok(r[0]?.sd === false && r[0]?.cfg === 'search_path=public, pg_temp', 'protect_status_completo: invoker, search_path fixo');
   ok(!/(^|,)(anon|authenticated)=|(^|,)=X/.test(r[0]?.acl || ''), `protect_status_completo: EXECUTE para ninguém além do dono (${r[0]?.acl})`);
+}
+if (ESPERADO.extra === 'privilegios') {
+  const r = consultar(`select count(*)::int as tabelas,
+      count(*) filter (where (select a from unnest(c.relacl::text[]) a where a like 'authenticated=%') ~ '^authenticated=arwd/')::int as auth_ok,
+      count(*) filter (where exists (select 1 from unnest(c.relacl::text[]) a where a like 'anon=%'))::int as com_anon
+    from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'`);
+  const x = r[0];
+  ok(x.auth_ok === x.tabelas, `authenticated só arwd (SELECT/INSERT/UPDATE/DELETE) em ${x.auth_ok} de ${x.tabelas} tabelas`);
+  ok(x.com_anon === 0, `anon sem privilégio em tabela nenhuma (${x.com_anon})`);
+  const d = consultar(`select coalesce((select a from unnest(defaclacl::text[]) a where a like 'authenticated=%'), '') as auth,
+      coalesce((select a from unnest(defaclacl::text[]) a where a like 'anon=%'), '') as anon
+    from pg_default_acl where defaclrole = 'postgres'::regrole and defaclnamespace = 'public'::regnamespace and defaclobjtype = 'r'`);
+  ok(/^authenticated=arwd\//.test(d[0]?.auth || ''), `tabela futura (migration): authenticated nasce só arwd (${d[0]?.auth})`);
+  ok(!d[0]?.anon, `tabela futura (migration): anon nasce sem nada (${d[0]?.anon || 'vazio'})`);
 }
 if (ESPERADO.extra === 'metas') {
   const r = consultar(`select position('metas_do_dia' in pg_get_functiondef('public.painel_televisao()'::regprocedure)) > 0 as tv,
