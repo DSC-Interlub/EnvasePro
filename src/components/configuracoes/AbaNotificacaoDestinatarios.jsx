@@ -132,7 +132,7 @@ export default function AbaNotificacaoDestinatarios({ isAdmin = false }) {
                   <Input
                     id="emailDest"
                     type="email"
-                    placeholder="Ex: coordenador@interlub.com.br"
+                    placeholder="Ex: nome@empresa.com.br.br"
                     value={novoEmail}
                     onChange={(e) => setNovoEmail(e.target.value)}
                     required
