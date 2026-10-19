@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-route
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import LoginModal from '@/components/auth/LoginModal';
+import TelaLogin from '@/components/auth/TelaLogin';
 import SelecionarOperadorModal from '@/components/auth/SelecionarOperadorModal';
 
 
@@ -95,7 +96,7 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 // isTvPage, que continua existindo).
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isAuthenticated, setLoginModalAberto } = useAuth();
+  const { isLoadingAuth, isAuthenticated } = useAuth();
   const location = useLocation();
 
   // Spinner enquanto carrega a sessão, inclusive nas telas de TV.
@@ -107,28 +108,11 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Sem sessão, exibe a tela de login — inclusive nas rotas de TV.
+  // Sem sessão, o FORMULÁRIO de login aparece direto — inclusive nas rotas de
+  // TV. Antes era uma tela quase vazia com um botão que abria um modal: um
+  // clique a mais para chegar no que a pessoa veio fazer.
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-fundo">
-        <LoginModal />
-        <div className="text-center space-y-4 max-w-sm">
-          <div className="w-16 h-16 bg-marca text-white rounded-painel mx-auto flex items-center justify-center shadow-cartao font-bold text-2xl">
-            EP
-          </div>
-          <h1 className="text-2xl font-bold text-tinta">EnvasePro Interlub</h1>
-          <p className="text-sm text-texto-fraco">
-            Sistema de Controle de Produção, Empilhadeira e Recebimento.
-          </p>
-          <button
-            onClick={() => setLoginModalAberto(true)}
-            className="w-full py-2.5 px-4 bg-marca hover:bg-marca-forte text-white font-semibold rounded-token shadow transition"
-          >
-            Fazer Login no Sistema
-          </button>
-        </div>
-      </div>
-    );
+    return <TelaLogin />;
   }
 
   return (

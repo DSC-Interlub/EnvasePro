@@ -176,10 +176,16 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Regra: monitor ativo APENAS para administradores; operadores e conta de TV (tv-fabrica@interlub.com) são 100% imunes
-    const ehAdmin = user?.role === 'admin';
-    const ehContaTv = user?.email === 'tv-fabrica@interlub.com';
-    const monitorarInatividade = ehAdmin && !ehContaTv;
+    // Regra: monitor ativo APENAS para administradores. Operadores e a conta
+    // da TV são imunes PELO PAPEL: a conta da TV é `operator` (conferido no
+    // banco local e no snapshot de produção de 09/10/2026).
+    //
+    // Havia aqui uma segunda condição comparando com o e-mail da conta da TV.
+    // Ela era redundante — com o papel `operator` o monitor já não roda — e
+    // colocava o e-mail da conta no bundle público. Se um dia a conta da TV
+    // virar admin, ela PASSA a cair por inatividade; isso é coberto pelo
+    // test-login, que confere a imunidade da TV.
+    const monitorarInatividade = user?.role === 'admin';
 
     if (!monitorarInatividade) {
       return;
