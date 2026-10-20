@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { visualEditPlugin } from './vite-plugins/visual-edit-plugin.js'
 import { errorOverlayPlugin } from './vite-plugins/error-overlay-plugin.js'
+import { apiLocalPlugin } from './vite-plugins/api-local-plugin.js'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -11,6 +12,9 @@ export default defineConfig(({ mode }) => {
       mode === 'development' && visualEditPlugin(),
       react(),
       errorOverlayPlugin(),
+      // Só no `vite` de desenvolvimento (apply: 'serve'): /api/admin-usuarios
+      // contra o Supabase LOCAL. Não entra no build.
+      mode === 'development' && apiLocalPlugin(mode),
       mode === 'development' && {
         name: 'iframe-hmr',
         configureServer(server) {
