@@ -34,7 +34,7 @@ const URL_SUPABASE = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const CHAVE_SERVICO = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const CHAVE_ANON = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-const ACOES_ADMIN = new Set(['listar', 'auditoria', 'criar', 'editar', 'resetar_senha', 'desativar', 'reativar', 'excluir']);
+const ACOES_ADMIN = new Set(['listar', 'auditoria', 'criar', 'editar', 'resetar_senha', 'desativar', 'reativar', 'excluir', 'encerrar_sessoes']);
 const ACOES_PROPRIAS = new Set(['trocar_minha_senha']);
 const PAPEIS = new Set(['admin', 'operator']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -137,7 +137,7 @@ async function buscarAlvo(adm, id) {
   return data.user;
 }
 
-const ESCRITAS = ['criar', 'editar', 'resetar_senha', 'desativar', 'reativar', 'excluir', 'negado'];
+const ESCRITAS = ['criar', 'editar', 'resetar_senha', 'desativar', 'reativar', 'excluir', 'encerrar_sessoes', 'negado'];
 
 /** Toda a regra, separada do HTTP para ser testável. */
 export async function executar({ adm, anon, token, corpo }) {
@@ -163,14 +163,24 @@ export async function executar({ adm, anon, token, corpo }) {
       await registrar(adm, ator, 'negado', ator, { tentou: 'trocar_minha_senha', motivo: 'senha_atual_errada' });
       throw new ErroHttp(400, 'A senha atual não confere.');
     }
-    // A conferência abriu uma sessão; ela é fechada na hora (só ela).
-    await adm.auth.admin.signOut(conferida.session.access_token, 'local').catch(() => {});
     const { error } = await adm.auth.admin.updateUserById(ator.id, {
       password: nova, app_metadata: { ...(ator.app_metadata || {}), trocar_senha: false },
     });
     if (error) throw new ErroHttp(400, error.message?.includes('weak') ? 'Senha fraca demais.' : 'Não foi possível trocar a senha.');
+    // Encerra TODAS as sessões e invalida os JWT já emitidos (inclusive o
+    // desta aba e o da conferência acima): as OUTRAS sessões caem na próxima
+    // requisição. A revogação vale até o início do próximo segundo (o iat do
+    // JWT tem resolução de segundo), então a sessão nova de quem trocou só é
+    // aberta depois disso — e volta na resposta, para a aba continuar logada.
+    await adm.rpc('encerrar_sessoes', { p_usuario: ator.id });
+    await new Promise((r) => setTimeout(r, 1100));
+    const { data: nova_sessao, error: erroNova } = await anon.auth.signInWithPassword({ email: ator.email, password: nova });
     await registrar(adm, ator, 'trocar_propria_senha', ator);
-    return { ok: true };
+    if (erroNova || !nova_sessao?.session) return { ok: true, sessao: null };
+    return {
+      ok: true,
+      sessao: { access_token: nova_sessao.session.access_token, refresh_token: nova_sessao.session.refresh_token },
+    };
   }
 
   // ── daqui para baixo: só admin ativo ──────────────────────────────────────
@@ -298,9 +308,20 @@ export async function executar({ adm, anon, token, corpo }) {
       throw new ErroHttp(400, 'Para excluir, digite o e-mail da conta exatamente.');
     }
     if (await ultimoAdmin()) throw new ErroHttp(403, 'Este é o último administrador ativo; ele não pode ser excluído.');
+    // NÃO revogar antes: se a exclusão for recusada (último admin, pela trava
+    // do banco), a conta ficaria deslogada sem ter sido excluída. Excluída, ela
+    // já é recusada por checar_sessao (a conta não existe) na próxima
+    // requisição, e as sessões somem junto com ela.
     const { error } = await adm.auth.admin.deleteUser(alvo.id);
     if (error) throw new ErroHttp(400, 'Não foi possível excluir.');
     await registrar(adm, ator, 'excluir', alvo, { papel: perfilAlvo?.role ?? null });
+    return { ok: true };
+  }
+
+  if (acao === 'encerrar_sessoes') {
+    if (proprio) throw new ErroHttp(403, 'Para sair, use "Sair" no menu.');
+    const { data: sessoes } = await adm.rpc('encerrar_sessoes', { p_usuario: alvo.id });
+    await registrar(adm, ator, 'encerrar_sessoes', alvo, { sessoes_encerradas: sessoes ?? 0 });
     return { ok: true };
   }
 

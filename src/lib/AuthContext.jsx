@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { EVENTO_SESSAO_REVOGADA, MENSAGEM_SESSAO_REVOGADA, rearmarAviso } from '@/lib/sessaoRevogada';
 
 const AuthContext = createContext();
 
@@ -187,6 +188,40 @@ export const AuthProvider = ({ children }) => {
     try { localStorage.removeItem(CHAVE_ANTIGA_ULTIMA_ATIVIDADE); } catch { /* sem localStorage */ }
   }, []);
 
+  // Sessão encerrada pelo administrador (resetar, desativar, excluir, encerrar
+  // sessões): o banco recusou o JWT ou o Auth recusou renová-lo. Sai LOCALMENTE
+  // na hora — o servidor já encerrou tudo — e a tela de login diz o motivo.
+  useEffect(() => {
+    const aoRevogar = async () => {
+      setAuthError(MENSAGEM_SESSAO_REVOGADA);
+      clearOperator();
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+    window.addEventListener(EVENTO_SESSAO_REVOGADA, aoRevogar);
+    return () => window.removeEventListener(EVENTO_SESSAO_REVOGADA, aoRevogar);
+  }, [clearOperator]);
+
+  // Bate-ponto: tela parada (TV, painel aberto) não faz requisição nenhuma por
+  // minutos e não perceberia a revogação. A cada 20 s, com a aba VISÍVEL, uma
+  // chamada mínima a checar_sessao() — a mesma checagem que o banco faz antes
+  // de toda requisição. Recusada, o detector central desloga. Ao voltar a ficar
+  // visível, confere na hora. Conta com senha temporária não bate ponto (o
+  // banco recusaria com senha_temporaria, e a tela dela já é a de troca).
+  const deveBaterPonto = isAuthenticated && !user?.trocarSenha;
+  useEffect(() => {
+    if (!deveBaterPonto || typeof document === 'undefined') return;
+    const bater = () => {
+      if (document.visibilityState !== 'visible') return;
+      supabase.rpc('checar_sessao').then(() => {}, () => {});
+    };
+    const id = setInterval(bater, 20000);
+    const aoVoltar = () => { if (document.visibilityState === 'visible') bater(); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', aoVoltar); };
+  }, [deveBaterPonto]);
+
   // Trocar a senha pelo servidor encerra TODAS as sessões da conta (o Auth
   // faz isso ao gravar senha nova), inclusive a desta aba. Em vez de deixar a
   // tela com uma sessão morta, sai e volta ao login com o aviso.
@@ -197,6 +232,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     setAuthError(null);
+    rearmarAviso();
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password

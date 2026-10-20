@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { fetchComDeteccao } from './sessaoRevogada.js';
 
 const getEnv = (key) => {
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
@@ -18,6 +19,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
+  // Toda resposta passa pelo detector de "sessão encerrada pelo administrador"
+  // (ver sessaoRevogada.js): uma recusa em QUALQUER chamada desloga na hora.
+  global: { fetch: fetchComDeteccao() },
   auth: {
     persistSession: true,
     autoRefreshToken: true,

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle, CheckCircle, Copy, History, KeyRound, Lock, Pencil, Power, ShieldAlert, Trash2, UserPlus, Users,
+  AlertCircle, CheckCircle, Copy, History, KeyRound, Lock, LogOut, Pencil, Power, ShieldAlert, Trash2, UserPlus, Users,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -26,7 +26,8 @@ import { ChipsFiltro, EmptyState, ListaCard, SectionCard } from "@/components/fl
 
 const ROTULO_ACAO = {
   criar: "criou", editar: "editou", resetar_senha: "resetou a senha de", desativar: "desativou",
-  reativar: "reativou", excluir: "excluiu", trocar_propria_senha: "trocou a própria senha", negado: "teve um pedido negado",
+  reativar: "reativou", excluir: "excluiu", trocar_propria_senha: "trocou a própria senha",
+  encerrar_sessoes: "encerrou as sessões de", negado: "teve um pedido negado",
 };
 
 function Aviso({ tipo, children }) {
@@ -169,10 +170,11 @@ function DialogoConfirmar({ pedido, aoFechar, aoConfirmar, enviando, erro }) {
   if (!pedido) return null;
   const { conta, acao } = pedido;
   const textos = {
-    resetar_senha: ["Resetar senha", "Uma senha temporária nova será gerada e mostrada uma vez. As sessões abertas desta conta são encerradas e ela terá de trocar a senha no próximo acesso.", "Resetar senha"],
-    desativar: ["Desativar conta", "A conta não consegue mais entrar e as sessões abertas são encerradas. Dá para reativar depois.", "Desativar"],
+    resetar_senha: ["Resetar senha", "Uma senha temporária nova será gerada e mostrada uma vez. A pessoa é deslogada em até 20 segundos, em todos os aparelhos, e terá de trocar a senha no próximo acesso.", "Resetar senha"],
+    desativar: ["Desativar conta", "A conta não consegue mais entrar e é deslogada em até 20 segundos, em todos os aparelhos. Dá para reativar depois.", "Desativar"],
+    encerrar_sessoes: ["Encerrar sessões", "A pessoa é deslogada em até 20 segundos, em todos os aparelhos. A senha não muda: ela pode entrar de novo.", "Encerrar sessões"],
     reativar: ["Reativar conta", "A conta volta a conseguir entrar com a senha que já tinha.", "Reativar"],
-    excluir: ["Excluir conta", "A conta é apagada de vez. Isto não pode ser desfeito. O histórico de alterações continua registrando quem ela era.", "Excluir de vez"],
+    excluir: ["Excluir conta", "A conta é apagada de vez e deslogada em até 20 segundos. Isto não pode ser desfeito. O histórico de alterações continua registrando quem ela era.", "Excluir de vez"],
   }[acao];
   const porDigitacao = acao === "excluir";
   const liberado = !porDigitacao || digitado.trim().toLowerCase() === conta.email.toLowerCase();
@@ -264,6 +266,7 @@ export default function GestaoUsuarios() {
       setAviso({
         resetar_senha: `Senha de ${conta.email} resetada.`, desativar: `${conta.email} desativada.`,
         reativar: `${conta.email} reativada.`, excluir: `${conta.email} excluída.`,
+        encerrar_sessoes: `Sessões de ${conta.email} encerradas.`,
       }[acao]);
       recarregar();
     },
@@ -364,6 +367,11 @@ export default function GestaoUsuarios() {
                         <Button variant="outline" size="lg" aria-label={`Resetar a senha de ${u.email}`} onClick={() => { setErroPedido(null); setPedido({ conta: u, acao: "resetar_senha" }); }}>
                           <KeyRound className="h-4 w-4" aria-hidden="true" /> Resetar senha
                         </Button>
+                        {u.ativo && (
+                          <Button variant="outline" size="lg" aria-label={`Encerrar as sessões de ${u.email}`} onClick={() => { setErroPedido(null); setPedido({ conta: u, acao: "encerrar_sessoes" }); }}>
+                            <LogOut className="h-4 w-4" aria-hidden="true" /> Encerrar sessões
+                          </Button>
+                        )}
                         <Button
                           variant="outline" size="lg" aria-label={`${u.ativo ? "Desativar" : "Reativar"} ${u.email}`}
                           onClick={() => { setErroPedido(null); setPedido({ conta: u, acao: u.ativo ? "desativar" : "reativar" }); }}
