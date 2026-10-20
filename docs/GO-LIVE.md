@@ -25,12 +25,11 @@ no mínimo 30 dias** depois, porque é o plano de retorno.
 | Catálogo | **1 produto, 1 operador, 0 embalagens** — os cadastros ainda **não** foram restaurados (passo 2) |
 | `auth.users` / `user_profiles` | **6 contas / 6 papéis** |
 | `empilhadeira_configs` | 1 registro |
-| `metas_diarias` | **0 metas** — as TVs mostram o concluído do dia até alguém lançar (passo 4b) |
 | Arquivos no storage | 0 |
 
 **Migrations aplicadas em 19/10/2026**, uma por vez, verificadas, com rollback
 testado (`supabase/rollbacks/`): `20261013000001` (fuso), `20261019000001`–`006`
-(painéis das TVs, indicadores, metas), `20261019000007` (só admin marca
+(painéis das TVs, indicadores, metas — removidas depois, ver abaixo), `20261019000007` (só admin marca
 "Completo") e `20261019000008` (privilégios mínimos). O histórico de migrations
 de produção é igual ao repositório.
 
@@ -165,21 +164,11 @@ As faixas propostas para B (aprovado ≥ 90%, atenção 70–89%, reprovado < 70
 
 ---
 
-## 4b. Lançar as metas diárias
+## 4b. (removido) Metas diárias
 
-**Quem:** Dono (ou quem ele indicar), como admin, em **Cadastros → Metas diárias**.
-
-Sem meta lançada, as TVs mostram a fração **concluída** do que foi lançado no dia
-— o mesmo de antes. Com meta, o anel mede o dia contra ela. São seis valores:
-unidades e envases de cada sala (Bio, Industrial), pedidos do check-out e linhas
-da empilhadeira. Trocar depois é lançar uma nova com a data em que passa a valer;
-a antiga fica no histórico, e **meta que já valeu não se altera** (o banco não
-deixa, nem para o admin).
-
-**Conferir depois:** a TV mostra "meta N …" na legenda do anel.
-
-**Desfazer:** apagar a meta lançada hoje (o botão só aparece para metas de hoje
-ou futuras).
+**Decisão do dono, 20/10/2026: o sistema não tem metas.** A tela, o menu, o
+anel de meta das TVs e a tabela saíram (migration `20261020000002`). As TVs
+mostram o concluído do dia sobre o lançado, como antes das metas.
 
 ---
 
@@ -275,7 +264,6 @@ cada um.
       Gerenciar Usuários, Configuração da Empilhadeira e os 2 Indicadores** —
       todas devem **abrir** para você.
 - [ ] Assinar como **líder** uma linha de empilhadeira concluída.
-- [ ] **Metas diárias**: lançar uma meta e ver a TV mostrar "meta N …".
 - [ ] **Nota fiscal**: abrir uma NF e ver o botão **Excluir** (só admin tem).
 - [ ] Tentar alterar o **código de uma programação** já criada — deve ser
       **recusado**, inclusive para admin.

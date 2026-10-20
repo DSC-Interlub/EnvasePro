@@ -374,7 +374,7 @@ cabe na tela; tudo na TV é múltiplo dela, e o texto que precisa caber usa
 |---|---|
 | `MolduraTV` | cabeçalho (hora grande, "Ao vivo · atualizado às HH:MM", aviso "Sem atualizar desde"), miolo, rodapé de 4 situações |
 | `GradeOperacoes` + `CartaoOperacao` | as operações em andamento, 4 por página, rodando |
-| `MetaTV`, `NumeroTV`, `StatusTV`, `ListaTV`, `CartaoVidro` | anel da meta, número grande, situação, lista curta, cartão |
+| `MetaTV`, `NumeroTV`, `StatusTV`, `ListaTV`, `CartaoVidro` | anel (concluído sobre lançado; o nome é histórico — não há metas desde 20/10/2026), número grande, situação, lista curta, cartão |
 | `usePainelTV` | um intervalo só (30 s) para todas as TVs, com "atualizado às" e falha |
 
 Provado por `scripts/test-tv-layout.mjs` em 1920×1080, 1366×768, 1280×720 e
@@ -390,7 +390,7 @@ abaixo de 14 px em 1080p — 232/232 com o volume da Base44.
 | Envase-tablet | `/NovoRegistro` |
 | Checklist-celular | `/NovoChecklist` |
 | Padrão Lista | `/Registros`, `/Produtos`, `/Embalagens`, `/Operadores`, `/NotasFiscais`, `/Checkout`, `/Recebimento` |
-| Padrão Formulário | programações novas, cadastros, `/Metas` |
+| Padrão Formulário | programações novas, cadastros |
 | Padrão Módulo | `/Empilhadeira` e os módulos operacionais |
 
 Comparação final, com os desvios de cada tela em relação ao protótipo:

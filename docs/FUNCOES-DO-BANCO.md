@@ -23,12 +23,11 @@ pode chamá-la e onde está a prova. A história de por que cada uma existe est�
 
 | Função | Devolve | Tela | Migration | Recuo | Prova |
 |---|---|---|---|---|---|
-| `painel_televisao_empilha()` | jsonb: linhas do dia (total, concluídas, em andamento, críticas pendentes, tempo médio), ocorrências abertas e a mais recente, até 60 operações em andamento, `meta` | `/TelevisaoEmpilha` | `20261019000001` (+ meta na `…006`) | `src/lib/painelEmpilha.js` | `test-painel-empilha.mjs` |
-| `painel_televisao()` | jsonb: `envase` (produção, concluídos, lançados, em andamento, por sala, operações), `checkout`, `empilha` (o painel acima + parada ativa e empilhadeira), `mes` (por sala e categoria), `metas` | `/Televisao` | `20261019000002` (+ `…006`) | `src/lib/painelTelevisao.js` | `test-painel-televisao.mjs` |
+| `painel_televisao_empilha()` | jsonb: linhas do dia (total, concluídas, em andamento, críticas pendentes, tempo médio), ocorrências abertas e a mais recente, até 60 operações em andamento | `/TelevisaoEmpilha` | `20261019000001` (meta acrescentada na `…006` e retirada na `20261020000002`) | `src/lib/painelEmpilha.js` | `test-painel-empilha.mjs` |
+| `painel_televisao()` | jsonb: `envase` (produção, concluídos, lançados, em andamento, por sala, operações), `checkout`, `empilha` (o painel acima + parada ativa e empilhadeira), `mes` (por sala e categoria) | `/Televisao` | `20261019000002` (meta acrescentada na `…006` e retirada na `20261020000002`) | `src/lib/painelTelevisao.js` | `test-painel-televisao.mjs` |
 | `painel_geral()` | jsonb: `hoje`, `semana` (segunda a domingo), `pendencias`, `ao_vivo` (4 cartões por módulo + totais), `ocorrencias` (5) | `/Painel` | `20261019000003` | `src/lib/painelGeral.js` | `test-painel-geral.mjs` |
 | `indicadores_empilhadeira(de, ate)` | jsonb: produção (por tipo, por dia), operadores (empilhadores, ajudantes), paradas, ocorrências, OEE por dia e médio | `/IndicadoresEmpilha`, aba da `/Empilhadeira` | `20261019000004` | `src/lib/indicadoresEmpilha.js` | `test-indicadores-empilha.mjs` |
 | `indicadores_recebimento(de, ate)` | jsonb: volume (status, tipo, dia), tempo (médio, totais, por tipo), ocorrências, equipe (top 8) | `/IndicadoresRecebimento` | `20261019000005` | `src/lib/indicadoresRecebimento.js` | `test-indicadores-recebimento.mjs` |
-| `metas_do_dia(dia)` | jsonb: meta vigente de cada item no dia (ou `null`) | lida pelos dois painéis de TV | `20261019000006` | `src/lib/metas.js` | `test-metas.mjs` |
 | `contadores_do_menu()` | 1 linha: 8 contadores dos selos do menu | menu lateral (admin) | `20261008000001` | — | `test-contadores-menu.js` |
 
 **O checklist não tem função de propósito.** As faixas de nota (critério A/B) moram
@@ -54,7 +53,6 @@ período.
 | Empilhadeira — OEE | por dia: `min(100, round(produtivo / turno × 100))`; médio = média dos dias do período, inclusive dias sem dado | `indicadores_empilhadeira` |
 | Recebimento — data | a de chegada, senão a prevista | `indicadores_recebimento` |
 | Semana (Painel) | segunda a domingo; datas de registros pelo dia de Brasília | `painel_geral` |
-| Meta vigente | a linha de `vigente_desde` mais recente que não seja posterior ao dia | `metas_do_dia` |
 
 ## Funções de gatilho (não são chamadas pelo app)
 
@@ -83,4 +81,4 @@ plataforma Supabase, não deste repositório.
 Cada migration de 19/10/2026 tem rollback em `supabase/rollbacks/`, testado por
 `scripts/test-rollbacks.mjs`: desfeito, o esquema fica igual ao de produção antes
 das migrations; reaplicado, igual ao de depois. Aplicar à mão, um arquivo por vez,
-na ordem inversa. O de `…006` **apaga as metas lançadas** — exportar antes.
+na ordem inversa. (As metas foram removidas por decisão do dono em 20/10/2026, migration `20261020000002`; o rollback dela recria a tabela vazia.)

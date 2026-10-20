@@ -79,7 +79,6 @@ const PAGINAS_SOMENTE_ADMIN = new Set([
   'EmpilhadeiraConfig',
   'IndicadoresEmpilha',
   'IndicadoresRecebimento',
-  'Metas',
 ]);
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?

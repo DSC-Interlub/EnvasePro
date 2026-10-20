@@ -81,7 +81,6 @@ async function limpar() {
     ['envase_records', 'op'],
     ['empilha_ocorrencias', 'descricao'],
     ['empilhadeira_paradas', 'descricao'],
-    ['metas_diarias', 'observacao'],
     ['empilha_programacoes', 'observacoes'],
     ['checkout_programacoes', 'observacoes'],
   ];
@@ -216,20 +215,6 @@ async function carregar() {
 
   await carregarPainelGeral(ops);
 
-  // Metas, com histórico: um valor que valia até 10 dias atrás e o vigente.
-  // (A meta de envases da sala Industrial fica SEM valor, para cobrir o caso
-  // de uma sala com meta e a outra sem.)
-  const metas = [
-    ['envase', 'unidades', 'Bio', 5000, 8000], ['envase', 'unidades', 'Industrial', 4000, 6000],
-    ['envase', 'envases', 'Bio', 10, 14],
-    ['checkout', 'pedidos', null, 20, 30], ['empilhadeira', 'linhas', null, 10, 15],
-  ].flatMap(([modulo, indicador, sala, antiga, atual]) => [
-    { modulo, indicador, sala, valor: antiga, vigente_desde: diaMenos(60), observacao: `${MARCA} meta antiga` },
-    { modulo, indicador, sala, valor: atual, vigente_desde: diaMenos(10), observacao: `${MARCA} meta vigente` },
-  ]);
-  const rm = await svc.from('metas_diarias').insert(metas);
-  if (rm.error) throw new Error(`metas: ${rm.error.message}`);
-  console.log(`  metas_diarias        ${metas.length}`);
   console.log(`\nCarga em ${((Date.now() - t0) / 1000).toFixed(1)}s.`);
 }
 
