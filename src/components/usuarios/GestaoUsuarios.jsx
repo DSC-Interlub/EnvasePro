@@ -145,7 +145,7 @@ function DialogoSenha({ dados, aoFechar }) {
           >
             {dados.senha}
           </p>
-          <Button type="button" size="lg" variant="outline" onClick={copiar}>
+          <Button type="button" size="lg" variant="outline" onClick={copiar} aria-label={copiado ? "Senha copiada" : "Copiar senha"}>
             <Copy className="h-4 w-4" aria-hidden="true" /> {copiado ? "Copiada" : "Copiar senha"}
           </Button>
           <div role="note" className="flex items-start gap-2.5 rounded-token bg-atencao-suave px-4 py-3">

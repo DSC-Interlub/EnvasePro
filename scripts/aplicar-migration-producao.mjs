@@ -195,8 +195,8 @@ if (ESPERADO.extra === 'gestao') {
   const ent = (t?.acl || '').split(',').filter(Boolean);
   ok(t?.rls === true, 'auditoria_usuarios: existe, RLS ativa');
   ok(!ent.some((e) => e.startsWith('anon=') || e.startsWith('=')), `  anon e PUBLIC sem nada (${t?.acl})`);
-  ok(ent.some((e) => /^authenticated=r//.test(e)), '  authenticated só SELECT (o RLS deixa só o admin ver)');
-  ok(ent.some((e) => /^service_role=ar//.test(e)), '  service_role só SELECT e INSERT (sem UPDATE/DELETE/TRUNCATE)');
+  ok(ent.some((e) => e.startsWith('authenticated=r/')), '  authenticated só SELECT (o RLS deixa só o admin ver)');
+  ok(ent.some((e) => e.startsWith('service_role=ar/')), '  service_role só SELECT e INSERT (sem UPDATE/DELETE/TRUNCATE)');
   ok(t?.politicas === 1, `  1 política, de leitura para admin (${t?.politicas})`);
   const g = consultar(`select string_agg(tgname, ',' order by tgname) as nomes from pg_trigger
     where not tgisinternal and tgname in ('trg_auditoria_usuarios_imutavel', 'trg_auditoria_usuarios_sem_truncate', 'trg_proteger_ultimo_admin')`)[0];
@@ -216,7 +216,7 @@ if (ESPERADO.extra === 'gestao') {
       ok(x.sd === false, `  ${x.proname}: sem SECURITY DEFINER`);
     }
   }
-  const a = consultar('select count(*)::int as n from public.user_profiles where role = 'admin'')[0];
+  const a = consultar("select count(*)::int as n from public.user_profiles where role = 'admin'")[0];
   console.log(`  (admins no momento: ${a?.n})`);
 }
 if (ESPERADO.extra === 'metas') {

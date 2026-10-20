@@ -41,10 +41,24 @@ const print = (page, nome) => page.screenshot({ path: `${SAIDA}/${nome}.png`, fu
 /** Login direto no formulário (conta nova não tem operador físico nem modal). */
 async function entrarNaTela(page, email, senha) {
   await page.goto(APP, { waitUntil: 'domcontentloaded' });
-  await page.locator('#email').waitFor({ state: 'visible', timeout: 30000 });
-  await page.locator('#email').fill(email);
-  await page.locator('#password').fill(senha);
-  await page.locator('button[type="submit"]').first().click();
+  // Logo depois de um "sair", a tela de login pode remontar (o estado de
+  // autenticação ainda está assentando) e apagar o que foi digitado; o clique
+  // então esperava um botão habilitado que não vinha. Confere os campos antes
+  // de clicar e tenta de novo.
+  for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+    await page.locator('#email').waitFor({ state: 'visible', timeout: 30000 });
+    await page.waitForTimeout(300);
+    await page.locator('#email').fill(email);
+    await page.locator('#password').fill(senha);
+    const preenchido = await page.evaluate(([e, s]) =>
+      document.querySelector('#email')?.value === e && document.querySelector('#password')?.value === s, [email, senha]);
+    if (!preenchido) continue;
+    try {
+      await page.locator('button[type="submit"]').first().click({ timeout: 8000 });
+      return;
+    } catch { /* remontou entre o preencher e o clicar: tenta de novo */ }
+  }
+  throw new Error('não consegui enviar o formulário de login');
 }
 
 const nav = await chromium.launch({ headless: true });
