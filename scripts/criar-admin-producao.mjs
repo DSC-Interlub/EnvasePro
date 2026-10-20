@@ -2,12 +2,16 @@
  * scripts/criar-admin-producao.mjs — cria a PRIMEIRA conta administradora em
  * produção, depois da limpeza total (docs/LIMPEZA-PRODUCAO.md).
  *
- * Autorizado pelo dono por escrito em 20/10/2026: e-mail pcp-brasil@interlub.com,
+ * Autorizado pelo dono por escrito em 20/10/2026. O primeiro administrador é
+ * adm.sp1@interlub.com (decisão do dono, no lugar de pcp-brasil@interlub.com):
  * senha temporária forte gerada aqui, e-mail já confirmado, troca obrigatória no
  * primeiro acesso, perfil admin gravado pela service_role (a trava de papel
  * aceita a service_role; nada é enfraquecido).
  *
- * Só roda se auth.users estiver VAZIO: não sobrescreve conta nenhuma.
+ * Só roda se auth.users estiver VAZIO — ou, com --substituir=<email>, se a ÚNICA
+ * conta existente for exatamente essa: aí cria a nova admin, confere o login e
+ * só então remove a antiga (nessa ordem, para nunca ficar sem admin; a trava
+ * proteger_ultimo_admin recusaria remover a última de qualquer forma).
  *
  * A chave de serviço vem da Management API (token da CLI, em $SBP), fica só em
  * memória e nunca é impressa. A senha temporária é impressa UMA vez, no fim,
@@ -21,7 +25,9 @@ import { createClient } from '@supabase/supabase-js';
 import { gerarSenhaTemporaria } from '../api/admin-usuarios.js';
 
 const REF = 'xifzjpbkpxislqrowswd';
-const EMAIL = 'pcp-brasil@interlub.com';
+const EMAIL = (process.argv.find((a) => a.startsWith('--email=')) || '--email=adm.sp1@interlub.com').slice(8).trim().toLowerCase();
+const SUBSTITUIR = (process.argv.find((a) => a.startsWith('--substituir=')) || '').slice(13).trim().toLowerCase();
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(EMAIL)) { console.error(`E-mail inválido: ${EMAIL}`); process.exit(2); }
 if (!process.argv.includes('--allow-production') || !process.argv.includes(`--confirm-ref=${REF}`)) {
   console.error('Recusado: produção exige --allow-production e --confirm-ref=' + REF);
   process.exit(2);
@@ -41,21 +47,24 @@ const svc = createClient(URL, SERVICO, o);
 
 const { data: lista, error: eLista } = await svc.auth.admin.listUsers({ perPage: 1000 });
 if (eLista) { console.error('Não consegui listar as contas:', eLista.message); process.exit(1); }
-if (lista.users.length > 0) {
-  console.error(`Recusado: auth.users tem ${lista.users.length} conta(s). Este script só cria a primeira conta num sistema vazio.`);
+const existentes = lista.users.map((u) => u.email.toLowerCase());
+const substituivel = SUBSTITUIR && existentes.length === 1 && existentes[0] === SUBSTITUIR;
+if (existentes.length > 0 && !substituivel) {
+  console.error(`Recusado: auth.users tem ${existentes.length} conta(s). Só crio num sistema vazio, ou com --substituir=<a única conta existente>.`);
   process.exit(1);
 }
+const antiga = substituivel ? lista.users[0] : null;
 
 const senha = gerarSenhaTemporaria();
 const { data: criado, error: eCriar } = await svc.auth.admin.createUser({
   email: EMAIL, password: senha, email_confirm: true,
-  user_metadata: { full_name: 'PCP Brasil' },
+  user_metadata: { full_name: 'Administrador SP1' },
   app_metadata: { trocar_senha: true, uso_tv: false },
 });
 if (eCriar) { console.error('Criação recusada:', eCriar.message); process.exit(1); }
 const id = criado.user.id;
 
-const { error: ePapel } = await svc.from('user_profiles').update({ role: 'admin', full_name: 'PCP Brasil' }).eq('id', id);
+const { error: ePapel } = await svc.from('user_profiles').update({ role: 'admin', full_name: 'Administrador SP1' }).eq('id', id);
 if (ePapel) {
   await svc.auth.admin.deleteUser(id).catch(() => {});
   console.error('Perfil admin recusado; a conta foi desfeita:', ePapel.message);
@@ -75,3 +84,15 @@ console.log(`trocar senha no primeiro acesso: ${criado.user.app_metadata?.trocar
 console.log(`perfil: ${perfil?.role}`);
 console.log(`login real com a senha temporária: ${entrou?.session ? 'OK' : `FALHOU (${eLogin?.message})`}`);
 console.log(`SENHA TEMPORÁRIA (mostrada só agora): ${senha}`);
+
+if (antiga) {
+  if (!entrou?.session || perfil?.role !== 'admin') {
+    console.error('A conta nova não passou na conferência; a antiga NÃO foi removida.');
+    process.exit(1);
+  }
+  await svc.rpc('encerrar_sessoes', { p_usuario: antiga.id }); // devolve o erro, não lança
+  const { error: eRemover } = await svc.auth.admin.deleteUser(antiga.id);
+  const { data: depois } = await svc.auth.admin.listUsers({ perPage: 1000 });
+  console.log(`conta antiga ${antiga.email} (id ${antiga.id}): ${eRemover ? `NÃO removida (${eRemover.message})` : 'removida'}`);
+  console.log(`contas agora: ${depois.users.map((u) => u.email).join(', ')}`);
+}

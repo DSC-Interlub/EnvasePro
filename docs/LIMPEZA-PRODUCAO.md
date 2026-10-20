@@ -97,3 +97,18 @@ sem nenhum erro**, e o primeiro protocolo é `000001`.
 - Limpeza: as programações dependem dos **locais de limpeza**.
 - Recebimento: **fornecedores** e operadores participantes vêm de cadastro.
 - Alerta de ocorrência por e-mail: sem **destinatários**, ninguém recebe.
+
+## Executada em 20/10/2026
+
+- Snapshot imediatamente antes: `prod_2026-10-20T19-09-36Z_PRE-LIMPEZA-100-B`
+  (verificado, 24 OK). Entre o snapshot das 13:09 e este, 6 linhas tinham
+  sumido de produção sem ação do Claude (3 envases, 1 operador, 1 produto,
+  1 config de empilhadeira); estão no snapshot das 13:09.
+- Limpeza com `--commit`: 0 linhas nas 25 tabelas, 0 contas, 0 sessões e
+  tokens, 0 arquivos.
+- Depois: migrations `20261020000001`, `…002`, `…003`, uma por vez, todas
+  verificadas.
+- Primeira conta: **`adm.sp1@interlub.com`** (admin, senha temporária, troca
+  obrigatória), criada por `scripts/criar-admin-producao.mjs`. A conta
+  `pcp-brasil@interlub.com`, criada antes, foi removida a pedido do dono pela
+  opção `--substituir` (cria a nova, confere o login, só então remove a antiga).

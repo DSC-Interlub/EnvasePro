@@ -136,7 +136,7 @@ Esta ordem **prevalece** sobre a numeração das fases da seção 3. As fases vi
 - Um script `truncar-tabelas-operacionais.js` provavelmente já esvaziou as tabelas reais. O histórico só existe nos CSVs de `exports-base44/` (ignorado pelo git) e na Base44. **Esses CSVs são insubstituíveis: não os altere nem os apague.**
 - O backup gerado (`backups/prod_backup_2026-10-06T18-16-35-191Z/`) é fraco: sem os ARQUIVOS do storage, `auth_users.json` sem senhas/hash, `backup_production_schema.sql` com 0 bytes, restauração nunca testada, e a pasta `backups/` **não está no `.gitignore`** (o `deploy_template.sh` faz `git add .`).
 
-**Contas oficiais (4):** `pcp-brasil@interlub.com` (admin), `operacoes.equipe@interlub.com` (operador), `tv-fabrica@interlub.com` (TV), `lauremank622@gmail.com` (dev/admin, e-mail pessoal: pergunte ao usuário de quem é). Conta de teste a remover: `operacoes@interlub.com` (22 caracteres; NÃO confundir com `operacoes.equipe@...`, de 29).
+**Contas em produção desde 20/10/2026 (depois da limpeza total):** só **`adm.sp1@interlub.com`** (admin, primeiro administrador, decisão do dono). As demais contas (operador, TV) são criadas pelo dono em Configurações → Usuários. `pcp-brasil@interlub.com` foi **removida** de produção (continua existindo só no banco LOCAL de testes, como conta admin das suítes). Histórico, antes da limpeza — **Contas oficiais (4):** `pcp-brasil@interlub.com` (admin), `operacoes.equipe@interlub.com` (operador), `tv-fabrica@interlub.com` (TV), `lauremank622@gmail.com` (dev/admin, e-mail pessoal: pergunte ao usuário de quem é). Conta de teste a remover: `operacoes@interlub.com` (22 caracteres; NÃO confundir com `operacoes.equipe@...`, de 29).
 
 ---
 
