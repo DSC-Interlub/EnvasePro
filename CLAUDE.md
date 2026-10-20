@@ -14,6 +14,14 @@ No início de uma sessão nova: responda com (1) o que entendeu, (2) as pergunta
   `20261019000008` (privilégios mínimos: `authenticated` só `arwd`, `anon` nada).
   **Histórico de migrations de produção = repositório.** Rollback de cada uma em
   `supabase/rollbacks/`, testado por `scripts/test-rollbacks.mjs`.
+- **Decisões do dono em 20/10/2026:** (1) **sem metas** — tela, menu, anel das TVs
+  e tabela removidos (`20261020000002`); (2) **sem logout por inatividade** para
+  nenhum papel (item 14 da auditoria revertido; risco declarado no GO-LIVE.md);
+  (3) **gestão de usuários pelo sistema** (`docs/GESTAO-USUARIOS.md`) com
+  **encerramento imediato de sessão** (`20261020000003`: `checar_sessao` como
+  `pgrst.db_pre_request` + bate-ponto de 20 s). Ordem em produção: o dono roda a
+  limpeza total → `20261020000001`, `…002`, `…003`, uma por vez → primeira conta
+  admin por `scripts/criar-admin-producao.mjs`.
 - **Produção está em uso para TESTE** (operador "Maycon" lançou envases). Os dados
   lá são de teste, mas **apagar continua exigindo autorização escrita**.
 - **Como aplicar migration em produção (quando autorizado):**

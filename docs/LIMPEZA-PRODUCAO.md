@@ -66,9 +66,13 @@ ficam de fora) estão em `RESTAURAR-CADASTROS.sql`. Ver
 estão no `base44.app`: baixar e subir pelo cadastro de operador **antes** de a
 Base44 sair do ar.
 
-## Ordem com a migration 20261020000001 (gestão de usuários)
+## Ordem com as migrations 20261020000001–003
 
-**Rodar a limpeza ANTES de aplicar a `20261020000001`.** Depois dela, a tabela
+**Rodar a limpeza ANTES de aplicar a `20261020000001`, a `…002` e a `…003`.** Depois dela, a tabela
 `auditoria_usuarios` recusa `TRUNCATE` (é imutável por gatilho), e a limpeza
 **aborta inteira**, sem apagar nada (é uma transação só). Se isso acontecer, não
 há dano: é só avisar.
+
+A `20261020000002` apaga a tabela `metas_diarias` (o dono não quer metas). O
+script de limpeza não precisa de mudança: ele esvazia **todas** as tabelas de
+`public` que existirem no momento, lidas do catálogo, e roda antes dela.
