@@ -41,8 +41,9 @@ const ref = fs.readFileSync('supabase/.temp/project-ref', 'utf8').trim();
 if (!ENSAIO && ref !== REF) { console.error(`Recusado: o projeto vinculado é ${ref}, não ${REF}`); process.exit(2); }
 
 // 000007 e 000008: autorizadas pelo dono por escrito na segunda mensagem de 19/10/2026.
+// 20261020000001: autorizada pelo dono por escrito em 20/10/2026 (gestão de usuários).
 const AUTORIZADAS = ['20261013000001', '20261019000001', '20261019000002', '20261019000003',
-  '20261019000004', '20261019000005', '20261019000006', '20261019000007', '20261019000008'];
+  '20261019000004', '20261019000005', '20261019000006', '20261019000007', '20261019000008', '20261020000001'];
 if (!ENSAIO && !AUTORIZADAS.includes(versao)) { console.error(`Recusado: ${versao} não está na autorização do dono`); process.exit(2); }
 
 const arquivo = fs.readdirSync('supabase/migrations').find((f) => f.startsWith(`${versao}_`));
@@ -83,6 +84,7 @@ const ESPERADO = {
   '20261019000006': { funcoes: ['metas_do_dia(dia date)', 'painel_televisao_empilha()', 'painel_televisao()'], indices: ['uq_metas_item_vigencia'], tabelas: ['metas_diarias'], extra: 'metas' },
   '20261019000007': { funcoes: [], indices: [], tabelas: [], extra: 'status' },
   '20261019000008': { funcoes: [], indices: [], tabelas: [], extra: 'privilegios' },
+  '20261020000001': { funcoes: [], indices: ['idx_auditoria_usuarios_criado_em', 'idx_auditoria_usuarios_ator_criado'], tabelas: [], extra: 'gestao' },
 }[versao];
 
 let falhas = 0;
@@ -184,6 +186,38 @@ if (ESPERADO.extra === 'privilegios') {
     from pg_default_acl where defaclrole = 'postgres'::regrole and defaclnamespace = 'public'::regnamespace and defaclobjtype = 'r'`);
   ok(/^authenticated=arwd\//.test(d[0]?.auth || ''), `tabela futura (migration): authenticated nasce só arwd (${d[0]?.auth})`);
   ok(!d[0]?.anon, `tabela futura (migration): anon nasce sem nada (${d[0]?.anon || 'vazio'})`);
+}
+if (ESPERADO.extra === 'gestao') {
+  const t = consultar(`select c.relrowsecurity as rls,
+      coalesce((select string_agg(a, ',' order by a) from unnest(c.relacl::text[]) a), '') as acl,
+      (select count(*)::int from pg_policies where schemaname = 'public' and tablename = 'auditoria_usuarios') as politicas
+    from pg_class c where c.oid = 'public.auditoria_usuarios'::regclass`)[0];
+  const ent = (t?.acl || '').split(',').filter(Boolean);
+  ok(t?.rls === true, 'auditoria_usuarios: existe, RLS ativa');
+  ok(!ent.some((e) => e.startsWith('anon=') || e.startsWith('=')), `  anon e PUBLIC sem nada (${t?.acl})`);
+  ok(ent.some((e) => e.startsWith('authenticated=r/')), '  authenticated só SELECT (o RLS deixa só o admin ver)');
+  ok(ent.some((e) => e.startsWith('service_role=ar/')), '  service_role só SELECT e INSERT (sem UPDATE/DELETE/TRUNCATE)');
+  ok(t?.politicas === 1, `  1 política, de leitura para admin (${t?.politicas})`);
+  const g = consultar(`select string_agg(tgname, ',' order by tgname) as nomes from pg_trigger
+    where not tgisinternal and tgname in ('trg_auditoria_usuarios_imutavel', 'trg_auditoria_usuarios_sem_truncate', 'trg_proteger_ultimo_admin')`)[0];
+  ok(g?.nomes === 'trg_auditoria_usuarios_imutavel,trg_auditoria_usuarios_sem_truncate,trg_proteger_ultimo_admin', `3 gatilhos (${g?.nomes})`);
+  const f = consultar(`select p.proname, p.prosecdef as sd, coalesce(array_to_string(p.proconfig, ','), '') as cfg,
+      coalesce((select string_agg(a, ',' order by a) from unnest(p.proacl::text[]) a), '') as acl
+    from pg_proc p where p.pronamespace = 'public'::regnamespace
+      and p.proname in ('encerrar_sessoes', 'proteger_ultimo_admin', 'auditoria_usuarios_imutavel') order by 1`);
+  ok(f.length === 3, `3 funções (${f.map((x) => x.proname).join(', ')})`);
+  for (const x of f) {
+    const e = x.acl.split(',').filter(Boolean);
+    ok(x.cfg === 'search_path=public, pg_temp', `  ${x.proname}: search_path fixo`);
+    ok(!e.some((a) => a.startsWith('anon=') || a.startsWith('authenticated=') || a.startsWith('=')), `  ${x.proname}: nada para anon, authenticated nem PUBLIC (${x.acl})`);
+    if (x.proname === 'encerrar_sessoes') {
+      ok(x.sd === true && e.some((a) => a.startsWith('service_role=X')), '  encerrar_sessoes: SECURITY DEFINER e só a service_role executa');
+    } else {
+      ok(x.sd === false, `  ${x.proname}: sem SECURITY DEFINER`);
+    }
+  }
+  const a = consultar("select count(*)::int as n from public.user_profiles where role = 'admin'")[0];
+  console.log(`  (admins no momento: ${a?.n})`);
 }
 if (ESPERADO.extra === 'metas') {
   const r = consultar(`select position('metas_do_dia' in pg_get_functiondef('public.painel_televisao()'::regprocedure)) > 0 as tv,

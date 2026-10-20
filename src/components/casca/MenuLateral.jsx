@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Factory, LogOut, RefreshCw, ShieldAlert, UserCheck } from "lucide-react";
+import { Factory, KeyRound, LogOut, RefreshCw, ShieldAlert, UserCheck } from "lucide-react";
 
 /**
  * O menu lateral da direção "Fluxo".
@@ -190,6 +190,17 @@ export default function MenuLateral({
 
       {/* ------------------------------------------------ conta e sair */}
       {soIcone ? (
+        <>
+        <Link
+          to="/AlterarSenha"
+          onClick={aoNavegar}
+          title="Alterar minha senha"
+          className="press foco-fluxo mx-auto mb-1 w-12 h-12 rounded-token text-tinta-media
+                     hover:bg-marca-suave hover:text-marca flex items-center justify-center"
+        >
+          <KeyRound className="w-5 h-5" aria-hidden="true" />
+          <span className="sr-only">Alterar minha senha</span>
+        </Link>
         <button
           type="button"
           onClick={aoSair}
@@ -200,7 +211,9 @@ export default function MenuLateral({
           <LogOut className="w-5 h-5" aria-hidden="true" />
           <span className="sr-only">Sair</span>
         </button>
+        </>
       ) : (
+        <>
         <div className="mt-2 flex items-center gap-2.5 rounded-token bg-fundo p-2.5">
           <span className="w-9 h-9 rounded-full bg-marca-suave-2 text-marca font-extrabold
                            text-xs flex items-center justify-center flex-shrink-0">
@@ -231,6 +244,15 @@ export default function MenuLateral({
             <span className="sr-only">Sair</span>
           </button>
         </div>
+        <Link
+          to="/AlterarSenha"
+          onClick={aoNavegar}
+          className="press foco-fluxo mt-1 flex min-h-[48px] items-center gap-2 rounded-token px-3
+                     text-[13px] font-bold text-tinta-media no-underline hover:bg-marca-suave hover:text-marca"
+        >
+          <KeyRound className="h-4 w-4" aria-hidden="true" /> Alterar minha senha
+        </Link>
+        </>
       )}
     </nav>
   );

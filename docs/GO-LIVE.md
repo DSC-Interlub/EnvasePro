@@ -208,16 +208,21 @@ comprometidas, junto com os tokens que passaram por chat.
 **Ordem, sem pular:**
 
 1. rotacionar a `service_role` no painel do Supabase;
-2. atualizar a variável na Vercel;
+2. atualizar a variável **`SUPABASE_SERVICE_ROLE_KEY`** na Vercel (Settings →
+   Environment Variables);
 3. **forçar novo deploy** — a Vercel não recarrega variável sem redeploy;
-4. trocar as senhas das 4 contas: `pcp-brasil`, `operacoes.equipe`,
-   `tv-fabrica` e a de desenvolvimento.
+4. trocar as senhas das contas. Desde 20/10/2026 isso se faz **pela tela**:
+   Configurações → Usuários → **Resetar senha** (para os outros) e
+   **Alterar minha senha** (para a sua).
 
-Entre os passos 1 e 3, as funções serverless (o e-mail de ocorrência) ficam fora
-do ar. É esperado e dura poucos minutos.
+Entre os passos 1 e 3, as funções serverless ficam fora do ar: o e-mail de
+ocorrência **e a gestão de usuários** (`/api/admin-usuarios`: criar, resetar,
+desativar e excluir contas responde "não configurada" ou erro). É esperado e dura
+poucos minutos. O resto do sistema continua funcionando.
 
-**Conferir depois:** login nas 4 contas com a senha nova, e registrar uma
-ocorrência de empilhadeira para ver o e-mail sair — isso exercita a chave nova.
+**Conferir depois:** login nas contas com a senha nova; registrar uma ocorrência
+de empilhadeira para ver o e-mail sair; e abrir Configurações → Usuários e ver a
+lista carregar — as duas coisas exercitam a chave nova.
 
 **Desfazer:** não volta. Se quebrar, rotacionar de novo e corrigir onde a chave
 está configurada.

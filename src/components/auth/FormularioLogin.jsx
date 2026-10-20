@@ -31,6 +31,11 @@ function mensagemDoErro(err) {
   if (status === 429 || /rate limit|too many|security purposes/.test(msg)) {
     return "Muitas tentativas seguidas. Aguarde alguns minutos e tente de novo.";
   }
+  // O Auth só diz "banned" depois de a senha conferir, então isto não revela
+  // se um e-mail existe para quem não sabe a senha.
+  if (/banned/.test(msg)) {
+    return "Esta conta está desativada. Fale com um administrador.";
+  }
   if (/failed to fetch|network|networkerror|load failed/.test(msg)) {
     return "Não foi possível conectar ao servidor. Verifique a internet e tente de novo.";
   }

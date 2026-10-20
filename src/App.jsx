@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import LoginModal from '@/components/auth/LoginModal';
 import TelaLogin from '@/components/auth/TelaLogin';
 import SelecionarOperadorModal from '@/components/auth/SelecionarOperadorModal';
+import TelaTrocarSenhaObrigatoria from '@/components/auth/TelaTrocarSenhaObrigatoria';
 
 
 
@@ -48,6 +49,7 @@ const Painel = lazy(() => import('@/pages/Painel'));
 const NotasFiscais = lazy(() => import('@/pages/NotasFiscais'));
 const NovaNotaFiscal = lazy(() => import('@/pages/NovaNotaFiscal'));
 const NotaFiscalDetalhe = lazy(() => import('@/pages/NotaFiscalDetalhe'));
+const AlterarSenha = lazy(() => import('@/pages/AlterarSenha'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -97,7 +99,7 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 // isTvPage, que continua existindo).
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isAuthenticated } = useAuth();
+  const { isLoadingAuth, isAuthenticated, user } = useAuth();
   const location = useLocation();
 
   // Spinner enquanto carrega a sessão, inclusive nas telas de TV.
@@ -114,6 +116,12 @@ const AuthenticatedApp = () => {
   // clique a mais para chegar no que a pessoa veio fazer.
   if (!isAuthenticated) {
     return <TelaLogin />;
+  }
+
+  // Senha temporária (conta nova ou senha resetada pelo admin): nada do
+  // sistema abre antes de a pessoa escolher a própria senha.
+  if (user?.trocarSenha) {
+    return <TelaTrocarSenhaObrigatoria />;
   }
 
   return (
@@ -160,6 +168,7 @@ const AuthenticatedApp = () => {
         <Route path="/NotasFiscais" element={<LayoutWrapper currentPageName="NotasFiscais"><NotasFiscais /></LayoutWrapper>} />
         <Route path="/NovaNotaFiscal" element={<LayoutWrapper currentPageName="NovaNotaFiscal"><NovaNotaFiscal /></LayoutWrapper>} />
         <Route path="/NotaFiscalDetalhe" element={<LayoutWrapper currentPageName="NotaFiscalDetalhe"><NotaFiscalDetalhe /></LayoutWrapper>} />
+        <Route path="/AlterarSenha" element={<LayoutWrapper currentPageName="AlterarSenha"><AlterarSenha /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
       </Suspense>

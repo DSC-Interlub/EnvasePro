@@ -224,7 +224,10 @@ export default function Painel() {
       foto: getPhoto(r.primeiro?.id, r.primeiro?.nome),
       principal: r.numero_documento,
       marcas,
-      secundario: [r.fornecedor_nome, r.participantes ? `${r.participantes} participante(s)` : null]
+      // Correção 5 de verdade: o participante aparece ESCRITO. Antes só a
+      // inicial dele ia na foto, e o teste só passava quando o mesmo nome
+      // aparecia em outro cartão da página.
+      secundario: [r.fornecedor_nome, r.primeiro?.nome, r.participantes ? `${r.participantes} participante(s)` : null]
         .filter(Boolean).join(" · "),
       direita: calcElapsed(horaLocal(r.datetime_inicio)),
     };
