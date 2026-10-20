@@ -28,7 +28,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local', quiet: true });
 enforceNonProductionGuard('test-rollbacks');
 
-const ORDEM = ['20261019000008', '20261019000007', '20261019000006', '20261019000005', '20261019000004', '20261019000003',
+const ORDEM = ['20261020000001', '20261019000008', '20261019000007', '20261019000006', '20261019000005', '20261019000004', '20261019000003',
   '20261019000002', '20261019000001', '20261013000001'];
 let falhas = 0;
 const ok = (c, m) => { console.log(`  ${c ? 'OK   ' : 'FALHA'} ${m}`); if (!c) falhas += 1; };
