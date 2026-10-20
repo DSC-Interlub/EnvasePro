@@ -142,12 +142,16 @@ try {
   ok(semSimbolo.status === 400, 'sem símbolo: 400', semSimbolo.corpo.erro);
   const NOVA = `Minha#Senha-${Date.now()}`;
   const troca = await api(T, 'trocar_minha_senha', { senha_atual: r1.corpo.senha_temporaria, senha_nova: NOVA });
-  ok(troca.status === 200, 'troca com a senha atual certa: 200', JSON.stringify(troca.corpo));
+  ok(troca.status === 200 && Boolean(troca.corpo.sessao?.access_token), 'troca com a senha atual certa: 200, com sessão nova', String(troca.status));
+  ok(!JSON.stringify(troca.corpo).includes(NOVA), 'a resposta não devolve a senha');
   const { data: ut } = await svc.auth.admin.getUserById(c1.corpo.usuario.id);
   ok(ut.user.app_metadata?.trocar_senha === false, 'o "trocar senha" saiu depois da troca');
   ok(Boolean((await entrar(emailDe('op'), NOVA)).sessao), 'entra com a senha que ELE escolheu');
-  ok((await api(T, 'listar')).status === 401, 'trocar a senha encerra as sessões da conta, inclusive a que pediu a troca');
-  const T2 = (await entrar(emailDe('op'), NOVA)).sessao.access_token;
+  ok((await api(T, 'listar')).status === 401, 'o token de antes da troca não vale mais (as outras sessões caem)');
+  const T2 = troca.corpo.sessao.access_token;
+  const lerCom = async (tok) => (await fetch(`${URL}/rest/v1/operators?select=id&limit=1`, { headers: { apikey: ANON, Authorization: `Bearer ${tok}` } })).status;
+  ok(await lerCom(T) === 401, 'no banco também: o token de antes da troca é recusado');
+  ok(await lerCom(T2) === 200, 'a sessão nova devolvida a quem trocou funciona (ele continua logado)');
   const statusTentativas = [];
   for (let i = 0; i < 6; i += 1) {
     statusTentativas.push((await api(T2, 'trocar_minha_senha', { senha_atual: `errada-${i}`, senha_nova: `Outra#Senha-${i}-2026` })).status);

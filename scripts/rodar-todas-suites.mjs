@@ -23,7 +23,7 @@ const GRUPOS = {
     'test-security-signup.js', 'test-sql-injection.js', 'test-critical-columns-triggers.js',
     'test-author-immutability.js', 'test-reconcile-triggers.js', 'test-fuso-banco.js', 'test-dia-local.js',
     'test-upload-seguro.js', 'test-concurrent-notifications.js', 'test-status-completo.mjs',
-    'test-401-intermitente.js', 'test-renovacao-sessao.js', 'test-admin-usuarios.mjs',
+    'test-401-intermitente.js', 'test-renovacao-sessao.js', 'test-admin-usuarios.mjs', 'test-sessao-revogada.mjs',
   ],
   'paridade com o cálculo antigo': [
     'test-contadores-menu.js', 'test-painel-empilha.mjs', 'test-painel-televisao.mjs', 'test-painel-geral.mjs',
@@ -36,7 +36,7 @@ const GRUPOS = {
     'test-contadores-menu-ui.js', 'test-aba-notificacoes.js', 'test-envase-m2.js',
     'test-leitor-codigo.js', 'test-listas-v1.js', 'test-tokens-fluxo.js', 'test-inactivity-timeout.js',
     'test-tv-authenticated.js', 'test-tv-paineis-ui.mjs', 'test-indicadores-ui.mjs',
-    'test-nf-assinaturas-ui.mjs', 'test-gerenciar-usuarios-ui.mjs',
+    'test-nf-assinaturas-ui.mjs', 'test-gerenciar-usuarios-ui.mjs', 'test-sessao-revogada-ui.mjs',
     'test-tv-layout.mjs',
   ],
 };

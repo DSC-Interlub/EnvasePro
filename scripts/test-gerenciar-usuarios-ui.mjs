@@ -122,11 +122,15 @@ try {
   await novo.locator('#senha-nova').fill(NOVA);
   await novo.locator('#senha-confirma').fill(NOVA);
   await novo.getByRole('button', { name: 'Trocar senha' }).click();
-  await novo.getByText('Senha trocada. Entre com a senha nova.').waitFor({ timeout: 20000 });
-  ok(true, 'depois da troca, volta ao login com o aviso');
-  await entrarNaTela(novo, EMAIL, NOVA);
-  await esperarPor(async () => (await novo.locator('#email').count()) === 0 && (await novo.getByRole('heading', { name: 'Crie a sua senha' }).count()) === 0, 30000);
-  ok((await novo.getByRole('heading', { name: 'Crie a sua senha' }).count()) === 0, 'com a senha nova, entra direto no sistema');
+  // A troca devolve uma sessão nova: a pessoa entra DIRETO no sistema, sem
+  // voltar ao login (as outras sessões da conta é que caem).
+  await esperarPor(async () => (await novo.getByRole('heading', { name: 'Crie a sua senha' }).count()) === 0, 30000);
+  ok((await novo.getByRole('heading', { name: 'Crie a sua senha' }).count()) === 0 && (await novo.locator('#email').count()) === 0,
+    'depois da troca, entra direto no sistema, sem voltar ao login');
+  await novo.reload({ waitUntil: 'domcontentloaded' });
+  await novo.waitForTimeout(3000);
+  ok((await novo.locator('#email').count()) === 0 && (await novo.getByRole('heading', { name: 'Crie a sua senha' }).count()) === 0,
+    'recarregando, continua dentro (a sessão nova vale)');
   await ctxN.close();
 
   console.log('\n3. Editar, resetar, desativar, reativar');
