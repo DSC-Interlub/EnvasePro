@@ -207,8 +207,14 @@ export default function MenuLateral({
             {(user?.email || "?").slice(0, 2).toUpperCase()}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-bold leading-tight text-tinta [overflow-wrap:anywhere]">
-              {user?.email || "Conectado"}
+            {/* Quebra depois do "@" ("pcp-brasil@" / "interlub.com"), e no meio
+                de palavra só se um pedaço sozinho não couber. Antes quebrava em
+                qualquer letra ("interlu" / "b.com"); cortar com "…" escondia o
+                e-mail, e a TV (/Painel) não aceita texto cortado. */}
+            <span className="block text-[13px] font-bold leading-tight text-tinta [overflow-wrap:break-word]">
+              {user?.email?.includes("@")
+                ? <>{user.email.split("@")[0]}@<wbr />{user.email.split("@").slice(1).join("@")}</>
+                : (user?.email || "Conectado")}
             </span>
             <span className="block text-[11px] font-semibold text-texto-fraco">
               {role === "admin" ? "Administrador" : "Operador"}

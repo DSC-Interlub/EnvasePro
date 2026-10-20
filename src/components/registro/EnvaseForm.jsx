@@ -463,7 +463,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
             </dl>
           )}
 
-          <Button aria-label="Confirmar"
+          <Button aria-label="Registrar envase"
             type="submit"
             size="lg"
             disabled={ocupado}
