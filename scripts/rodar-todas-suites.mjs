@@ -7,7 +7,8 @@
  * objetivo é o quadro inteiro.
  *
  * Fora da rodada, declarado: as suítes *staging* (miram um projeto de staging
- * que nunca existiu — ver CLAUDE.md, seção -1).
+ * que nunca existiu — ver CLAUDE.md, seção -1) e as que miram PRODUÇÃO em
+ * endereço fixo (test-functional-audit, test-quick-gerenciar, audit-*).
  *
  * Uso: node scripts/rodar-todas-suites.mjs [saida.json]
  */
@@ -21,7 +22,7 @@ const GRUPOS = {
   'banco: migrations, permissões, segurança': [
     'test-security-signup.js', 'test-sql-injection.js', 'test-critical-columns-triggers.js',
     'test-author-immutability.js', 'test-reconcile-triggers.js', 'test-fuso-banco.js', 'test-dia-local.js',
-    'test-upload-seguro.js', 'test-nota-fiscal.js', 'test-concurrent-notifications.js',
+    'test-upload-seguro.js', 'test-concurrent-notifications.js', 'test-status-completo.mjs',
     'test-401-intermitente.js', 'test-renovacao-sessao.js', 'test-metas.mjs',
   ],
   'paridade com o cálculo antigo': [
@@ -31,14 +32,18 @@ const GRUPOS = {
   ],
   'interface real (Playwright)': [
     'test-login.mjs', 'test-rotas-admin.js', 'test-telas-abrem.mjs', 'test-acessibilidade.mjs', 'test-imports.mjs',
-    'test-fase3-ui.js', 'test-local-e2e-ui.js', 'test-browser.js', 'test-functional-audit.js',
-    'test-contadores-menu-ui.js', 'test-aba-notificacoes.js', 'test-quick-gerenciar.js', 'test-envase-m2.js',
+    'test-fase3-ui.js', 'test-local-e2e-ui.js', 'test-browser.js',
+    'test-contadores-menu-ui.js', 'test-aba-notificacoes.js', 'test-envase-m2.js',
     'test-leitor-codigo.js', 'test-listas-v1.js', 'test-tokens-fluxo.js', 'test-inactivity-timeout.js',
     'test-tv-authenticated.js', 'test-tv-paineis-ui.mjs', 'test-indicadores-ui.mjs', 'test-metas-ui.mjs',
+    'test-nf-assinaturas-ui.mjs',
     'test-tv-layout.mjs',
   ],
 };
 
+// FORA DE PROPÓSITO: test-functional-audit.js e test-quick-gerenciar.js têm o
+// endereço do app de PRODUÇÃO no código (o primeiro como padrão, o segundo fixo),
+// e o db-guard só confere variáveis de ambiente. Ver CLAUDE.md §-2.
 const relatorio = [];
 for (const [grupo, suites] of Object.entries(GRUPOS)) {
   console.log(`\n=== ${grupo}`);

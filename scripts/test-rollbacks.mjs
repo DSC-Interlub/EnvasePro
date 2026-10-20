@@ -4,8 +4,12 @@
  * No banco LOCAL (que tem todas as migrations do repositório):
  *  1. assinatura do esquema ANTES;
  *  2. aplica os rollbacks na ordem inversa;
- *  3. a assinatura tem de ser IGUAL à de PRODUÇÃO (lida agora, só leitura) —
- *     que é exatamente o estado anterior a essas migrations;
+ *  3. a assinatura do passo 1 (local com TUDO aplicado) tem de ser IGUAL à de
+ *     PRODUÇÃO (lida agora, só leitura): repositório = produção.
+ *     Até 19/10/2026 este passo comparava o estado DESFEITO com produção,
+ *     porque produção ainda não tinha estas migrations; naquele dia, antes de
+ *     aplicar, desfeito = produção passou. Depois que as 9 foram aplicadas,
+ *     produção é o estado "com tudo", e a comparação certa é com o passo 1;
  *  4. reaplica as migrations (supabase migration up --include-all);
  *  5. a assinatura tem de voltar a ser igual à do passo 1.
  *
@@ -101,9 +105,11 @@ for (const v of ORDEM) {
   }
 }
 const desfeito = mapa(local(SQL_ASSINATURA));
+const mudou = diferencas(antes, desfeito).length;
+ok(mudou > 0, `os rollbacks mudaram o esquema (${mudou} diferença(s) em relação ao passo 1)`);
 
 if (!process.argv.includes('--sem-producao')) {
-  console.log('\n3. Depois do rollback × PRODUÇÃO hoje (só leitura)');
+  console.log('\n3. Local com tudo aplicado (passo 1) × PRODUÇÃO hoje (só leitura)');
   const prod = mapa(producao(SQL_ASSINATURA));
   // Divergências CONHECIDAS e explicadas (comparação de 19/10/2026):
   //  - contadores_do_menu: produção tem um GRANT EXECUTE a mais para
@@ -116,13 +122,24 @@ if (!process.argv.includes('--sem-producao')) {
   //    explicitamente (conferido uma a uma). Achado registrado para o dono.
   const CONHECIDAS = ['difere: funcao contadores_do_menu()', 'difere: funcao rls_auto_enable()',
     'difere: privpadrao postgres f', 'difere: privpadrao postgres S'];
-  const todas = diferencas(desfeito, prod);
+  //  - consequência da anterior: toda função criada pelas migrations de 19/10
+  //    nasceu em produção com EXECUTE também para service_role (o local não dá).
+  //    É a ÚNICA diferença aceita aqui: o resto da assinatura (corpo,
+  //    volatilidade, search_path, e anon sem nada) tem de ser idêntico.
+  //    service_role já ignora RLS; isso não abre nada novo.
+  const semServiceRoleExtra = (k, v) => (k.startsWith('funcao ')
+    ? v.replace(/,service_role=X\/postgres(?=,|$)/, '') : v);
+  const prodNormal = new Map([...prod].map(([k, v]) => [k, antes.has(k) && !antes.get(k).includes('service_role=X')
+    ? semServiceRoleExtra(k, v) : v]));
+  const soServiceRole = diferencas(antes, prod).length - diferencas(antes, prodNormal).length;
+  if (soServiceRole) console.log(`      (conhecida) ${soServiceRole} função(ões) com EXECUTE extra só para service_role em produção`);
+  const todas = diferencas(antes, prodNormal);
   const d = todas.filter((x) => !CONHECIDAS.includes(x));
   for (const x of todas.filter((y) => CONHECIDAS.includes(y))) console.log(`      (conhecida) ${x}`);
-  ok(d.length === 0, `esquema local desfeito = produção (${prod.size} objetos), fora as ${CONHECIDAS.length} conhecidas`);
+  ok(d.length === 0, `esquema local com tudo aplicado = produção (${prod.size} objetos), fora as ${CONHECIDAS.length} conhecidas`);
   for (const x of d.slice(0, 40)) console.log(`      ${x}`);
   fs.mkdirSync('scratch/rollbacks', { recursive: true });
-  fs.writeFileSync('scratch/rollbacks/diferencas-local-desfeito-x-producao.txt', d.join('\n'));
+  fs.writeFileSync('scratch/rollbacks/diferencas-local-x-producao.txt', d.join('\n'));
 }
 
 console.log('\n4. Reaplicando as migrations');
