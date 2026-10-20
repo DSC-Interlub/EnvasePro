@@ -65,3 +65,10 @@ ficam de fora) estão em `RESTAURAR-CADASTROS.sql`. Ver
 `scripts/backup/restaurar-cadastros.mjs` e `docs/GO-LIVE.md`. As 6 fotos reais
 estão no `base44.app`: baixar e subir pelo cadastro de operador **antes** de a
 Base44 sair do ar.
+
+## Ordem com a migration 20261020000001 (gestão de usuários)
+
+**Rodar a limpeza ANTES de aplicar a `20261020000001`.** Depois dela, a tabela
+`auditoria_usuarios` recusa `TRUNCATE` (é imutável por gatilho), e a limpeza
+**aborta inteira**, sem apagar nada (é uma transação só). Se isso acontecer, não
+há dano: é só avisar.
