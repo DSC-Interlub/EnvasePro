@@ -15,14 +15,14 @@
  */
 
 import { supabase } from '../lib/supabaseClient.js';
-import { validarUpload, tipoRealDoArquivo, ErroDeUpload, mensagemDeErroSegura, registrarErro } from '@/lib/uploadSeguro';
-import { executarComRenovacao as repetirSeSessao } from '@/lib/sessaoRetry';
-import { calcularPainelEmpilha, hojeEmBrasilia } from '@/lib/painelEmpilha';
-import { calcularPainelTelevisao, limitesDoMes } from '@/lib/painelTelevisao';
-import { calcularPainelGeral, limitesDaSemana } from '@/lib/painelGeral';
-import { calcularIndicadoresEmpilha } from '@/lib/indicadoresEmpilha';
-import { calcularIndicadoresRecebimento } from '@/lib/indicadoresRecebimento';
-import { metasDoDia } from '@/lib/metas';
+import { validarUpload, tipoRealDoArquivo, ErroDeUpload, mensagemDeErroSegura, registrarErro } from '../lib/uploadSeguro.js';
+import { executarComRenovacao as repetirSeSessao } from '../lib/sessaoRetry.js';
+import { calcularPainelEmpilha, hojeEmBrasilia } from '../lib/painelEmpilha.js';
+import { calcularPainelTelevisao, limitesDoMes } from '../lib/painelTelevisao.js';
+import { calcularPainelGeral, limitesDaSemana } from '../lib/painelGeral.js';
+import { calcularIndicadoresEmpilha } from '../lib/indicadoresEmpilha.js';
+import { calcularIndicadoresRecebimento } from '../lib/indicadoresRecebimento.js';
+import { metasDoDia } from '../lib/metas.js';
 
 /**
  * Colunas que sao chave estrangeira de TEXTO (referenciam `products.codigo`,

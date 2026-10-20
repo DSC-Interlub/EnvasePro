@@ -1,8 +1,9 @@
-# Design System V2 — proposta
+# Design System V2
 
-**Status: proposta. Nada aqui está implementado.** Este documento descreve o que
-o sistema usa hoje (medido no código) e o que proponho padronizar na V2. A
-decisão de adotar, adiar ou mudar é do dono.
+**Status (20/10/2026): IMPLEMENTADO**, na direção "Fluxo" aprovada pelo dono
+(protótipos em `docs/design/v2/prototipos-v2/`). As seções 1 a 9 são a proposta
+original, mantidas como registro do raciocínio; **a seção 10 diz o que existe no
+código hoje**, e é ela que vale quando as duas divergirem.
 
 Escrito para quem for implementar a V2 e para quem precisar decidir sobre as
 escolhas visuais.
@@ -319,3 +320,78 @@ V1 foi feita. As suítes de segurança continuam valendo e não podem regredir.
 - **Nome dos tokens em português.** Segui o resto do código, que é em português;
   se a preferência for inglês, é um renomear mecânico.
 - **Quando fazer.** Isto é uma proposta; a prioridade é do dono.
+
+---
+
+## 10. O que foi implementado (20/10/2026)
+
+Levantado no código, não de memória.
+
+### 10.1 Tokens
+
+Em `src/index.css` (CSS variables, claro e escuro) e expostos ao Tailwind:
+
+| Grupo | Tokens |
+|---|---|
+| Superfícies | `--fundo` (#F3F4F8), `--cartao`, `--cartao-fraco`, `--borda`, `--trilha` |
+| Texto | `--tinta` (#141A2B), `--tinta-media`, `--texto-fraco` (#7A8296), `--texto-apagado` |
+| Marca | `--marca` (#3B5BFF), `--marca-forte`, `--marca-suave` |
+| Estado | `--ok` (#12A66B), `--atencao` (#E69A00), `--erro` (#E5484D), cada um com `-suave` |
+| Forma | `--raio`, `--raio-pequeno`, `--raio-cartao`, `--raio-painel`; `--sombra-leve`, `--sombra-cartao(-alta)`, `--sombra-marca(-alta)`, `--sombra-foco` |
+| Movimento | `--tempo-rapido`, `--tempo`, `--tempo-lento`, `--curva`, `--curva-forte` (tudo para em `prefers-reduced-motion`) |
+
+Fontes **locais** (sem CDN): Manrope 500–800 no texto, JetBrains Mono 500 em
+código (protocolo, OP, matrícula, lote).
+
+### 10.2 A regra de 48 px
+
+Todo botão e campo chega a 48 px (PR #10: de 1.491 alvos pequenos para 30, e os
+que sobraram são justificados). Conferido por `scripts/test-acessibilidade.mjs`.
+
+### 10.3 Componentes (`src/components/fluxo/`)
+
+| Componente | Para quê |
+|---|---|
+| `PageHeader` | migalha + título + legenda + ações; "Ao vivo" opcional |
+| `SectionCard`, `StatCard`, `MiniKPI`, `ChartCard`, `Anel` | blocos de painel e indicador |
+| `ListaCard`, `ChipsFiltro`, `FilterBar`, `SegmentoPeriodo`, `ListaAcoes` | o padrão Lista |
+| `CartaoAoVivo`, `StatusPill`, `EmptyState` | estado ao vivo, situação, vazio/carregando |
+| `TecladoNumerico` | lançamento no tablet (envase) |
+
+E as cores dos gráficos (`CORES_GRAFICO`, `EIXO`, `GRADE`, `TOOLTIP`, `LEGENDA`)
+saem dos tokens. **Uso medido:** 2.430 usos de componente novo; **10 usos de
+estilo antigo restantes** (`scripts/contar-estilo-antigo.mjs`): 7 numa ferramenta
+de desenvolvimento que não entra no bundle, 1 na máscara do leitor de código, 1 no
+toast e 1 na página 404.
+
+### 10.4 TV (`src/components/fluxo/tv/`)
+
+Unidade própria: `--u = min(1vw, 1.7778vh)` — o lado do maior quadro 16:9 que
+cabe na tela; tudo na TV é múltiplo dela, e o texto que precisa caber usa
+`fonteQueCabe()` (unidades de contêiner). Tema **escuro sempre** na TV.
+
+| Componente | Para quê |
+|---|---|
+| `MolduraTV` | cabeçalho (hora grande, "Ao vivo · atualizado às HH:MM", aviso "Sem atualizar desde"), miolo, rodapé de 4 situações |
+| `GradeOperacoes` + `CartaoOperacao` | as operações em andamento, 4 por página, rodando |
+| `MetaTV`, `NumeroTV`, `StatusTV`, `ListaTV`, `CartaoVidro` | anel da meta, número grande, situação, lista curta, cartão |
+| `usePainelTV` | um intervalo só (30 s) para todas as TVs, com "atualizado às" e falha |
+
+Provado por `scripts/test-tv-layout.mjs` em 1920×1080, 1366×768, 1280×720 e
+800×395 (a do dono), com 0, 1 e 12 operações: nada sobrepõe, nada corta, nada
+abaixo de 14 px em 1080p — 232/232 com o volume da Base44.
+
+### 10.5 Padrões aplicados
+
+| Padrão (protótipo) | Telas |
+|---|---|
+| TV-fabrica | `/Televisao`, `/TelevisaoEmpilha` |
+| Painel-desktop | `/Painel`, `/Dashboard` |
+| Envase-tablet | `/NovoRegistro` |
+| Checklist-celular | `/NovoChecklist` |
+| Padrão Lista | `/Registros`, `/Produtos`, `/Embalagens`, `/Operadores`, `/NotasFiscais`, `/Checkout`, `/Recebimento` |
+| Padrão Formulário | programações novas, cadastros, `/Metas` |
+| Padrão Módulo | `/Empilhadeira` e os módulos operacionais |
+
+Comparação final, com os desvios de cada tela em relação ao protótipo:
+`scratch/redesenho/COMPARAR-FINAL.html` (local; as capturas têm dado de teste).

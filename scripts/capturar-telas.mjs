@@ -14,7 +14,7 @@ import { enforceNonProductionGuard } from './lib/db-guard.js';
 dotenv.config({ path: '.env.local' });
 enforceNonProductionGuard('capturar-telas');
 
-const APP = 'http://127.0.0.1:5173';
+const APP = process.env.APP_CAPTURA || 'http://127.0.0.1:5173';
 const [pasta, papel, lista] = process.argv.slice(2);
 if (!pasta || !papel || !lista) {
   console.error('Uso: node scripts/capturar-telas.mjs <pasta> <papel> <Tela1,Tela2>');
@@ -50,6 +50,8 @@ for (const [nomeL, w, h] of LARGURAS) {
   const ctx = await nav.newContext({ viewport: { width: w, height: h }, storageState: estado });
   const page = await ctx.newPage();
   for (const tela of lista.split(',')) {
+   // Uma tela que falha não derruba as outras: fica registrada e segue.
+   try {
     await page.goto(`${APP}/${tela}`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelectorAll('button,a,input').length > 3,
       null, { timeout: 60000 }).catch(() => {});
@@ -64,15 +66,19 @@ for (const [nomeL, w, h] of LARGURAS) {
       // ancorar em /^SEED-/ nunca casa. Vale o nome em qualquer posicao.
       const cartao = page.locator('button').filter({ hasText: /SEED-/ });
       if (await cartao.count()) {
-        await cartao.first().click();
+        await cartao.first().click({ force: true }); // a lista anima ao entrar
         await modal.first().waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {});
       }
     }
 
     await page.waitForTimeout(3000);
     const arq = `${pasta}/${nomeL}_${tela}.png`;
-    await page.screenshot({ path: arq, fullPage: true });
+    await page.screenshot({ path: arq, fullPage: true, animations: 'disabled', timeout: 60000 })
+      .catch(() => page.screenshot({ path: arq, animations: 'disabled', timeout: 60000 }));
     console.log(`  ${arq}`);
+   } catch (e) {
+    console.log(`  FALHOU ${nomeL}_${tela}: ${String(e.message || e).split(String.fromCharCode(10))[0].slice(0, 160)}`);
+   }
   }
   await ctx.close();
 }

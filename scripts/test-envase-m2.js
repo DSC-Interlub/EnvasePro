@@ -285,7 +285,17 @@ async function main() {
     const industrial = numero(textos[2]);
 
     // A contagem do chip tem de bater com o banco, nao com a pagina visivel.
-    const { data: todos } = await svc.from('envase_records').select('termino, sala, material_retirado');
+    // Lida em paginas: o PostgREST devolve no maximo 1000 linhas por pedido, e
+    // com o volume da Base44 carregado (5.800+) a conta do banco ficava menor
+    // que a da tela, que pagina.
+    const todos = [];
+    for (let de = 0; ; de += 1000) {
+      const { data: pag, error: erroPag } = await svc.from('envase_records')
+        .select('termino, sala, material_retirado').order('id').range(de, de + 999);
+      if (erroPag) throw erroPag;
+      todos.push(...pag);
+      if (pag.length < 1000) break;
+    }
     const finalizado = (r) => r.termino && (r.sala !== 'Bio' || r.material_retirado);
     const esperado = {
       andamento: todos.filter((r) => !finalizado(r)).length,
@@ -300,11 +310,17 @@ async function main() {
     await chips.nth(1).click();
     await esperarPor(async () => (await chips.nth(1).getAttribute('aria-pressed')) === 'true', 6000);
     const filtrado = await page.evaluate(() => {
+      // So a coluna Sala: o texto da linha inteira inclui o nome do produto, e
+      // produtos como "Oleo Teste Industrial" faziam uma linha de Bio parecer
+      // Industrial.
+      const cabecalhos = [...document.querySelectorAll('thead th')].map((th) => (th.textContent || '').trim());
+      const col = cabecalhos.findIndex((t) => /^sala$/i.test(t));
       const linhas = [...document.querySelectorAll('tbody tr')];
+      const sala = (tr) => (tr.children[col]?.textContent || '').trim();
       return {
-        total: linhas.length,
-        todasBio: linhas.length > 0 && linhas.every((tr) => /Bio/.test(tr.textContent || '')),
-        algumaIndustrial: linhas.some((tr) => /Industrial/.test(tr.textContent || '')),
+        total: col < 0 ? 0 : linhas.length,
+        todasBio: col >= 0 && linhas.length > 0 && linhas.every((tr) => sala(tr) === 'Bio'),
+        algumaIndustrial: linhas.some((tr) => sala(tr) === 'Industrial'),
       };
     });
     registrar('o chip "Sala Bio" filtra de fato',

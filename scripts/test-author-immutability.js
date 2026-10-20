@@ -44,88 +44,69 @@ async function testAuthorImmutability() {
   // Para testar sem escrever no banco remoto, vamos mockar a chamada do Supabase no client
   const { default: clientModule } = await import('../src/api/base44Client.js');
 
-  // Cenário 2: Outro operador (Carlos Silva) tenta editar o registro existente
+  // Cenário 2: outro operador (Carlos Silva) fica ativo no LocalStorage e edita.
   const outroOperador = {
     id: '99999999-9999-4999-8999-999999999999',
     nome: 'Carlos Silva'
   };
   localStorage.setItem('envase_current_operator', JSON.stringify(outroOperador));
+  console.log('\n[CENÁRIO 2] Edição por outro operador (ativo no LocalStorage: "Carlos Silva")');
 
-  console.log('\n[CENÁRIO 2] Edição do registro por Outro Operador:');
-  console.log(`   - Operador ativo no LocalStorage mudou para: "${outroOperador.nome}" (${outroOperador.id})`);
-  console.log('   - Payload enviado na edição tenta forçar novo operador:');
-  const dadosEdicao = {
-    quantidade_produzida: 500,
-    observacoes: 'Ajuste de quantidade pelo segundo turno',
-    operador: 'Carlos Silva',
-    operator_id: outroOperador.id
-  };
-  console.log('     ', dadosEdicao);
-
-  // Verificação direta no adapter
-  // Vamos interceptar a query do Supabase para capturar o payload exato que chega no banco
-  let payloadCapturadoNoUpdate = null;
-  const originalUpdate = base44.entities.EnvaseRecord.update;
-
-  // Criamos um mock da chamada interna
-  try {
-    // Usamos um mock temporário no supabase.from('envase_records').update
-    const originalFrom = supabase.from;
-
-    supabase.from = function(table) {
-      if (table === 'envase_records') {
-        return {
-          update: (payload) => {
-            payloadCapturadoNoUpdate = payload;
-            return {
-              eq: () => ({
-                select: () => ({
-                  single: async () => ({
-                    data: {
-                      id: 'env-test-123',
-                      op: 'OP-2026-001',
-                      quantidade_produzida: payload.quantidade_produzida,
-                      operador: 'Lucas Araujo', // Banco preservou o original
-                      operator_id: operadorCriador.id
-                    },
-                    error: null
-                  })
-                })
-              })
-            };
-          }
-        };
-      }
-      return originalFrom.apply(this, arguments);
-    };
-
-    // Executa o update com o segundo operador logado
-    const resultado = await base44.entities.EnvaseRecord.update('env-test-123', dadosEdicao);
-
-    console.log('\n[RESULTADO DA INTERCEPTAÇÃO NO CLIENTE]');
-    console.log('   Payload real enviado pelo base44Client para o Postgres no UPDATE:');
-    console.log('   ', payloadCapturadoNoUpdate);
-
-    if (payloadCapturadoNoUpdate.operator_id === undefined && payloadCapturadoNoUpdate.operador === undefined) {
-      console.log('\n   ✅ PROVA CONFIRMADA:');
-      console.log('      1. "operator_id" foi removido do payload de UPDATE.');
-      console.log('      2. "operador" foi removido do payload de UPDATE.');
-      console.log('      3. O autor original ("Lucas Araujo") NUNCA é substituído por "Carlos Silva".');
-    } else {
-      console.error('\n   ❌ FALHA: operator_id ou operador vazaram no payload de UPDATE!');
-      process.exit(1);
+  // O que o adapter promete (CLAUDE.md §2): no UPDATE ele NÃO tira a autoria do
+  // LocalStorage. Se a tela não manda operador, o payload não leva operador.
+  // Quando a tela manda operador de propósito (check-out e empilhadeira gravam o
+  // operador num item Pendente), o adapter repassa. Quem impede TROCAR um autor
+  // já gravado é o banco (protect_write_once_columns), provado com JWT real em
+  // test-critical-columns-triggers.js e test-reconcile-triggers.js.
+  // (A versão anterior deste teste exigia que o adapter apagasse o operador mesmo
+  // quando enviado; isso quebraria o check-out e nunca foi o desenho. Ela também
+  // não rodava desde 07/10: o adapter importava por '@/', que só o Vite resolve.)
+  const capturados = [];
+  const originalFrom = supabase.from;
+  supabase.from = function(table) {
+    if (table === 'envase_records') {
+      return {
+        update: (payload) => {
+          capturados.push(payload);
+          const linha = { id: 'env-test-123', ...payload };
+          const resposta = { data: linha, error: null };
+          const fim = {
+            select: () => ({ single: async () => resposta, maybeSingle: async () => resposta,
+              then: (r) => r({ data: [linha], error: null }) }),
+            then: (r) => r({ data: null, error: null }),
+          };
+          return { eq: () => fim };
+        }
+      };
     }
+    return originalFrom.apply(this, arguments);
+  };
 
-    // Restaura
-    supabase.from = originalFrom;
+  let falhas = 0;
+  const ok = (cond, txt) => { console.log(`   ${cond ? 'OK   ' : 'FALHA'} ${txt}`); if (!cond) falhas++; };
+  try {
+    await base44.entities.EnvaseRecord.update('env-test-123', {
+      quantidade_produzida: 500,
+      observacoes: 'Ajuste de quantidade pelo segundo turno',
+    });
+    const p1 = capturados[0] || {};
+    console.log('   payload (edição sem operador):', p1);
+    ok(capturados.length === 1, 'o UPDATE chegou ao cliente do banco');
+    ok(p1.operator_id === undefined && p1.operador === undefined,
+      'edição sem operador NÃO injeta o operador do LocalStorage (Carlos Silva)');
+    ok(p1.quantidade_produzida === 500, 'o campo editado chega ao banco');
   } catch (err) {
     console.error('Erro no teste:', err);
-    process.exit(1);
+    falhas++;
+  } finally {
+    supabase.from = originalFrom;
   }
 
   console.log('\n' + '='.repeat(78));
-  console.log('🏁 TESTE DE IMUTABILIDADE DO AUTOR CONCLUÍDO COM SUCESSO.');
+  console.log(falhas ? `RESULTADO: ${falhas} FALHA(S)`
+    : 'TUDO OK — a troca de autor já gravado é barrada no banco (ver test-critical-columns-triggers).');
   console.log('='.repeat(78));
+  process.exitCode = falhas ? 1 : 0;
 }
 
 testAuthorImmutability();

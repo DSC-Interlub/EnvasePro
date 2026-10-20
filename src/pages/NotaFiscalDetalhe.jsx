@@ -22,6 +22,9 @@ export default function NotaFiscalDetalhe() {
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [erroExclusao, setErroExclusao] = useState(null);
+  // Só admin apaga NF (RLS). O botão some para os outros perfis.
+  const isAdmin = user?.role === "admin";
 
   const { data: nf, isLoading } = useQuery({
     queryKey: ["nf-detalhe", id],
@@ -60,11 +63,26 @@ export default function NotaFiscalDetalhe() {
     setUploading(false);
   };
 
+  // O banco recusa a exclusão de quem não é admin SEM erro (o RLS só filtra
+  // as linhas). Antes, a tela voltava para a lista como se tivesse excluído.
+  // Agora confere se o registro sumiu de fato e, se não sumiu, avisa.
   const handleDelete = async () => {
     setDeleting(true);
-    await base44.entities.NotaFiscalArquivo.delete(id);
-    queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-    navigate("/NotasFiscais");
+    setErroExclusao(null);
+    try {
+      await base44.entities.NotaFiscalArquivo.delete(id);
+      const ainda = await base44.entities.NotaFiscalArquivo.filter({ id });
+      if (ainda?.length) {
+        setErroExclusao("Não foi possível excluir: somente administradores podem excluir notas fiscais.");
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+      navigate("/NotasFiscais");
+    } catch {
+      setErroExclusao("Não foi possível excluir. Tente de novo.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const fmtDate = (d) => d ? format(new Date(d), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—";
@@ -165,7 +183,11 @@ export default function NotaFiscalDetalhe() {
         </CardContent>
       </Card>
 
-      {/* Excluir */}
+      {/* Excluir — só admin (o RLS também só deixa admin) */}
+      {erroExclusao && (
+        <p role="alert" className="rounded-token bg-erro-suave px-4 py-3 text-sm font-bold text-erro">{erroExclusao}</p>
+      )}
+      {isAdmin && (
       <div className="pt-2">
         {!confirmDelete ? (
           <Button variant="outline" className="text-erro border-erro hover:bg-erro-suave gap-1 w-full" onClick={() => setConfirmDelete(true)}>
@@ -180,6 +202,7 @@ export default function NotaFiscalDetalhe() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

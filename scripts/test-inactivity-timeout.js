@@ -1,219 +1,122 @@
-import { chromium } from 'playwright';
-import { spawn } from 'child_process';
+/**
+ * scripts/test-inactivity-timeout.js — admin cai por inatividade, TV não.
+ * Interface real (Playwright) contra o app LOCAL, com RELÓGIO SIMULADO.
+ *
+ * REESCRITO em 20/10/2026. A versão anterior:
+ *  - subia o próprio `vite preview` na 4173, servindo a pasta dist/ como
+ *    estivesse (podia ser um build antigo — estava: de 19/10 08:34);
+ *  - não terminava: no Windows, `preview.kill()` mata o shell e deixa o Vite
+ *    vivo segurando o Node (saída 124, morto pelo timeout);
+ *  - só falsificava o horário guardado e recarregava a página.
+ *
+ * O que prova agora, com o relógio do Playwright (page.clock):
+ *  1. ADMIN parado por 61 minutos, SEM recarregar nada: a checagem
+ *     periódica derruba a sessão e a tela de login aparece com o aviso
+ *     "Sessão encerrada por inatividade".
+ *  2. ADMIN parado por 59 minutos: continua logado (o limite é 60).
+ *  3. ADMIN que volta à aba depois de 65 minutos (o caso da recarga): cai.
+ *  4. TV parada por 10 horas: continua logada, sem tela de login, com o
+ *     painel no ar.
+ */
+import fs from 'node:fs';
 import dotenv from 'dotenv';
+import { chromium } from 'playwright';
 import { enforceNonProductionGuard } from './lib/db-guard.js';
-dotenv.config({ path: '.env.local' });
+import { criarAjudantes, esperarPor } from './lib/ui-teste.js';
 
-// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
-// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+dotenv.config({ path: '.env.local', quiet: true });
 enforceNonProductionGuard('test-inactivity-timeout');
 
-const PORT = 4173;
-const BASE_URL = `http://localhost:${PORT}`;
+const APP = process.env.APP_BASE_URL || 'http://127.0.0.1:5173';
+if (!/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?/.test(APP)) {
+  console.error(`Recusado: este teste só roda contra o app local (APP_BASE_URL=${APP})`);
+  process.exit(2);
+}
+const SAIDA = 'scratch/inatividade';
+fs.mkdirSync(SAIDA, { recursive: true });
+let falhas = 0;
+const ok = (c, m) => { console.log(`  ${c ? 'OK   ' : 'FALHA'} ${m}`); if (!c) falhas += 1; };
+const { login } = criarAjudantes({ app: APP });
+const logado = (page) => page.evaluate(() => !!Object.keys(localStorage).find((k) => k.includes('auth-token')));
 
-async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+const nav = await chromium.launch({ headless: true });
+
+/**
+ * Login com o relógio NORMAL (o relógio simulado instalado antes travava o
+ * próprio formulário); depois instala o relógio simulado. Cada teste navega
+ * em seguida, e o app reinicia já com os temporizadores sob controle — a
+ * sessão continua no navegador.
+ */
+async function sessaoComRelogio(email, senha) {
+  const ctx = await nav.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  if (!(await login(page, { email, senha }))) throw new Error(`${email} não entrou`);
+  await page.clock.install();
+  return { ctx, page };
 }
 
-async function runInactivityTests() {
-  console.log('='.repeat(78));
-  console.log('🧪 TESTE AUTOMATIZADO: TIMEOUT DE INATIVIDADE POR PAPEL (ADMIN vs TV)');
-  console.log(`🌐 Alvo Local: ${BASE_URL} (Vite Preview)`);
-  console.log('='.repeat(78));
-
-  const adminEmail = process.env.TEST_ADMIN_EMAIL || 'pcp-brasil@interlub.com';
-  const adminPass = process.env.TEST_ADMIN_PASSWORD;
-  const tvEmail = process.env.TEST_TV_EMAIL || 'tv-fabrica@interlub.com';
-  const tvPass = process.env.TEST_TV_PASSWORD;
-
-  if (!adminPass || !tvPass) {
-    console.error('❌ ERRO: TEST_ADMIN_PASSWORD e TEST_TV_PASSWORD são obrigatórios no ambiente (.env.local).');
-    process.exit(1);
+try {
+  console.log('1. Admin parado 61 minutos (sem recarregar)');
+  {
+    const { ctx, page } = await sessaoComRelogio(process.env.TEST_ADMIN_EMAIL, process.env.TEST_ADMIN_PASSWORD);
+    await page.goto(`${APP}/Dashboard`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2000);
+    ok(await logado(page), 'admin entra e a sessão existe');
+    await page.clock.fastForward(61 * 60000);
+    await page.clock.runFor(31000); // a checagem roda a cada 30 s
+    // O app abre o login logo depois de CHAMAR o logout, sem esperar o signOut
+    // apagar o token: as duas condições são esperadas juntas (antes era corrida).
+    const caiu = await esperarPor(async () => (await page.locator('#email').count()) > 0 && !(await logado(page)), 30000);
+    ok(caiu, 'a sessão é derrubada e a tela de login aparece');
+    ok(await page.getByText(/Sessão encerrada por inatividade/).count() > 0, 'com o aviso "Sessão encerrada por inatividade"');
+    await page.screenshot({ path: `${SAIDA}/1-admin-caiu.png` });
+    await ctx.close();
   }
 
-  // Inicia vite preview
-  console.log('\n[0/4] 🚀 Iniciando servidor local Vite Preview na porta 4173...');
-  const preview = spawn('npx.cmd', ['vite', 'preview', '--port', String(PORT)], {
-    stdio: 'pipe',
-    shell: true
-  });
-
-  preview.stdout.on('data', data => {
-    // console.log('[preview]', data.toString().trim());
-  });
-
-  // Aguarda servidor subir
-  await sleep(3000);
-
-  let browser;
-  try {
-    browser = await chromium.launch({ headless: true, channel: 'msedge' });
-  } catch {
-    browser = await chromium.launch({ headless: true });
+  console.log('\n2. Admin parado 59 minutos');
+  {
+    const { ctx, page } = await sessaoComRelogio(process.env.TEST_ADMIN_EMAIL, process.env.TEST_ADMIN_PASSWORD);
+    await page.goto(`${APP}/Dashboard`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2000);
+    await page.clock.fastForward(59 * 60000);
+    await page.clock.runFor(31000);
+    await page.waitForTimeout(2000);
+    ok(await logado(page) && (await page.locator('#email').count()) === 0, 'continua logado (o limite é 60 minutos)');
+    await ctx.close();
   }
 
-  try {
-    // ------------------------------------------------------------------------
-    // TESTE 1: ADMIN (pcp-brasil@interlub.com) - DEVE DESLOGAR COM 60+ MIN INATIVO
-    // ------------------------------------------------------------------------
-    console.log(`\n[1/4] 👤 Testando Conta ADMIN: Login com ${adminEmail}...`);
-    const adminContext = await browser.newContext();
-    const adminPage = await adminContext.newPage();
-
-    let adminWarnLog = null;
-    adminPage.on('console', msg => {
-      const txt = msg.text();
-      if (txt.includes('[AuthContext]')) {
-        adminWarnLog = txt;
-        console.log('   📢 Console Auth:', txt);
-      }
-    });
-
-    await adminPage.goto(BASE_URL, { waitUntil: 'networkidle' });
-
-    // Clica em login se botão estiver visível
-    const loginBtn = adminPage.locator('button:has-text("Fazer Login no Sistema")').first();
-    if (await loginBtn.isVisible()) {
-      await loginBtn.click();
-      await sleep(500);
-    }
-
-    await adminPage.fill('input#email', adminEmail);
-    await adminPage.fill('input#password', adminPass);
-    await adminPage.click('button[type="submit"]');
-    await sleep(3000);
-
-    // Confirma que está logado como admin
-    const adminRole = await adminPage.evaluate(() => {
-      const raw = localStorage.getItem('envase_last_activity');
-      return {
-        hasLastActivity: !!raw,
-        lastActivity: raw
-      };
-    });
-    console.log('   ✅ Admin logado com sucesso. envase_last_activity inicial:', adminRole.lastActivity);
-
-    // Simula inatividade de 65 minutos (ultrapassando os 60 min de limite)
-    console.log('\n[2/4] ⏳ Simulando 65 minutos de inatividade para o ADMIN...');
-    await adminPage.evaluate(() => {
-      const sessentaCincoMinAtras = Date.now() - (65 * 60 * 1000);
-      localStorage.setItem('envase_last_activity', sessentaCincoMinAtras.toString());
-    });
-
-    // Recarrega a página simulando o admin voltando à aba
-    console.log('   🔄 Admin reabre/recarrega a aba após 65 min de inatividade...');
-    await adminPage.reload({ waitUntil: 'networkidle' });
-    await sleep(2500);
-
-    // Verifica se foi deslogado automaticamente
-    const adminStatusDepois = await adminPage.evaluate(() => {
-      const token = Object.keys(localStorage).find(k => k.includes('auth-token'));
-      return {
-        hasToken: !!token,
-        tokenVal: token ? localStorage.getItem(token) : null,
-        url: window.location.pathname
-      };
-    });
-
-    const telaLoginVisivel = await adminPage.locator('button:has-text("Fazer Login no Sistema")').isVisible();
-    const modalLoginVisivel = await adminPage.locator('input#password').isVisible();
-
-    if (!adminStatusDepois.hasToken || telaLoginVisivel || modalLoginVisivel) {
-      console.log('   🎉 SUCESSO: ADMIN DESLOGADO AUTOMATICAMENTE POR INATIVIDADE!');
-      console.log(`   - Tela de login ativa: ${telaLoginVisivel || modalLoginVisivel}`);
-      console.log(`   - Log capturado: ${adminWarnLog}`);
-    } else {
-      throw new Error('FALHA: Admin permaneceu logado após 65 minutos de inatividade simulada!');
-    }
-
-    await adminContext.close();
-
-    // ------------------------------------------------------------------------
-    // TESTE 2: TV FÁBRICA (tv-fabrica@interlub.com) - NUNCA DEVE DESLOGAR
-    // ------------------------------------------------------------------------
-    console.log('\n[3/4] 📺 Testando Conta TV FÁBRICA: Login com tv-fabrica@interlub.com...');
-    const tvContext = await browser.newContext();
-    const tvPage = await tvContext.newPage();
-
-    let tvWarnLog = null;
-    tvPage.on('console', msg => {
-      const txt = msg.text();
-      if (txt.includes('[AuthContext]')) {
-        tvWarnLog = txt;
-        console.log('   📢 Console TV:', txt);
-      }
-    });
-
-    await tvPage.goto(BASE_URL, { waitUntil: 'networkidle' });
-
-    const tvLoginBtn = tvPage.locator('button:has-text("Fazer Login no Sistema")').first();
-    if (await tvLoginBtn.isVisible()) {
-      await tvLoginBtn.click();
-      await sleep(500);
-    }
-
-    await tvPage.fill('input#email', tvEmail);
-    await tvPage.fill('input#password', tvPass);
-    await tvPage.click('button[type="submit"]');
-    await sleep(3000);
-
-    console.log('   ✅ TV logada com sucesso.');
-
-    // Simula 10 horas sem nenhuma interação física (display rodando a noite toda)
-    console.log('\n[4/4] ⏳ Simulando 10 HORAS sem interação para a TV...');
-    await tvPage.evaluate(() => {
-      const dezHorasAtras = Date.now() - (10 * 3600 * 1000);
-      localStorage.setItem('envase_last_activity', dezHorasAtras.toString());
-    });
-
-    // Navega para /Televisao e depois /TelevisaoEmpilha
-    console.log('   🔄 Navegando para /Televisao e /TelevisaoEmpilha...');
-    await tvPage.goto(`${BASE_URL}/Televisao`, { waitUntil: 'networkidle' });
-    await sleep(3000);
-
-    const tvEnvaseAtiva = await tvPage.evaluate(() => {
-      const token = Object.keys(localStorage).find(k => k.includes('auth-token'));
-      return {
-        hasToken: !!token,
-        bodyText: document.body.innerText.substring(0, 200)
-      };
-    });
-
-    if (!tvEnvaseAtiva.hasToken) {
-      throw new Error('FALHA: TV perdeu a sessão ao simular horas sem interação!');
-    }
-    console.log('   ✅ /Televisao funcionando normalmente com sessão ativa.');
-
-    await tvPage.goto(`${BASE_URL}/TelevisaoEmpilha`, { waitUntil: 'networkidle' });
-    await sleep(3000);
-
-    const tvEmpilhaAtiva = await tvPage.evaluate(() => {
-      const token = Object.keys(localStorage).find(k => k.includes('auth-token'));
-      return {
-        hasToken: !!token,
-        bodyText: document.body.innerText.substring(0, 200)
-      };
-    });
-
-    if (!tvEmpilhaAtiva.hasToken) {
-      throw new Error('FALHA: TV Empilhadeira perdeu a sessão!');
-    }
-    console.log('   ✅ /TelevisaoEmpilha funcionando normalmente com sessão ativa.');
-
-    console.log('\n' + '='.repeat(78));
-    console.log('🏆 RESULTADO FINAL: TODOS OS TESTES PASSARAM COM SUCESSO!');
-    console.log('1. Admin inativo > 60 min: DESLOGA IMEDIATAMENTE (Sessão limpa no cliente).');
-    console.log('2. TV sem interação (10h simuladas): PERMANECE LOGADA E FUNCIONAL 24/7.');
-    console.log('='.repeat(78));
-
-    await tvContext.close();
-  } finally {
-    if (browser) await browser.close();
-    preview.kill();
+  console.log('\n3. Admin volta à aba depois de 65 minutos (recarga)');
+  {
+    const { ctx, page } = await sessaoComRelogio(process.env.TEST_ADMIN_EMAIL, process.env.TEST_ADMIN_PASSWORD);
+    await page.goto(`${APP}/Dashboard`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2000);
+    await page.evaluate(() => localStorage.setItem('envase_last_activity', String(Date.now() - 65 * 60000)));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    // O app abre o login logo depois de CHAMAR o logout, sem esperar o signOut
+    // apagar o token: as duas condições são esperadas juntas (antes era corrida).
+    const caiu = await esperarPor(async () => (await page.locator('#email').count()) > 0 && !(await logado(page)), 30000);
+    ok(caiu, 'ao reabrir, a sessão é derrubada');
+    await ctx.close();
   }
+
+  console.log('\n4. TV parada 10 horas');
+  {
+    const { ctx, page } = await sessaoComRelogio(process.env.TEST_TV_EMAIL, process.env.TEST_TV_PASSWORD);
+    await page.goto(`${APP}/Televisao`, { waitUntil: 'domcontentloaded' });
+    await esperarPor(async () => (await page.locator('[data-tv-atualizacao]').count()) > 0, 30000);
+    await page.clock.fastForward(10 * 3600000);
+    await page.clock.runFor(31000);
+    await page.waitForTimeout(3000);
+    ok(await logado(page), 'a sessão da TV continua');
+    ok((await page.locator('#email').count()) === 0, 'sem tela de login');
+    ok(await page.locator('[data-tv-atualizacao]').count() > 0, 'o painel continua no ar');
+    await page.screenshot({ path: `${SAIDA}/4-tv-10h.png` });
+    await ctx.close();
+  }
+} catch (e) {
+  ok(false, `a suíte parou: ${String(e.message || e).split('\n')[0].slice(0, 200)}`);
+} finally {
+  await nav.close();
 }
-
-runInactivityTests().catch(err => {
-  console.error('\n❌ ERRO NO TESTE:', err);
-  process.exit(1);
-});
+console.log('\n' + (falhas ? `${falhas} FALHA(S)` : `TUDO OK — capturas em ${SAIDA}/`));
+process.exitCode = falhas ? 1 : 0;

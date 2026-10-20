@@ -1,117 +1,96 @@
+/**
+ * scripts/test-aba-notificacoes.js — destinatários dos alertas de ocorrência,
+ * na interface real (Playwright, app e banco LOCAIS).
+ *
+ * REESCRITO em 20/10/2026. A versão anterior gravava no banco local mas abria
+ * a TELA no site de PRODUÇÃO (endereço fixo no código): rodada, tentou logar
+ * em produção com a senha local do admin e foi recusada. Também usava o
+ * botão de login removido no PR #25.
+ *
+ * O que prova agora:
+ *  1. admin cadastra um destinatário pela aba "Alertas de Ocorrência" e ele
+ *     aparece na lista e no banco;
+ *  2. admin desativa e reativa pelo botão da linha (o banco acompanha);
+ *  3. admin remove (confirmando o diálogo) e o registro some do banco;
+ *  4. o operador não cadastra destinatário (RLS: 42501) nem abre a tela.
+ */
+import fs from 'node:fs';
+import dotenv from 'dotenv';
 import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
 import { enforceNonProductionGuard } from './lib/db-guard.js';
-dotenv.config({ path: '.env.local' });
+import { criarAjudantes, esperarPor } from './lib/ui-teste.js';
 
-// Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
-// Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+dotenv.config({ path: '.env.local', quiet: true });
 enforceNonProductionGuard('test-aba-notificacoes');
 
-const BASE_URL = 'https://envase-pro.vercel.app';
-const ARTIFACT_DIR = 'C:/Users/kauan.pereira/.gemini/antigravity/brain/17e52817-9948-4001-b5fb-875daf584a4c';
-
-async function runTest() {
-  console.log('='.repeat(70));
-  console.log('🧪 TESTE COMPLETO: notificacao_destinatarios + ABA EM GerenciarUsuarios.jsx');
-  console.log('='.repeat(70));
-
-  // 1. Teste via Supabase Client Autenticado como Admin
-  const adminEmail = process.env.TEST_ADMIN_EMAIL || 'pcp-brasil@interlub.com';
-  const adminPass = process.env.TEST_ADMIN_PASSWORD;
-  if (!adminPass) {
-    console.error('❌ ERRO: TEST_ADMIN_PASSWORD é obrigatório no ambiente (.env.local).');
-    process.exit(1);
-  }
-
-  console.log(`1. Autenticando cliente Supabase como Admin (${adminEmail})...`);
-  const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
-  const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
-    email: adminEmail,
-    password: adminPass
-  });
-  if (authErr) throw new Error(`Falha no login: ${authErr.message}`);
-  console.log('   ✅ Admin autenticado com sucesso. UID:', authData.user.id);
-
-  // Inserir registro de teste via API
-  console.log('2. Inserindo destinatário de teste via cliente autenticado...');
-  const testEmail = `lider.qa.${Date.now()}@interlub.com.br`;
-  const { data: inserted, error: insErr } = await supabase
-    .from('notificacao_destinatarios')
-    .insert({
-      email: testEmail,
-      nome: 'Líder Operacional QA',
-      ativo: true
-    })
-    .select()
-    .single();
-
-  if (insErr) throw new Error(`Erro ao inserir destinatário: ${insErr.message}`);
-  console.log(`   ✅ Inserido com sucesso no banco: ID=${inserted.id}, Email=${inserted.email}`);
-
-  // Leitura do registro
-  const { data: list, error: listErr } = await supabase
-    .from('notificacao_destinatarios')
-    .select('*')
-    .eq('id', inserted.id)
-    .single();
-
-  if (listErr) throw new Error(`Erro ao ler destinatário: ${listErr.message}`);
-  console.log(`   ✅ Leitura confirmada no banco: Nome="${list.nome}", Ativo=${list.ativo}`);
-
-  // 2. Teste no Navegador via Playwright na tela de Staging
-  console.log('\n3. Abrindo navegador para validar a interface visual em /GerenciarUsuarios...');
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-
-  console.log('   ↳ Acessando página inicial...');
-  await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
-
-  // Fazer login como admin
-  // Login direto (PR #25): se o formulário está na tela, entra.
-  const campoEmail = page.locator('input#email').first();
-  if (await campoEmail.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await page.fill('input#email', adminEmail);
-    await page.fill('input#password', adminPass);
-    await page.click('button[type="submit"]');
-    await page.waitForTimeout(3000);
-  }
-
-  console.log('   ↳ Navegando para /GerenciarUsuarios...');
-  await page.goto(`${BASE_URL}/GerenciarUsuarios`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(2000);
-
-  console.log('   ↳ Clicando na aba "Alertas de Ocorrência"...');
-  await page.click('text=Alertas de Ocorrência');
-  await page.waitForTimeout(2500);
-
-  // Cadastrar um novo destinatário diretamente pelo formulário da tela
-  const emailUi = `gerente.logistica.${Date.now().toString().slice(-4)}@interlub.com.br`;
-  console.log(`   ↳ Preenchendo formulário na UI com: ${emailUi}`);
-  await page.fill('input#nomeDest', 'Gerente de Logística e Envase');
-  await page.fill('input#emailDest', emailUi);
-  await page.click('button:has-text("Cadastrar Destinatário")');
-  await page.waitForTimeout(3000);
-
-  const shotPath = `${ARTIFACT_DIR}/staging-25-destinatarios-cadastrados.png`;
-  await page.screenshot({ path: shotPath });
-  console.log(`   📸 Screenshot salvo: staging-25-destinatarios-cadastrados.png`);
-
-  // Confirmar no banco que o e-mail cadastrado pela UI foi gravado
-  const { data: dbDestUi } = await supabase
-    .from('notificacao_destinatarios')
-    .select('*')
-    .eq('email', emailUi)
-    .maybeSingle();
-
-  if (dbDestUi) {
-    console.log(`   ✅ DESTINATÁRIO CADASTRADO PELA UI CONFIRMADO NO BANCO! ID=${dbDestUi.id}, Nome="${dbDestUi.nome}"`);
-  } else {
-    console.log('   ⚠️ Não localizou imediatamente via select direto, checando lista geral...');
-  }
-
-  await browser.close();
-  console.log('='.repeat(70));
+const APP = process.env.APP_BASE_URL || 'http://127.0.0.1:5173';
+if (!/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?/.test(APP)) {
+  console.error(`Recusado: este teste só roda contra o app local (APP_BASE_URL=${APP})`);
+  process.exit(2);
 }
+const URL = process.env.VITE_SUPABASE_URL;
+const svc = createClient(URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+const { login } = criarAjudantes({ app: APP, svc });
+const SAIDA = 'scratch/notificacoes';
+fs.mkdirSync(SAIDA, { recursive: true });
+const EMAIL = `teste.alerta.${Date.now()}@exemplo.com.br`;
+let falhas = 0;
+const ok = (c, m) => { console.log(`  ${c ? 'OK   ' : 'FALHA'} ${m}`); if (!c) falhas += 1; };
+const linhaNoBanco = async () => (await svc.from('notificacao_destinatarios').select('*').eq('email', EMAIL)).data?.[0];
 
-runTest().catch(console.error);
+// Restos da versão antiga (lider.qa.*), só no banco LOCAL.
+await svc.from('notificacao_destinatarios').delete().like('email', 'lider.qa.%');
+
+const nav = await chromium.launch({ headless: true });
+try {
+  const ctx = await nav.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  page.on('dialog', (d) => d.accept());
+  ok(await login(page, { email: process.env.TEST_ADMIN_EMAIL, senha: process.env.TEST_ADMIN_PASSWORD }), 'admin entra');
+  await page.goto(`${APP}/GerenciarUsuarios`, { waitUntil: 'domcontentloaded' });
+  await esperarPor(async () => (await page.getByRole('tab', { name: /Alertas de Ocorrência/ }).count()) > 0, 20000);
+  await page.getByRole('tab', { name: /Alertas de Ocorrência/ }).click();
+
+  console.log('1. Cadastrar');
+  await page.locator('#nomeDest').fill('Destinatário de teste');
+  await page.locator('#emailDest').fill(EMAIL);
+  await page.getByRole('button', { name: /Cadastrar Destinatário/ }).click();
+  const naLista = await esperarPor(async () => (await page.getByText(EMAIL).count()) > 0, 15000);
+  ok(naLista, 'aparece na lista da tela');
+  const r1 = await linhaNoBanco();
+  ok(r1?.ativo === true && r1?.nome === 'Destinatário de teste', 'gravado no banco, ativo');
+  await page.screenshot({ path: `${SAIDA}/1-cadastrado.png`, fullPage: true });
+
+  console.log('\n2. Desativar e reativar');
+  const linha = page.locator('li, tr, div').filter({ hasText: EMAIL }).filter({ has: page.getByRole('button', { name: /o destinatário/ }) }).last();
+  await linha.getByRole('button', { name: 'Desativar o destinatário' }).click();
+  ok(await esperarPor(async () => (await linhaNoBanco())?.ativo === false, 10000), 'desativado no banco');
+  await linha.getByRole('button', { name: 'Ativar o destinatário' }).click();
+  ok(await esperarPor(async () => (await linhaNoBanco())?.ativo === true, 10000), 'reativado no banco');
+
+  console.log('\n3. Remover');
+  await linha.getByRole('button', { name: 'Excluir' }).click();
+  ok(await esperarPor(async () => !(await linhaNoBanco()), 10000), 'removido do banco (depois de confirmar)');
+  await ctx.close();
+
+  console.log('\n4. Operador');
+  const op = createClient(URL, process.env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  await op.auth.signInWithPassword({ email: process.env.TEST_OPERATOR_EMAIL, password: process.env.TEST_OPERATOR_PASSWORD });
+  const ins = await op.from('notificacao_destinatarios').insert({ email: `op.${EMAIL}`, nome: 'x', ativo: true });
+  ok(ins.error?.code === '42501', `operador NÃO cadastra (${ins.error?.code || 'CADASTROU'})`);
+  const ctxOp = await nav.newContext({ viewport: { width: 1280, height: 900 } });
+  const pOp = await ctxOp.newPage();
+  await login(pOp, { email: process.env.TEST_OPERATOR_EMAIL, senha: process.env.TEST_OPERATOR_PASSWORD });
+  await pOp.goto(`${APP}/GerenciarUsuarios`, { waitUntil: 'domcontentloaded' });
+  await pOp.waitForTimeout(3000);
+  ok(await pOp.getByRole('tab', { name: /Alertas de Ocorrência/ }).count() === 0, 'operador não abre a tela de configurações');
+  await ctxOp.close();
+} catch (e) {
+  ok(false, `a suíte parou: ${String(e.message || e).split('\n')[0].slice(0, 200)}`);
+} finally {
+  await svc.from('notificacao_destinatarios').delete().like('email', `%${EMAIL}`);
+  await nav.close();
+}
+console.log('\n' + (falhas ? `${falhas} FALHA(S)` : `TUDO OK — capturas em ${SAIDA}/`));
+process.exitCode = falhas ? 1 : 0;

@@ -75,6 +75,17 @@ for (const [papel, tela] of TELAS.filter(([, t]) => !SO.length || SO.includes(t)
   const page = await ctx.newPage();
   const pedidos = [];
 
+  // MEDIR_SEM_FUNCOES=1: mede o RECUO — o que a tela baixa quando as funções
+  // da Etapa 2 não existem no banco (o PostgREST responde PGRST202). É o
+  // tráfego de produção entre a publicação do código e a aplicação das
+  // migrations.
+  if (process.env.MEDIR_SEM_FUNCOES === '1') {
+    await page.route(/\/rest\/v1\/rpc\/(painel_|indicadores_|metas_do_dia)/, (r) => r.fulfill({
+      status: 404, contentType: 'application/json',
+      body: JSON.stringify({ code: 'PGRST202', message: 'Could not find the function in the schema cache', details: null, hint: null }),
+    }));
+  }
+
   page.on('response', async (r) => {
     const alvo = alvoDaUrl(r.url());
     if (!alvo) return;

@@ -525,3 +525,25 @@ recebimento — sem eles, metade desses indicadores compararia zero com zero.
 
 - **Alerta de ritmo** ("abaixo do esperado para este horário") exige saber o horário
   do turno de cada módulo. Não foi inventado: a TV mostra % da meta, sem julgar o ritmo.
+
+## 10. Medição final (20/10/2026) — com as funções × recuo no navegador
+
+Build de produção (`main`), banco local com o volume da Base44, mesma sessão.
+"Recuo" = as funções respondem PGRST202 (`MEDIR_SEM_FUNCOES=1` em
+`scripts/medir-trafego-tv.mjs`), que é o que o código faz se a função não existir.
+Regime = depois dos primeiros 20 s.
+
+| Tela | Com as funções (regime) | Recuo no navegador (regime) |
+|---|---|---|
+| `/Televisao` | 1,8 req/min · 28,8 KB/min | 21,6 req/min · 157,3 KB/min |
+| `/TelevisaoEmpilha` | 1,8 req/min · 5,4 KB/min | 9,0 req/min · 24,3 KB/min |
+| `/Painel` | 1,8 req/min · 10,3 KB/min | 59,3 req/min · 1.429,1 KB/min |
+| `/IndicadoresEmpilha` (abertura) | 6 req · 4,2 KB | 11 req · 6,8 KB |
+| `/IndicadoresRecebimento` (abertura) | 7 req · 14,1 KB | 11 req · 17,0 KB |
+| `/Dashboard` (abertura) | 11 req · 415,9 KB | 11 req · 415,9 KB |
+
+- O recuo funciona (as telas mostram dado), mas custa de 5× a 140× mais nas TVs.
+- **`/Dashboard` não usa as funções**: lê as tabelas já filtradas pela faixa de datas
+  (`envasesDaFaixa` e afins), por isso é igual nos dois modos. Os 346 KB são os envases
+  da faixa padrão. Se quiser reduzir isso, uma função de resumo para o Dashboard seria
+  o próximo passo. Isso **não** foi feito.
