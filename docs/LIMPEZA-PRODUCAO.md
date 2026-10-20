@@ -76,3 +76,24 @@ há dano: é só avisar.
 A `20261020000002` apaga a tabela `metas_diarias` (o dono não quer metas). O
 script de limpeza não precisa de mudança: ele esvazia **todas** as tabelas de
 `public` que existirem no momento, lidas do catálogo, e roda antes dela.
+
+## O sistema do zero (provado no banco local em 20/10/2026)
+
+`scripts/test-sistema-do-zero.mjs --apagar-banco-local` reproduz o estado
+pós-limpeza: zera o banco, cria só o admin com senha temporária, e pela tela o
+admin troca a senha e cria as contas de operador e de TV, que fazem o primeiro
+acesso. Resultado: **as 36 telas (admin, operador, TV) abrem com o banco vazio,
+sem nenhum erro**, e o primeiro protocolo é `000001`.
+
+**O que depende de cadastro para servir (com o banco vazio):**
+
+- **Operador fica TRAVADO**: o modal "Quem é você hoje?" mostra "Nenhum operador
+  ativo cadastrado no sistema." e não fecha. **Cadastre os operadores**
+  (Configurações → Operadores, ou restaure os 14 reais) **antes** de entregar a
+  conta de operador.
+- Envase (`/NovoRegistro`): sem **produtos** e **embalagens**, a busca não acha nada.
+- Empilhadeira: manutenção e paradas usam a **empilhadeira cadastrada**
+  (`/EmpilhadeiraConfig`).
+- Limpeza: as programações dependem dos **locais de limpeza**.
+- Recebimento: **fornecedores** e operadores participantes vêm de cadastro.
+- Alerta de ocorrência por e-mail: sem **destinatários**, ninguém recebe.
