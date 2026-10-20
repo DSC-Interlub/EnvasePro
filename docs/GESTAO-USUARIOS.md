@@ -86,9 +86,9 @@ fazer o Redeploy.**
 
 ## Provas
 
-- `scripts/test-admin-usuarios.mjs` — JWT real, 74 conferências: recusas para
+- `scripts/test-admin-usuarios.mjs` — JWT real, 71 conferências: recusas para
   anon/operador/TV, criar/editar/resetar/desativar/reativar/excluir, autoproteção,
   último admin com exclusão cruzada simultânea, troca da própria senha, limite
   de tentativas, auditoria imutável e sem senha.
 - `scripts/test-gerenciar-usuarios-ui.mjs` — o fluxo inteiro na tela real
-  (Playwright), inclusive o primeiro acesso no celular.
+  (Playwright), 33 conferências, inclusive o primeiro acesso no celular.
