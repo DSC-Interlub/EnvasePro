@@ -647,6 +647,37 @@ const functionsAdapter = {
   },
 
   /**
+   * Gestão de contas: chama a função serverless /api/admin-usuarios, que
+   * confere o JWT e o papel no servidor e usa a service_role SÓ lá.
+   * `acao`: listar, auditoria, criar, editar, resetar_senha, desativar,
+   * reativar, excluir, trocar_minha_senha.
+   * Lança Error com a mensagem do servidor (já em português).
+   */
+  async adminUsuarios(acao, dados = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Sua sessão expirou. Faça login de novo.');
+    let res;
+    try {
+      res = await fetch('/api/admin-usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ ...dados, acao }),
+      });
+    } catch {
+      throw new Error('Não foi possível conectar ao servidor. Verifique a internet e tente de novo.');
+    }
+    let corpo = {};
+    try { corpo = await res.json(); } catch { /* resposta sem JSON */ }
+    if (!res.ok) {
+      const erro = new Error(corpo.erro || `Falha no servidor (${res.status}).`);
+      erro.status = res.status;
+      erro.codigo = corpo.codigo;
+      throw erro;
+    }
+    return corpo;
+  },
+
+  /**
    * Lista todos os usuários cadastrados em user_profiles.
    */
   async listarUsuarios() {

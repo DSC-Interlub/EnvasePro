@@ -91,7 +91,10 @@ export const AuthProvider = ({ children }) => {
           email: authUser.email,
           role: profile?.role || 'operator',
           full_name: profile?.full_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0],
-          created_date: authUser.created_at
+          created_date: authUser.created_at,
+          // "Trocar a senha no primeiro acesso": vem do app_metadata, que só o
+          // servidor (service_role) escreve; o próprio usuário não consegue apagar.
+          trocarSenha: Boolean(authUser.app_metadata?.trocar_senha),
         }));
       } catch (err) {
         console.warn('Aviso ao carregar perfil do usuário:', err.message);
@@ -122,7 +125,10 @@ export const AuthProvider = ({ children }) => {
           email: session.user.email,
           role: 'operator', // Papel inicial seguro; papel autoritativo vem de user_profiles via carregarPerfilUsuario
           full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-          created_date: session.user.created_at
+          created_date: session.user.created_at,
+          // "Trocar a senha no primeiro acesso": vem do app_metadata, que só o
+          // servidor (service_role) escreve; o próprio usuário não consegue apagar.
+          trocarSenha: Boolean(session.user.app_metadata?.trocar_senha),
         });
         setIsAuthenticated(true);
         carregarPerfilUsuario(session.user);
@@ -145,7 +151,10 @@ export const AuthProvider = ({ children }) => {
           email: session.user.email,
           role: 'operator', // Papel inicial seguro; papel autoritativo vem de user_profiles via carregarPerfilUsuario
           full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-          created_date: session.user.created_at
+          created_date: session.user.created_at,
+          // "Trocar a senha no primeiro acesso": vem do app_metadata, que só o
+          // servidor (service_role) escreve; o próprio usuário não consegue apagar.
+          trocarSenha: Boolean(session.user.app_metadata?.trocar_senha),
         });
         setIsAuthenticated(true);
         setLoginModalAberto(false);
@@ -250,6 +259,14 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user?.role, user?.email, logout]);
 
+  // Trocar a senha pelo servidor encerra TODAS as sessões da conta (o Auth
+  // faz isso ao gravar senha nova), inclusive a desta aba. Em vez de deixar a
+  // tela com uma sessão morta, sai e volta ao login com o aviso.
+  const sairComAviso = useCallback(async (aviso) => {
+    await logout();
+    setAuthError(aviso);
+  }, [logout]);
+
   const login = async (email, password) => {
     setAuthError(null);
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -281,6 +298,7 @@ export const AuthProvider = ({ children }) => {
       authError,
       appPublicSettings: { id: 'envasepro' },
       logout,
+      sairComAviso,
       navigateToLogin,
       login,
       currentOperator,
