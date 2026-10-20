@@ -1,141 +1,83 @@
 /**
- * Script de Verificação Real no Navegador via Playwright (msedge / chromium)
- * Testa as 4 regras exigidas:
- * 1. Telas de TV (/Televisao e /TelevisaoEmpilha) funcionando 100% sem login.
- * 2. Tela de login exibida em rota protegida quando desautenticado.
- * 3. Login com conta compartilhada (operacoes.equipe@interlub.com).
- * 4. Abertura automática do modal "Quem é você hoje?" para seleção de operador.
- * 5. Seleção de operador e renderização do dashboard com operador ativo no turno.
+ * scripts/test-browser.js — navegador real (Playwright), regras v2 de acesso.
+ *
+ * REESCRITO em 20/10/2026. A versão anterior afirmava o comportamento ANTIGO
+ * ("TVs funcionando 100% sem login") — removido de propósito: desde a
+ * remove_anon_rls e a reconcile_security, o anon não lê nada, então a TV
+ * precisa de sessão (GO-LIVE (f)). Ela só "passava" porque procurava um
+ * texto ("Acesso ao EnvasePro") que nem existe mais, e saía com 0 mesmo
+ * quebrando. Usava ainda o atalho de e-mail removido no PR #25 e um operador
+ * de produção ("Lucas Araujo").
+ *
+ * O que prova agora:
+ *  1. /Televisao e /TelevisaoEmpilha SEM sessão mostram o formulário de
+ *     login e NÃO pedem dado nenhum ao banco.
+ *  2. A rota raiz sem sessão mostra o formulário de login.
+ *  3. Login com a conta de operador (senha do .env.local) abre o modal
+ *     "Quem é você hoje?".
+ *  4. Escolher o operador fecha o modal e o nome aparece como operador do turno.
  */
-
-import { chromium } from 'playwright';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
+import { chromium } from 'playwright';
+import { enforceNonProductionGuard } from './lib/db-guard.js';
+import { esperarPor } from './lib/ui-teste.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const SCRATCH_DIR = path.join(__dirname, '..', 'scratch');
+dotenv.config({ path: '.env.local', quiet: true });
+enforceNonProductionGuard('test-browser');
 
-if (!fs.existsSync(SCRATCH_DIR)) {
-  fs.mkdirSync(SCRATCH_DIR, { recursive: true });
-}
+const APP = process.env.APP_BASE_URL || 'http://127.0.0.1:5173';
+const SAIDA = 'scratch/browser';
+fs.mkdirSync(SAIDA, { recursive: true });
+let falhas = 0;
+const ok = (c, m) => { console.log(`  ${c ? 'OK   ' : 'FALHA'} ${m}`); if (!c) falhas += 1; };
 
-async function runBrowserTests() {
-  console.log('='.repeat(70));
-  console.log('🌐 INICIANDO TESTES REAIS NO NAVEGADOR (PLAYWRIGHT)');
-  console.log('='.repeat(70));
-
-  let browser;
-  try {
-    browser = await chromium.launch({
-      headless: true,
-      channel: 'msedge' // Usa o Microsoft Edge padrão do Windows
-    });
-  } catch (e) {
-    console.log('Tentando canal padrão chromium...');
-    browser = await chromium.launch({ headless: true });
+const nav = await chromium.launch({ headless: true });
+try {
+  console.log('1. TVs sem sessão');
+  for (const rota of ['Televisao', 'TelevisaoEmpilha']) {
+    const ctx = await nav.newContext();
+    const page = await ctx.newPage();
+    const pedidos = [];
+    page.on('request', (r) => { if (/\/rest\/v1\//.test(r.url())) pedidos.push(r.url()); });
+    await page.goto(`${APP}/${rota}`, { waitUntil: 'domcontentloaded' });
+    const pediuLogin = await esperarPor(async () => (await page.locator('#email').count()) > 0, 20000);
+    await page.waitForTimeout(1500);
+    ok(pediuLogin, `/${rota} sem sessão mostra o formulário de login`);
+    ok(pedidos.length === 0, `/${rota} sem sessão não pede dado nenhum ao banco (${pedidos.length} pedido(s))`);
+    await page.screenshot({ path: `${SAIDA}/1-${rota}-sem-sessao.png` });
+    await ctx.close();
   }
 
-  const BASE_URL = 'http://localhost:5173';
+  console.log('\n2. Rota raiz sem sessão');
+  const ctx = await nav.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(`${APP}/`, { waitUntil: 'domcontentloaded' });
+  ok(await esperarPor(async () => (await page.locator('#email').count()) > 0, 20000), 'a raiz sem sessão mostra o formulário de login');
 
-  // --------------------------------------------------------------------------
-  // TESTE 1: Tela de TV /Televisao em contexto 100% anônimo
-  // --------------------------------------------------------------------------
-  console.log('\n📺 [TESTE 1] Acessando /Televisao sem sessão ativa...');
-  const ctx1 = await browser.newContext();
-  const page1 = await ctx1.newPage();
-  await page1.goto(`${BASE_URL}/Televisao`, { waitUntil: 'networkidle' });
-  await page1.waitForTimeout(3000);
+  console.log('\n3. Login de operador');
+  await page.locator('#email').fill(process.env.TEST_OPERATOR_EMAIL);
+  await page.locator('#password').fill(process.env.TEST_OPERATOR_PASSWORD);
+  await page.locator('button[type="submit"]').click();
+  const modal = page.getByText(/Quem é você hoje/i);
+  ok(await esperarPor(async () => (await modal.count()) > 0, 20000), 'o modal "Quem é você hoje?" abre depois do login');
+  await page.screenshot({ path: `${SAIDA}/3-quem-e-voce.png` });
 
-  const url1 = page1.url();
-  console.log(`   ↳ URL atual: ${url1}`);
-  const temLogin1 = await page1.locator('text=Acesso ao EnvasePro').count();
-  console.log(`   ↳ Exigiu login? ${temLogin1 > 0 ? '❌ SIM (Erro!)' : '✅ NÃO (Correto!)'}`);
-
-  const shot1 = path.join(SCRATCH_DIR, '01-televisao-anonima.png');
-  await page1.screenshot({ path: shot1, fullPage: true });
-  console.log(`   📸 Screenshot salvo: ${shot1}`);
-  await ctx1.close();
-
-  // --------------------------------------------------------------------------
-  // TESTE 2: Tela de TV /TelevisaoEmpilha em contexto 100% anônimo
-  // --------------------------------------------------------------------------
-  console.log('\n🚜 [TESTE 2] Acessando /TelevisaoEmpilha sem sessão ativa...');
-  const ctx2 = await browser.newContext();
-  const page2 = await ctx2.newPage();
-  await page2.goto(`${BASE_URL}/TelevisaoEmpilha`, { waitUntil: 'networkidle' });
-  await page2.waitForTimeout(3000);
-
-  const url2 = page2.url();
-  console.log(`   ↳ URL atual: ${url2}`);
-  const temLogin2 = await page2.locator('text=Acesso ao EnvasePro').count();
-  console.log(`   ↳ Exigiu login? ${temLogin2 > 0 ? '❌ SIM (Erro!)' : '✅ NÃO (Correto!)'}`);
-
-  const shot2 = path.join(SCRATCH_DIR, '02-televisao-empilha-anonima.png');
-  await page2.screenshot({ path: shot2, fullPage: true });
-  console.log(`   📸 Screenshot salvo: ${shot2}`);
-  await ctx2.close();
-
-  // --------------------------------------------------------------------------
-  // TESTE 3: Rota protegida /Dashboard exige login
-  // --------------------------------------------------------------------------
-  console.log('\n🔒 [TESTE 3] Acessando rota protegida (/) desautenticado...');
-  const ctx3 = await browser.newContext();
-  const page3 = await ctx3.newPage();
-  await page3.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
-  
-  // Desde o PR #25 a tela de login aparece DIRETO (sem botão para abrir).
-  await page3.waitForSelector('#email', { timeout: 10000 });
-  const temBotaoLogin = await page3.locator('#email').count();
-  console.log(`   ↳ Apresentou tela de login? ${temBotaoLogin > 0 ? '✅ SIM (Correto!)' : '❌ NÃO (Erro!)'}`);
-
-  const shot3 = path.join(SCRATCH_DIR, '03-modal-login.png');
-  await page3.screenshot({ path: shot3 });
-  console.log(`   📸 Screenshot salvo: ${shot3}`);
-
-  // --------------------------------------------------------------------------
-  // TESTE 4: Login com conta de operações (operacoes.equipe@interlub.com)
-  // --------------------------------------------------------------------------
-  console.log('\n🔑 [TESTE 4] Realizando login com operacoes.equipe@interlub.com...');
-  // Clica no botão de preenchimento rápido de Operações
-  await page3.click('text=Operações (Fábrica)');
-  await page3.waitForTimeout(300);
-
-  // Submete o login
-  await page3.click('button[type="submit"]');
-  console.log('   ↳ Aguardando autenticação e abertura do modal "Quem é você hoje?"...');
-  await page3.waitForSelector('text=Quem é você hoje?', { timeout: 15000 });
-  console.log('   ✅ Modal "Quem é você hoje?" abriu automaticamente com sucesso!');
-
-  const shot4 = path.join(SCRATCH_DIR, '04-selecionar-operador.png');
-  await page3.screenshot({ path: shot4 });
-  console.log(`   📸 Screenshot salvo: ${shot4}`);
-
-  // --------------------------------------------------------------------------
-  // TESTE 5: Seleção de operador do turno (Lição 3)
-  // --------------------------------------------------------------------------
-  console.log('\n👷 [TESTE 5] Selecionando o operador "Lucas Araujo"...');
-  await page3.click('button:has-text("Lucas Araujo")');
-  await page3.waitForTimeout(2000);
-
-  // Verifica se o operador ativo aparece no layout
-  const textoOperador = await page3.locator('text=Lucas Araujo').count();
-  console.log(`   ↳ Operador ativo renderizado no layout? ${textoOperador > 0 ? '✅ SIM' : '❌ NÃO'}`);
-
-  const shot5 = path.join(SCRATCH_DIR, '05-dashboard-com-operador-ativo.png');
-  await page3.screenshot({ path: shot5, fullPage: true });
-  console.log(`   📸 Screenshot salvo: ${shot5}`);
-
-  await ctx3.close();
-  await browser.close();
-
-  console.log('\n' + '='.repeat(70));
-  console.log('🎉 TODOS OS 5 TESTES NO NAVEGADOR PASSARAM COM 100% DE SUCESSO!');
-  console.log('='.repeat(70));
+  console.log('\n4. Escolha do operador do turno');
+  const cartao = page.locator('button').filter({ hasText: /SEED-/ }).first();
+  await esperarPor(async () => (await cartao.count()) > 0, 15000);
+  const nome = ((await cartao.innerText()).match(/SEED-[^\n]+/) || [''])[0].trim();
+  await cartao.click({ force: true });
+  ok(await esperarPor(async () => (await modal.count()) === 0, 15000), 'o modal fecha depois da escolha');
+  const gravado = await page.evaluate(() => { try { return JSON.parse(localStorage.getItem('envase_current_operator') || 'null'); } catch { return null; } });
+  ok(gravado?.nome === nome, `o operador do turno fica gravado (${gravado?.nome})`);
+  ok(await page.getByText(nome).count() > 0, `"${nome}" aparece na tela como operador do turno`);
+  await page.screenshot({ path: `${SAIDA}/4-operador-do-turno.png`, fullPage: true });
+  await ctx.close();
+} catch (e) {
+  ok(false, `a suíte parou: ${String(e.message || e).split('\n')[0].slice(0, 200)}`);
+} finally {
+  await nav.close();
 }
-
-runBrowserTests().catch(err => {
-  console.error('❌ Falha nos testes de navegador:', err);
-  process.exit(1);
-});
+console.log('\n' + (falhas ? `${falhas} FALHA(S)` : `TUDO OK — capturas em ${SAIDA}/`));
+process.exitCode = falhas ? 1 : 0;
