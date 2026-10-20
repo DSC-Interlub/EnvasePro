@@ -190,7 +190,7 @@ export default function MenuLateral({
 
       {/* ------------------------------------------------ conta e sair */}
       {soIcone ? (
-        <>
+        <div className="contents">
         <Link
           to="/AlterarSenha"
           onClick={aoNavegar}
@@ -211,9 +211,9 @@ export default function MenuLateral({
           <LogOut className="w-5 h-5" aria-hidden="true" />
           <span className="sr-only">Sair</span>
         </button>
-        </>
+        </div>
       ) : (
-        <>
+        <div className="contents">
         <div className="mt-2 flex items-center gap-2.5 rounded-token bg-fundo p-2.5">
           <span className="w-9 h-9 rounded-full bg-marca-suave-2 text-marca font-extrabold
                            text-xs flex items-center justify-center flex-shrink-0">
@@ -226,7 +226,7 @@ export default function MenuLateral({
                 e-mail, e a TV (/Painel) não aceita texto cortado. */}
             <span className="block text-[13px] font-bold leading-tight text-tinta [overflow-wrap:break-word]">
               {user?.email?.includes("@")
-                ? <>{user.email.split("@")[0]}@<wbr />{user.email.split("@").slice(1).join("@")}</>
+                ? <span>{user.email.split("@")[0]}@<wbr />{user.email.split("@").slice(1).join("@")}</span>
                 : (user?.email || "Conectado")}
             </span>
             <span className="block text-[11px] font-semibold text-texto-fraco">
@@ -252,7 +252,7 @@ export default function MenuLateral({
         >
           <KeyRound className="h-4 w-4" aria-hidden="true" /> Alterar minha senha
         </Link>
-        </>
+        </div>
       )}
     </nav>
   );

@@ -100,7 +100,7 @@ Esta ordem **prevalece** sobre a numeração das fases da seção 3. As fases vi
   - `empilha_linhas` e `checkout_itens` têm CHECK exigindo `operador_empilhadeira_id` / `operator_id` preenchido quando `status <> 'Pendente'`.
   - `nota_fiscal_arquivos` tem retenção legal de 5 anos (`data_expiracao_legal`). Não apagar arquivos de NF reais.
   - Colunas de protocolo (`protocolo`, `numero_checklist`, `codigo_programacao`, `protocolo_arquivo`, `protocolo_recebimento`) e `created_at` devem ser imutáveis, inclusive para admin.
-  - TVs (`/Televisao`, `/TelevisaoEmpilha`, `/Painel`) usam a conta `tv-fabrica` com sessão persistente e **não podem sofrer logout por inatividade**. Admin sofre logout após 60 min de inatividade.
+  - TVs (`/Televisao`, `/TelevisaoEmpilha`, `/Painel`) usam a conta `tv-fabrica` com sessão persistente e **não podem sofrer logout por inatividade**. **Desde 20/10/2026 NENHUM papel sofre logout por inatividade** (o item 14 da auditoria — admin cair aos 60 min — foi revertido por decisão do dono; risco declarado no GO-LIVE.md: computador compartilhado deixado logado continua logado).
 
 ---
 
@@ -354,7 +354,7 @@ Corrija o que o teste revelar e prove cada fluxo com a UI de verdade, logando co
 - [ ] Limpeza: assinatura de responsável e de líder.
 - [ ] Nota fiscal: upload, URL assinada, descarte só admin.
 - [ ] TV: abre autenticada com `tv-fabrica`, atualiza sem logout; fotos de operador carregam por URL assinada (bucket privado).
-- [ ] Admin: logout por inatividade de 60 min (use relógio simulado), TV imune.
+- [x] ~~Admin: logout por inatividade de 60 min~~ — revertido por decisão do dono em 20/10/2026; `test-inactivity-timeout.js` agora prova que nenhum papel cai.
 - Adapter: `update()` não injeta autoria do `localStorage`; só resolve `operator_id` quando vier o nome. Cuidado: resolução por nome é frágil com homônimos; prefira enviar o `id` direto do select.
 - `AuthContext.jsx`: remova o fallback que lê `user_metadata.role` (editável pelo próprio usuário). O papel deve vir só de `user_profiles`.
 - **Aceite:** relatório Playwright com todos os fluxos verdes e capturas de tela.
@@ -587,15 +587,15 @@ Apagar também os 13 arquivos do bucket `fotos-operadores`, que pertencem a esse
 > Na prática: **cada TV da fábrica precisa estar logada na conta `tv-fabrica`**, uma vez,
 > com a sessão persistida no navegador daquele equipamento. Se o navegador da TV limpar
 > dados do site, ou se o equipamento for trocado, **é preciso logar de novo**. A conta
-> `tv-fabrica` continua imune ao logout por inatividade (só o admin cai, aos 60 min).
+> `tv-fabrica` não sofre logout por inatividade (nenhum papel sofre, desde 20/10/2026).
 
 Último passo, porque é o que a fábrica vê.
 
 **Conferir antes**
 - [ ] (a) a (e) conferidos.
 - [ ] A conta `tv-fabrica` loga com a senha nova e a sessão persiste.
-- [ ] Confirmado **in loco**, não por suposição: a tela não cai por inatividade (só admin cai,
-      aos 60 min) e as fotos carregam por URL assinada.
+- [ ] Confirmado **in loco**, não por suposição: a tela não cai por inatividade e as fotos
+      carregam por URL assinada.
 
 **Fazer:** apontar `/Televisao`, `/TelevisaoEmpilha` e `/Painel` para o EnvasePro e deixar
 rodando sob observação por um turno inteiro.

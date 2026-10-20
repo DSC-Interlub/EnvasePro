@@ -227,8 +227,8 @@ vez na conta `tv-fabrica` (com a senha nova do passo 6) e a sessão fica salva
 naquele navegador.
 
 **Conferir, olhando a tela:** `/Televisao`, `/TelevisaoEmpilha` e `/Painel`
-carregam; as fotos aparecem; e a tela **não cai** por inatividade — só o admin
-cai, aos 60 minutos. Deixar rodando um turno inteiro sob observação.
+carregam; as fotos aparecem; e a tela **não cai** por inatividade (nenhum papel cai,
+desde 20/10/2026). Deixar rodando um turno inteiro sob observação.
 
 **Desfazer:** apontar as TVs de volta para a Base44.
 
@@ -369,6 +369,19 @@ anterior → `...` → **Promote to Production**. Instantâneo, não depende de 
   Recomendado: uma migration que ajuste esse padrão (não autorizada ainda).
 - Decidir o que fazer com a conta de teste `operacoes@interlub.com`, que
   continua em `auth.users`.
+
+---
+
+## Decisão do dono: sem logout por inatividade (20/10/2026)
+
+O item 14 da auditoria (admin deslogado após 60 min parado) foi **revertido por
+decisão do dono**. Nenhum papel é deslogado por ficar sem mexer; a sessão continua
+enquanto a aba estiver aberta, renovada pelo refresh normal do Supabase.
+
+**Risco declarado:** um computador **compartilhado** deixado logado continua
+logado — quem sentar nele usa a conta de quem saiu sem clicar em "Sair". Mitigação:
+o administrador pode **desativar ou resetar** a conta (encerra a sessão em até
+~20 s, ver `docs/GESTAO-USUARIOS.md`), e cada pessoa deve sair ao terminar.
 
 ---
 

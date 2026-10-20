@@ -10,11 +10,15 @@ const ROTAS_TV_PUBLICAS = [
   '/painel'
 ];
 
-// Configurações de Inatividade (Item 14 / Auditoria de Segurança)
-// Admin: logout automático após 60 minutos sem interação real
-export const ADMIN_INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutos
-export const STORAGE_KEY_LAST_ACTIVITY = 'envase_last_activity';
-const EVENTOS_INTERACAO = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+// SEM logout por inatividade, para nenhum papel (decisão do dono, 20/10/2026,
+// revertendo o item 14 da auditoria). A sessão segue viva enquanto a aba estiver
+// aberta, renovada pelo refresh normal do Supabase. Risco declarado no CLAUDE.md
+// e no GO-LIVE.md: computador compartilhado deixado logado continua logado.
+// Quem encerra sessão agora é o administrador (desativar, resetar, excluir) e
+// o próprio usuário (Sair).
+//
+// Chave que a versão anterior gravava; apagada uma vez para não ficar lixo.
+const CHAVE_ANTIGA_ULTIMA_ATIVIDADE = 'envase_last_activity';
 
 function ehRotaTvPublica(pathname) {
   if (!pathname) return false;
@@ -67,9 +71,6 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     clearOperator();
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY_LAST_ACTIVITY);
-    }
     await supabase.auth.signOut().catch(() => {});
     setUser(null);
     setIsAuthenticated(false);
@@ -112,7 +113,7 @@ export const AuthProvider = ({ children }) => {
     const ehTv = ehRotaTvPublica(pathname);
     setIsTvPage(ehTv);
 
-    // isTvPage continua sendo usado para isentar a TV do logout por inatividade.
+    // isTvPage continua sendo usado para o modal de operador físico não abrir na TV.
     // O que NÃO se faz mais aqui: encerrar o loading antes de getSession(). Isso
     // vinha da época da "TV pública" e, numa TV já logada, fazia a tela de login
     // piscar por um instante antes de a sessão resolver.
@@ -181,83 +182,10 @@ export const AuthProvider = ({ children }) => {
     };
   }, [carregarPerfilUsuario, clearOperator]);
 
-  // 3. Monitor de inatividade exclusivo para administradores (Item 14 / Auditoria de Segurança)
+  // Resto da versão com logout por inatividade: apaga a chave antiga.
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Regra: monitor ativo APENAS para administradores. Operadores e a conta
-    // da TV são imunes PELO PAPEL: a conta da TV é `operator` (conferido no
-    // banco local e no snapshot de produção de 09/10/2026).
-    //
-    // Havia aqui uma segunda condição comparando com o e-mail da conta da TV.
-    // Ela era redundante — com o papel `operator` o monitor já não roda — e
-    // colocava o e-mail da conta no bundle público. Se um dia a conta da TV
-    // virar admin, ela PASSA a cair por inatividade; isso é coberto pelo
-    // test-login, que confere a imunidade da TV.
-    const monitorarInatividade = user?.role === 'admin';
-
-    if (!monitorarInatividade) {
-      return;
-    }
-
-    // A. Verificação imediata na inicialização / restauração de página
-    const rawLastActivity = localStorage.getItem(STORAGE_KEY_LAST_ACTIVITY);
-    const agora = Date.now();
-
-    if (rawLastActivity) {
-      const tempoInativo = agora - Number(rawLastActivity);
-      if (tempoInativo > ADMIN_INACTIVITY_TIMEOUT_MS) {
-        console.warn(`[AuthContext] Sessão admin expirada por inatividade (${Math.round(tempoInativo / 60000)} min). Deslogando.`);
-        logout();
-        setAuthError('Sessão encerrada por inatividade (limite de 60 minutos para administradores).');
-        setLoginModalAberto(true);
-        return;
-      }
-    } else {
-      localStorage.setItem(STORAGE_KEY_LAST_ACTIVITY, agora.toString());
-    }
-
-    // B. Ouvintes de interação real do usuário com throttle de 10 segundos
-    let ultimoRegistro = Date.now();
-    const handleInteracao = () => {
-      const current = Date.now();
-      if (current - ultimoRegistro > 10000) {
-        ultimoRegistro = current;
-        try {
-          localStorage.setItem(STORAGE_KEY_LAST_ACTIVITY, current.toString());
-        } catch {}
-      }
-    };
-
-    EVENTOS_INTERACAO.forEach(evento => {
-      window.addEventListener(evento, handleInteracao, { passive: true });
-    });
-
-    // C. Verificação periódica a cada 30 segundos durante a aba aberta
-    const intervalId = setInterval(() => {
-      try {
-        const lastRaw = localStorage.getItem(STORAGE_KEY_LAST_ACTIVITY);
-        const lastTime = lastRaw ? Number(lastRaw) : Date.now();
-        const decorrido = Date.now() - lastTime;
-        if (decorrido > ADMIN_INACTIVITY_TIMEOUT_MS) {
-          console.warn(`[AuthContext] 60 minutos de inatividade atingidos para admin. Deslogando.`);
-          clearInterval(intervalId);
-          logout();
-          setAuthError('Sessão encerrada por inatividade (limite de 60 minutos para administradores).');
-          setLoginModalAberto(true);
-        }
-      } catch (err) {
-        console.error('Erro na checagem de inatividade:', err);
-      }
-    }, 30000);
-
-    return () => {
-      EVENTOS_INTERACAO.forEach(evento => {
-        window.removeEventListener(evento, handleInteracao);
-      });
-      clearInterval(intervalId);
-    };
-  }, [user?.role, user?.email, logout]);
+    try { localStorage.removeItem(CHAVE_ANTIGA_ULTIMA_ATIVIDADE); } catch { /* sem localStorage */ }
+  }, []);
 
   // Trocar a senha pelo servidor encerra TODAS as sessões da conta (o Auth
   // faz isso ao gravar senha nova), inclusive a desta aba. Em vez de deixar a
@@ -276,9 +204,6 @@ export const AuthProvider = ({ children }) => {
     if (error) {
       setAuthError(error.message);
       throw error;
-    }
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY_LAST_ACTIVITY, Date.now().toString());
     }
     setLoginModalAberto(false);
     return data;
