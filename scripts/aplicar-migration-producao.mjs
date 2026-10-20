@@ -88,6 +88,7 @@ const ESPERADO = {
   '20261019000008': { funcoes: [], indices: [], tabelas: [], extra: 'privilegios' },
   '20261020000001': { funcoes: [], indices: ['idx_auditoria_usuarios_criado_em', 'idx_auditoria_usuarios_ator_criado'], tabelas: [], extra: 'gestao' },
   '20261020000002': { funcoes: ['painel_televisao_empilha()', 'painel_televisao()'], indices: [], tabelas: [], extra: 'sem_metas' },
+  '20261020000003': { funcoes: [], indices: [], tabelas: [], extra: 'sessao' },
 }[versao];
 
 let falhas = 0;
@@ -221,6 +222,23 @@ if (ESPERADO.extra === 'gestao') {
   }
   const a = consultar("select count(*)::int as n from public.user_profiles where role = 'admin'")[0];
   console.log(`  (admins no momento: ${a?.n})`);
+}
+if (ESPERADO.extra === 'sessao') {
+  const x = consultar(`select
+      exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'user_profiles'
+              and column_name = 'sessoes_validas_desde') as coluna,
+      exists (select 1 from pg_trigger where tgname = 'trg_proteger_sessoes_validas_desde' and not tgisinternal) as gatilho,
+      (select p.prosecdef from pg_proc p where p.oid = 'public.checar_sessao()'::regprocedure) as sd,
+      (select coalesce(array_to_string(p.proconfig, ','), '') from pg_proc p where p.oid = 'public.checar_sessao()'::regprocedure) as cfg,
+      (select coalesce((select string_agg(a, ',' order by a) from unnest(p.proacl::text[]) a), '') from pg_proc p where p.oid = 'public.checar_sessao()'::regprocedure) as acl,
+      position('sessoes_validas_desde' in pg_get_functiondef('public.encerrar_sessoes(uuid)'::regprocedure)) > 0 as encerrar,
+      (select coalesce(array_to_string(rolconfig, ','), '') from pg_roles where rolname = 'authenticator') as autenticador`)[0];
+  ok(x?.coluna && x?.gatilho, 'user_profiles.sessoes_validas_desde existe, protegida por gatilho');
+  ok(x?.sd === true && x?.cfg === 'search_path=public, pg_temp', 'checar_sessao: SECURITY DEFINER com search_path fixo');
+  ok(!/(^|,)=X/.test(x?.acl || '') && /anon=X/.test(x?.acl || '') && /authenticated=X/.test(x?.acl || ''),
+    `checar_sessao: EXECUTE só para anon/authenticated/service_role, não PUBLIC (${x?.acl})`);
+  ok(x?.encerrar, 'encerrar_sessoes grava sessoes_validas_desde');
+  ok((x?.autenticador || '').includes('pgrst.db_pre_request=public.checar_sessao'), `authenticator chama checar_sessao antes de cada requisição (${x?.autenticador})`);
 }
 if (ESPERADO.extra === 'sem_metas') {
   const r = consultar(`select to_regclass('public.metas_diarias') is null as sem_tabela,
