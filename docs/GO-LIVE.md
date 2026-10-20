@@ -15,22 +15,31 @@ no mínimo 30 dias** depois, porque é o plano de retorno.
 
 ---
 
-## Situação de partida (08/10/2026)
+## Situação de partida (atualizada em 20/10/2026)
 
-O banco de produção está **vazio**, de propósito. Foi limpo com autorização
-escrita, depois de backup verificado.
+**Banco de produção, lido em 19/10/2026 (snapshot verificado):**
 
 | O que | Situação |
 |---|---|
-| 21 tabelas de dados | **0 linhas** |
-| Arquivos no storage | **0** (os 3 buckets vazios e privados) |
-| Sequences de protocolo | **reiniciadas**: o primeiro registro será o `000001` |
-| `auth.users` | **5 contas**, intactas |
-| `user_profiles` | **5 papéis**, intactos |
-| `empilhadeira_configs` | **1 registro**, mantido |
+| Movimento | **3 envases de TESTE** (lançados pelo operador "Maycon" em 15/10 e 19/10) — o resto vazio |
+| Catálogo | **1 produto, 1 operador, 0 embalagens** — os cadastros ainda **não** foram restaurados (passo 2) |
+| `auth.users` / `user_profiles` | **6 contas / 6 papéis** |
+| `empilhadeira_configs` | 1 registro |
+| `metas_diarias` | **0 metas** — as TVs mostram o concluído do dia até alguém lançar (passo 4b) |
+| Arquivos no storage | 0 |
 
-Backup completo e com restauração conferida:
-`C:\Users\kauan.pereira\EnvasePro-backups\prod_2026-10-08T12-20-02Z_PRE-LIMPEZA-TOTAL\`
+**Migrations aplicadas em 19/10/2026**, uma por vez, verificadas, com rollback
+testado (`supabase/rollbacks/`): `20261013000001` (fuso), `20261019000001`–`006`
+(painéis das TVs, indicadores, metas), `20261019000007` (só admin marca
+"Completo") e `20261019000008` (privilégios mínimos). O histórico de migrations
+de produção é igual ao repositório.
+
+Backups, fora do repositório:
+- `C:\Users\kauan.pereira\EnvasePro-backups\prod_2026-10-19T17-56-01Z\` — o mais
+  recente, antes das migrations: verificação 40/40 (sha256, contagens relidas,
+  restauração local), manifesto sha256 `56995F40…48E6`;
+- `…\contagens_antes_de_aplicar\` — contagens lidas logo antes de aplicar;
+- `…\prod_2026-10-08T12-20-02Z_PRE-LIMPEZA-TOTAL\` — o de antes da limpeza.
 
 ---
 
@@ -38,10 +47,11 @@ Backup completo e com restauração conferida:
 
 | | Quem | Situação |
 |---|---|---|
-| Fases 0 a 4 concluídas | Claude | feito |
-| V1 (a–g) concluída | Claude | em andamento |
-| Suítes verdes | Claude | triggers 31, injection 21, upload 22, interface 37, rotas 26, checklist 41, sessão 26, CSP 0 violações |
-| Backup com restauração testada | Claude | feito: 24/24 tabelas, 1869/1869 linhas |
+| Fases 0 a 4, V1, v2 (Blocos 1–3) | Claude | feito |
+| Migrations em produção | Claude | **feito em 19/10/2026** (as 9, verificadas) |
+| Suítes verdes | Claude | ver o relatório da rodada final (`scratch/rodada-final/`) |
+| Backup com restauração testada | Claude | feito em 19/10/2026: 40/40 |
+| **Limpar os 3 envases de teste** de produção | **Dono autoriza** | PENDENTE — o Claude não apaga dado sem autorização escrita |
 | **Qualidade confirma o critério A ou B do checklist** | **Qualidade** | **PENDENTE — ver o passo 4** |
 | Janela combinada com a fábrica | Dono | — |
 | Critério de desistência lido e aceito | Dono | — |
@@ -155,6 +165,24 @@ As faixas propostas para B (aprovado ≥ 90%, atenção 70–89%, reprovado < 70
 
 ---
 
+## 4b. Lançar as metas diárias
+
+**Quem:** Dono (ou quem ele indicar), como admin, em **Cadastros → Metas diárias**.
+
+Sem meta lançada, as TVs mostram a fração **concluída** do que foi lançado no dia
+— o mesmo de antes. Com meta, o anel mede o dia contra ela. São seis valores:
+unidades e envases de cada sala (Bio, Industrial), pedidos do check-out e linhas
+da empilhadeira. Trocar depois é lançar uma nova com a data em que passa a valer;
+a antiga fica no histórico, e **meta que já valeu não se altera** (o banco não
+deixa, nem para o admin).
+
+**Conferir depois:** a TV mostra "meta N …" na legenda do anel.
+
+**Desfazer:** apagar a meta lançada hoje (o botão só aparece para metas de hoje
+ou futuras).
+
+---
+
 ## 5. Teste do Dono, logado
 
 **Quem:** Dono. O Claude **não tem as senhas** e não pode fazer este passo.
@@ -242,6 +270,8 @@ cada um.
       Gerenciar Usuários, Configuração da Empilhadeira e os 2 Indicadores** —
       todas devem **abrir** para você.
 - [ ] Assinar como **líder** uma linha de empilhadeira concluída.
+- [ ] **Metas diárias**: lançar uma meta e ver a TV mostrar "meta N …".
+- [ ] **Nota fiscal**: abrir uma NF e ver o botão **Excluir** (só admin tem).
 - [ ] Tentar alterar o **código de uma programação** já criada — deve ser
       **recusado**, inclusive para admin.
 
@@ -257,6 +287,10 @@ cada um.
 - [ ] Tentar **trocar o operador** de um item que já tem um — deve ser
       **recusado**.
 - [ ] Tentar **assinar como líder** — deve ser **recusado**.
+- [ ] Concluir e **assinar** uma linha de empilhadeira: ela fica "Aguardando
+      assinatura do líder" — o operador **não** consegue deixá-la "Completo"
+      (corrigido em 19/10: antes conseguia).
+- [ ] Abrir uma nota fiscal: **não** aparece o botão Excluir.
 - [ ] Digitar na barra de endereço `/Produtos`, `/Operadores` e
       `/GerenciarUsuarios` — todas devem **recusar** e mandar para a
       Empilhadeira com aviso.
@@ -329,9 +363,17 @@ anterior → `...` → **Promote to Production**. Instantâneo, não depende de 
   nos primeiros dias. A CSP já está **bloqueando** e continua reportando em
   `/api/csp-report`.
 - Aplicar os dois limites de requisições (`docs/LIMITE-DE-REQUISICOES.md`).
-- Conferir que `authenticated` não voltou a ter `TRUNCATE`: tabela criada pelo
-  painel nasce com ele, e `ALTER DEFAULT PRIVILEGES` não cobre o que o
-  `supabase_admin` cria.
+- **Tabela criada pelo painel do Supabase** nasce pelo papel `supabase_admin`,
+  com TODOS os privilégios para `anon` e `authenticated` (inclusive
+  `TRUNCATE`, que ignora RLS). A `20261019000008` cobre só o que nasce por
+  migration. Se um dia criar tabela pelo painel, rodar:
+  `REVOKE ALL ON public.<tabela> FROM anon;` e
+  `REVOKE REFERENCES, TRIGGER, MAINTAIN, TRUNCATE ON public.<tabela> FROM authenticated;`
+  Conferência: `authenticated` deve aparecer como `arwd` em todas as tabelas.
+- **Função nova em produção nasce com EXECUTE para `anon`** (privilégio padrão do
+  papel `postgres` em produção; no local não). Toda migration que cria função
+  precisa de `REVOKE ... FROM PUBLIC, anon` explícito — as de 19/10 têm.
+  Recomendado: uma migration que ajuste esse padrão (não autorizada ainda).
 - Decidir o que fazer com a conta de teste `operacoes@interlub.com`, que
   continua em `auth.users`.
 

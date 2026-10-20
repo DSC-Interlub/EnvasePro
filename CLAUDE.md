@@ -5,6 +5,39 @@ No início de uma sessão nova: responda com (1) o que entendeu, (2) as pergunta
 
 ---
 
+## -2. ESTADO EM 20/10/2026 (prevalece sobre as seções abaixo, inclusive a -1)
+
+- **Produção recebeu em 19/10/2026**, com autorização escrita do dono, uma por vez,
+  verificadas: `20261013000001` (fuso), `20261019000001`–`006` (painéis das TVs,
+  indicadores, metas), `20261019000007` (só admin leva `status_assinatura` a
+  "Completo" — a reconciliação de 07/10 tinha aberto esse buraco) e
+  `20261019000008` (privilégios mínimos: `authenticated` só `arwd`, `anon` nada).
+  **Histórico de migrations de produção = repositório.** Rollback de cada uma em
+  `supabase/rollbacks/`, testado por `scripts/test-rollbacks.mjs`.
+- **Produção está em uso para TESTE** (operador "Maycon" lançou envases). Os dados
+  lá são de teste, mas **apagar continua exigindo autorização escrita**.
+- **Como aplicar migration em produção (quando autorizado):**
+  `scripts/aplicar-migration-producao.mjs <versão> --allow-production --confirm-ref=<ref>`
+  — uma por vez, migration + histórico na mesma transação, verificação automática.
+  Ensaiar antes com `--ensaio-local`. Usa o login da CLI do Supabase
+  (`supabase db query --linked`), nunca a service key. Snapshot antes:
+  `scripts/backup/snapshot-producao.mjs` + `verificar-snapshot.mjs` (token da CLI
+  lido do cofre do Windows só em memória).
+- **Scripts com endereço de PRODUÇÃO fixo no código** (o db-guard só confere
+  variáveis de ambiente e NÃO os barra): `test-functional-audit`,
+  `test-quick-gerenciar`, `audit-32-pages-roles`, `audit-all-pages`, `debug-card`,
+  `medir-desempenho-ensaio`, `test-*staging*`, `verify-*`. **Não rodar.** Dois deles
+  (`test-tv-authenticated` e `test-aba-notificacoes`) foram rodados por engano em
+  19–20/10 e tentaram logar em produção com senha de teste (recusados); foram
+  reescritos para o app local, com trava de endereço.
+- **GitHub:** só a credencial `oauth2` (conta DSC-Interlub) escreve no repositório;
+  `git credential fill` sem `username=` trava esperando escolha de conta.
+- **Ver também:** `docs/FUNCOES-DO-BANCO.md` (referência das funções),
+  `docs/ETAPA2-INDICADORES.md` §7–9, `docs/GO-LIVE.md` (atualizado),
+  `docs/DESIGN-SYSTEM-V2.md` §10.
+
+---
+
 ## -1. CONTEXTO ATUALIZADO — 07/10/2026 (prevalece sobre o resto do arquivo)
 
 - **O EnvasePro ainda NÃO ENTROU EM USO.** A **Base44 continua sendo o sistema real**. Logo, o projeto `xifzjpbkpxislqrowswd` é hoje, na prática, **ambiente de testes**, e todo dado operacional nele é **descartável**. Isso **não** relaxa a regra 1: continua proibido escrever nele, e a Fase 5 continua exigindo confirmação escrita do usuário.
