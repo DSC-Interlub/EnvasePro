@@ -106,7 +106,16 @@ async function conferir(rotulo, rota, rpcNome, esperados, opcoes = {}) {
         ok(lidas.length > 0 && lidas.every((u) => /=gte\./.test(u) && /=lte\./.test(u)),
           `${rotulo} · ${atalho.padEnd(4)} · ${modo}: ${t} lido só no período (${lidas.length} pedido(s))`);
       }
-      await page.screenshot({ path: `${SAIDA}/${rotulo.replace(/\W+/g, '-')}-${atalho}-${semFuncao ? 'recuo' : 'rpc'}.png`, fullPage: true });
+      // A captura é prova visual, não asserção. Na /Empilhadeira a página inteira
+      // tem a lista de pendências (milhares de linhas com o volume da Base44) e o
+      // print de página inteira estourava 30 s e derrubava a suíte depois de
+      // todas as conferências terem passado. Cai para a área visível e avisa.
+      const arquivo = `${SAIDA}/${rotulo.replace(/\W+/g, '-')}-${atalho}-${semFuncao ? 'recuo' : 'rpc'}.png`;
+      await page.screenshot({ path: arquivo, fullPage: true, animations: 'disabled', timeout: 60000 })
+        .catch(async () => {
+          console.log(`  (aviso) print de página inteira demorou demais em ${rotulo} · ${atalho}; salvo só a área visível`);
+          await page.screenshot({ path: arquivo, animations: 'disabled' });
+        });
     }
   }
 }

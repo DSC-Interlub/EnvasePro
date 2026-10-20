@@ -88,7 +88,10 @@ export function criarAjudantes({ app, svc }) {
       for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
         const opcoes = page.locator('button').filter({ hasText: /SEED-/ });
         if (!(await opcoes.count())) break;
-        await opcoes.first().click({ force: true });
+        // Prazo curto por tentativa: se a lista recarrega entre a contagem e o
+        // clique, o clique esperava 30 s por um botao que sumiu e derrubava a
+        // suite inteira (visto em test-metas-ui na rodada de 20/10).
+        await opcoes.first().click({ force: true, timeout: 8000 }).catch(() => {});
         if (await esperarPor(async () => (await tituloOperador.count()) === 0, 6000)) break;
       }
     }
