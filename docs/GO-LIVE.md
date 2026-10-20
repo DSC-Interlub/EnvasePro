@@ -248,7 +248,7 @@ começam em `000001`.
 O Claude não tem as senhas, então estes itens **só o Dono pode fazer**. Marque
 cada um.
 
-### Como **admin** (`pcp-brasil`)
+### Como **admin** (`adm.sp1`)
 
 - [ ] Entrar e ver o Dashboard carregar sem erro.
 - [ ] **Operadores**: a lista mostra **14**, nenhum "Operador Teste Funcional QA".
