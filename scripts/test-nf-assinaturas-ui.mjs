@@ -148,7 +148,11 @@ try {
     const { data } = await svc.from('nota_fiscal_arquivos').select('id').eq('id', doc.id);
     return data.length === 0;
   }, 15000);
-  ok(sumiu && /\/NotasFiscais/.test(adm.url()), 'admin exclui a NF e volta para a lista');
+  // A tela confere de novo no banco que a NF sumiu e SÓ ENTÃO navega: olhar a
+  // URL no instante em que o banco já mostra a exclusão era corrida (falhou 3
+  // vezes em rodadas longas em 20/10/2026). Espera as duas coisas.
+  const voltou = sumiu && await esperarPor(async () => /\/NotasFiscais/.test(adm.url()), 15000);
+  ok(sumiu && voltou, 'admin exclui a NF e volta para a lista', adm.url().replace(APP, ''));
 
   /* ── 2a. Empilhadeira ───────────────────────────────────────────────── */
   console.log('\n2a. ASSINATURAS — empilhadeira');

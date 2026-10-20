@@ -41,9 +41,11 @@ const ref = fs.readFileSync('supabase/.temp/project-ref', 'utf8').trim();
 if (!ENSAIO && ref !== REF) { console.error(`Recusado: o projeto vinculado é ${ref}, não ${REF}`); process.exit(2); }
 
 // 000007 e 000008: autorizadas pelo dono por escrito na segunda mensagem de 19/10/2026.
-// 20261020000001: autorizada pelo dono por escrito em 20/10/2026 (gestão de usuários).
+// 20261020000001–003: autorizadas pelo dono por escrito em 20/10/2026 (gestão de
+// usuários; remoção das metas; encerramento imediato de sessão).
 const AUTORIZADAS = ['20261013000001', '20261019000001', '20261019000002', '20261019000003',
-  '20261019000004', '20261019000005', '20261019000006', '20261019000007', '20261019000008', '20261020000001'];
+  '20261019000004', '20261019000005', '20261019000006', '20261019000007', '20261019000008', '20261020000001',
+  '20261020000002', '20261020000003'];
 if (!ENSAIO && !AUTORIZADAS.includes(versao)) { console.error(`Recusado: ${versao} não está na autorização do dono`); process.exit(2); }
 
 const arquivo = fs.readdirSync('supabase/migrations').find((f) => f.startsWith(`${versao}_`));
@@ -85,6 +87,8 @@ const ESPERADO = {
   '20261019000007': { funcoes: [], indices: [], tabelas: [], extra: 'status' },
   '20261019000008': { funcoes: [], indices: [], tabelas: [], extra: 'privilegios' },
   '20261020000001': { funcoes: [], indices: ['idx_auditoria_usuarios_criado_em', 'idx_auditoria_usuarios_ator_criado'], tabelas: [], extra: 'gestao' },
+  '20261020000002': { funcoes: ['painel_televisao_empilha()', 'painel_televisao()'], indices: [], tabelas: [], extra: 'sem_metas' },
+  '20261020000003': { funcoes: [], indices: [], tabelas: [], extra: 'sessao' },
 }[versao];
 
 let falhas = 0;
@@ -218,6 +222,31 @@ if (ESPERADO.extra === 'gestao') {
   }
   const a = consultar("select count(*)::int as n from public.user_profiles where role = 'admin'")[0];
   console.log(`  (admins no momento: ${a?.n})`);
+}
+if (ESPERADO.extra === 'sessao') {
+  const x = consultar(`select
+      exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'user_profiles'
+              and column_name = 'sessoes_validas_desde') as coluna,
+      exists (select 1 from pg_trigger where tgname = 'trg_proteger_sessoes_validas_desde' and not tgisinternal) as gatilho,
+      (select p.prosecdef from pg_proc p where p.oid = 'public.checar_sessao()'::regprocedure) as sd,
+      (select coalesce(array_to_string(p.proconfig, ','), '') from pg_proc p where p.oid = 'public.checar_sessao()'::regprocedure) as cfg,
+      (select coalesce((select string_agg(a, ',' order by a) from unnest(p.proacl::text[]) a), '') from pg_proc p where p.oid = 'public.checar_sessao()'::regprocedure) as acl,
+      position('sessoes_validas_desde' in pg_get_functiondef('public.encerrar_sessoes(uuid)'::regprocedure)) > 0 as encerrar,
+      (select coalesce(array_to_string(rolconfig, ','), '') from pg_roles where rolname = 'authenticator') as autenticador`)[0];
+  ok(x?.coluna && x?.gatilho, 'user_profiles.sessoes_validas_desde existe, protegida por gatilho');
+  ok(x?.sd === true && x?.cfg === 'search_path=public, pg_temp', 'checar_sessao: SECURITY DEFINER com search_path fixo');
+  ok(!/(^|,)=X/.test(x?.acl || '') && /anon=X/.test(x?.acl || '') && /authenticated=X/.test(x?.acl || ''),
+    `checar_sessao: EXECUTE só para anon/authenticated/service_role, não PUBLIC (${x?.acl})`);
+  ok(x?.encerrar, 'encerrar_sessoes grava sessoes_validas_desde');
+  ok((x?.autenticador || '').includes('pgrst.db_pre_request=public.checar_sessao'), `authenticator chama checar_sessao antes de cada requisição (${x?.autenticador})`);
+}
+if (ESPERADO.extra === 'sem_metas') {
+  const r = consultar(`select to_regclass('public.metas_diarias') is null as sem_tabela,
+      to_regprocedure('public.metas_do_dia(date)') is null as sem_funcao,
+      position('meta' in pg_get_functiondef('public.painel_televisao()'::regprocedure)) = 0 as tv,
+      position('meta' in pg_get_functiondef('public.painel_televisao_empilha()'::regprocedure)) = 0 as emp`)[0];
+  ok(r?.sem_tabela && r?.sem_funcao, 'metas_diarias e metas_do_dia não existem mais');
+  ok(r?.tv && r?.emp, 'os dois painéis das TVs não falam mais em meta');
 }
 if (ESPERADO.extra === 'metas') {
   const r = consultar(`select position('metas_do_dia' in pg_get_functiondef('public.painel_televisao()'::regprocedure)) > 0 as tv,

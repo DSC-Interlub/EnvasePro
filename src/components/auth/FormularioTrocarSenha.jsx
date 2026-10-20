@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, CheckCircle, Circle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
+import { semAvisarDuranteTroca } from "@/lib/sessaoRevogada";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +16,10 @@ import { REGRAS_SENHA, problemaDaSenha } from "@/lib/politicaSenha";
  * ele confere a senha atual, grava a nova e apaga o "trocar no primeiro
  * acesso" do app_metadata, que o próprio usuário não consegue escrever.
  *
- * Gravar a senha nova encerra TODAS as sessões da conta, inclusive esta (é o
- * Auth que faz isso). Por isso, depois da troca, a tela volta ao login com o
- * aviso, e a pessoa entra com a senha nova.
+ * Gravar a senha nova encerra TODAS as sessões da conta e invalida os JWT já
+ * emitidos — as OUTRAS abas e aparelhos caem. O servidor devolve uma sessão
+ * NOVA para quem trocou, e esta aba passa a usá-la: a pessoa continua logada.
+ * (Se a sessão nova não vier, volta ao login com o aviso.)
  */
 export default function FormularioTrocarSenha({ rotuloAtual = "Senha atual", aoConcluir }) {
   const { sairComAviso } = useAuth();
@@ -43,11 +46,20 @@ export default function FormularioTrocarSenha({ rotuloAtual = "Senha atual", aoC
     setEnviando(true);
     setErro(null);
     try {
-      await base44.functions.adminUsuarios("trocar_minha_senha", { senha_atual: atual, senha_nova: nova });
-      setFeito(true);
+      // Durante a troca, a sessão desta aba é revogada junto com as outras:
+      // um 401 de uma chamada em voo é esperado e não pode deslogar.
+      const resposta = await semAvisarDuranteTroca(async () => {
+        const r = await base44.functions.adminUsuarios("trocar_minha_senha", { senha_atual: atual, senha_nova: nova });
+        if (r.sessao) await supabase.auth.setSession(r.sessao);
+        return r;
+      });
       setAtual(""); setNova(""); setConfirma("");
+      if (!resposta.sessao) {
+        await sairComAviso("Senha trocada. Entre com a senha nova.");
+        return;
+      }
+      setFeito(true);
       aoConcluir?.();
-      await sairComAviso("Senha trocada. Entre com a senha nova.");
     } catch (err) {
       setErro(err.message || "Não foi possível trocar a senha.");
     } finally {
@@ -66,7 +78,7 @@ export default function FormularioTrocarSenha({ rotuloAtual = "Senha atual", aoC
       {feito && (
         <div role="status" className="flex items-start gap-2.5 rounded-token bg-ok-suave px-4 py-3">
           <CheckCircle className="mt-0.5 h-4 w-4 flex-none text-ok" aria-hidden="true" />
-          <p className="text-sm font-bold text-ok">Senha trocada. Use a nova senha no próximo login.</p>
+          <p className="text-sm font-bold text-ok">Senha trocada. As outras sessões desta conta foram encerradas.</p>
         </div>
       )}
 

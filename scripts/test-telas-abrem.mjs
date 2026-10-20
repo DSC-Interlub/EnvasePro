@@ -42,7 +42,7 @@ const TELAS = {
     'NovaProgramacaoCheckout', 'Empilhadeira', 'NovaEmpilhaProgramacao',
     'EmpilhadeiraConfig', 'IndicadoresEmpilha', 'Recebimento', 'IndicadoresRecebimento',
     'ChecklistRecebimento', 'NovoChecklist', 'NotasFiscais', 'NovaNotaFiscal',
-    'Produtos', 'Embalagens', 'Operadores', 'GerenciarUsuarios', 'Metas',
+    'Produtos', 'Embalagens', 'Operadores', 'GerenciarUsuarios',
     'ImportarProdutos', 'ImportarEmbalagens', 'ImportarCategorias'],
   operador: ['Dashboard', 'NovoRegistro', 'Registros', 'Checkout', 'Empilhadeira',
     'Recebimento', 'ChecklistRecebimento', 'NotasFiscais'],

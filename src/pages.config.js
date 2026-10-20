@@ -29,7 +29,6 @@ const NovaEmpilhaProgramacao = lazy(() => import('./pages/NovaEmpilhaProgramacao
 const ExecutarEmpilha = lazy(() => import('./pages/ExecutarEmpilha'));
 const EmpilhadeiraConfigPage = lazy(() => import('./pages/EmpilhadeiraConfig'));
 const TelevisaoEmpilha = lazy(() => import('./pages/TelevisaoEmpilha'));
-const Metas = lazy(() => import('./pages/Metas'));
 
 
 
@@ -51,7 +50,6 @@ export const PAGES = {
     "ExecutarEmpilha": ExecutarEmpilha,
     "EmpilhadeiraConfig": EmpilhadeiraConfigPage,
     "TelevisaoEmpilha": TelevisaoEmpilha,
-    "Metas": Metas,
 }
 
 export const pagesConfig = {

@@ -31,7 +31,7 @@ export default function TelaLogin() {
           <p className="mt-1 text-sm font-semibold text-texto-fraco">Operações Interlub</p>
         </div>
 
-        {/* O aviso vem do contexto: "sessão encerrada por inatividade", por
+        {/* O aviso vem do contexto: "sua sessão foi encerrada pelo administrador", por
             exemplo. Sem ele o admin caía na tela de login sem saber por quê. */}
         <FormularioLogin aviso={authError && !/invalid login/i.test(authError) ? authError : null} />
       </div>

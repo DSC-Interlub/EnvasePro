@@ -79,7 +79,6 @@ const PAGINAS_SOMENTE_ADMIN = new Set([
   'EmpilhadeiraConfig',
   'IndicadoresEmpilha',
   'IndicadoresRecebimento',
-  'Metas',
 ]);
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -95,8 +94,7 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 // renderizaria a moldura vazia e encheria o console de erro de permissão.
 //
 // As TVs da fábrica usam a conta `tv-fabrica`, com sessão persistente, e
-// seguem imunes ao logout por inatividade (a isenção vive no AuthContext, via
-// isTvPage, que continua existindo).
+// não são deslogadas por inatividade (nenhum papel é, desde 20/10/2026).
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isAuthenticated, user } = useAuth();

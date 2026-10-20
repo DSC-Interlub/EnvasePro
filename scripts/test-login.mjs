@@ -7,8 +7,9 @@
  *  2. Enter envia; admin, operador e TV entram.
  *  3. Senha errada dá erro claro e GENÉRICO — e um e-mail inexistente dá a
  *     MESMA mensagem (não dá para descobrir quais contas existem).
- *  4. A TV continua imune ao logout por inatividade; o admin continua caindo
- *     (e vê o motivo na tela de login).
+ *  4. NENHUM papel cai por inatividade (decisão do dono, 20/10/2026): admin,
+ *     operador e TV continuam logados depois de 2 h parados; a chave antiga
+ *     de "última atividade" é apagada.
  *  5. Token expirado no meio do uso reabre o MESMO formulário, por cima da tela.
  *  6. O bundle de produção não tem nenhum e-mail das contas internas.
  *
@@ -118,16 +119,17 @@ async function main() {
     await ctx.close();
   }
 
-  /* ── 4. inatividade: TV imune, admin cai ──────────────────────────── */
-  console.log('\n[4] logout por inatividade');
-  for (const [papel, deveCair] of [['tv', false], ['admin', true]]) {
+  /* ── 4. inatividade: ninguém cai ────────────────────────────────── */
+  console.log('\n[4] sem logout por inatividade');
+  for (const [papel, deveCair] of [['tv', false], ['admin', false], ['operador', false]]) {
     const ctx = await nav.newContext({ viewport: { width: 1280, height: 800 } });
     const page = await ctx.newPage();
     await page.goto(papel === 'tv' ? `${APP}/Televisao` : APP, { waitUntil: 'domcontentloaded' });
     await esperarPor(() => temFormulario(page), 20000);
     await entrarPeloTeclado(page, CONTAS[papel]);
 
-    // Simula duas horas sem interação: a regra lê este carimbo ao carregar.
+    // O carimbo que a versão anterior usava para derrubar o admin: com ele
+    // dizendo "2 h parado", ninguém pode cair — e o app apaga a chave.
     await page.evaluate(() => localStorage.setItem('envase_last_activity', String(Date.now() - 2 * 3600 * 1000)));
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(4000);
@@ -135,11 +137,8 @@ async function main() {
     const caiu = await temFormulario(page);
     registrar(`${papel} ${deveCair ? 'CAI' : 'NÃO cai'} após 2h sem interação`, caiu === deveCair,
       caiu ? 'voltou para o login' : 'continua logado');
-    if (deveCair && caiu) {
-      const motivo = await page.getByText(/inatividade/i).count();
-      registrar('o admin vê o motivo na tela de login', motivo > 0);
-      await page.screenshot({ path: path.join(SHOTS, '4_admin_inatividade.png') });
-    }
+    const chave = await page.evaluate(() => localStorage.getItem('envase_last_activity'));
+    registrar(`${papel}: a chave antiga de última atividade foi apagada`, chave === null);
     await ctx.close();
   }
 

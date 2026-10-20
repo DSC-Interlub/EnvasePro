@@ -15,7 +15,7 @@ export default function AlterarSenha() {
           titulo="Alterar minha senha"
           legenda={user?.email}
         />
-        <SectionCard titulo="Senha nova" legenda="Ao trocar, todas as sessões desta conta são encerradas, inclusive esta: você entra de novo com a senha nova" icone={KeyRound} atraso={0.05}>
+        <SectionCard titulo="Senha nova" legenda="Ao trocar, as outras sessões desta conta (outras abas e aparelhos) são encerradas; esta continua" icone={KeyRound} atraso={0.05}>
           <FormularioTrocarSenha />
         </SectionCard>
       </div>

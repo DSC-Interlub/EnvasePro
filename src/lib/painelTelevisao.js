@@ -28,7 +28,7 @@ const instante = (t) => (t ? Date.parse(t) : 0);
  * @param {object[]} p.empilhadeiras empilhadeira_configs
  */
 export function calcularPainelTelevisao({
-  dia, envaseHoje, envaseMes, checkoutHoje, produtos, painelEmpilha, paradasHoje, empilhadeiras, metas,
+  dia, envaseHoje, envaseMes, checkoutHoje, produtos, painelEmpilha, paradasHoje, empilhadeiras,
 }) {
   const produto = new Map(produtos.map((p) => [p.codigo, p]));
 
@@ -69,16 +69,10 @@ export function calcularPainelTelevisao({
   const bio = envaseMes.filter((r) => r.sala === "Bio");
   const ind = envaseMes.filter((r) => r.sala === "Industrial");
 
-  const daSala = (sala) => envaseHoje.filter((r) => r.sala === sala);
   return {
     dia,
-    metas,
     envase: {
       producao_dia: soma(envaseHoje),
-      por_sala: Object.fromEntries(["Bio", "Industrial"].map((sala) => [sala, {
-        producao: soma(daSala(sala)),
-        concluidos: daSala(sala).filter((r) => r.termino != null).length,
-      }])),
       concluidos: envaseHoje.filter((r) => r.termino != null).length,
       lancados: envaseHoje.filter((r) => r.inicio != null || r.termino != null).length,
       em_andamento: envaseAtivo.length,
