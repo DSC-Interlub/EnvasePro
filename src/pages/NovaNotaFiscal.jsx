@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Camera, ImagePlus, X, Upload, CheckCircle2, Loader2 } from "lucide-react";
+import SelectOperador from "@/components/operadores/SelectOperador";
 
 // Um item de lote: { id, file, preview, numero_nf, status: 'pendente'|'enviando'|'ok'|'erro' }
 function criarItem(file) {
@@ -26,6 +27,15 @@ export default function NovaNotaFiscal() {
 
   const [itens, setItens] = useState([]);
   const [salvando, setSalvando] = useState(false);
+  // Quem está arquivando: escolhido na lista (antes era o nome da CONTA
+  // logada, gravado sem ninguém ver — com conta compartilhada, sempre o mesmo).
+  const [arquivador, setArquivador] = useState(null);
+  const [erroArquivador, setErroArquivador] = useState(null);
+  const exigirArquivador = () => {
+    if (arquivador?.id) { setErroArquivador(null); return true; }
+    setErroArquivador("Escolha quem está arquivando antes de salvar.");
+    return false;
+  };
 
   const adicionarArquivos = (files) => {
     const novos = Array.from(files).map(criarItem);
@@ -46,6 +56,7 @@ export default function NovaNotaFiscal() {
       alert("Preencha o número da NF em todos os itens antes de salvar.");
       return;
     }
+    if (!exigirArquivador()) return;
     setSalvando(true);
     for (const item of pendentes) {
       setItens(prev => prev.map(i => i.id === item.id ? { ...i, status: "enviando" } : i));
@@ -60,7 +71,8 @@ export default function NovaNotaFiscal() {
           numero_nf: item.numero_nf.trim(),
           arquivo_url, // Caminho relativo no bucket (em conformidade com 5 anos de retenção legal)
           arquivo_nome,
-          arquivado_por_nome: user?.full_name || "",
+          arquivado_por_nome: arquivador.nome,
+          arquivado_por_id: arquivador.id,
         });
         setItens(prev => prev.map(i => i.id === item.id ? { ...i, status: "ok" } : i));
       } catch (err) {
@@ -73,6 +85,7 @@ export default function NovaNotaFiscal() {
   // Sem arquivo: permite salvar só número
   const salvarSemArquivo = async () => {
     const numeros = itens.filter(i => i.status === "pendente" || i.status === "erro");
+    if (!exigirArquivador()) return;
     setSalvando(true);
     for (const item of numeros) {
       if (!item.numero_nf.trim()) continue;
@@ -82,7 +95,8 @@ export default function NovaNotaFiscal() {
           numero_nf: item.numero_nf.trim(),
           arquivo_url: item.arquivo_url || "",
           arquivo_nome: item.arquivo_nome || "",
-          arquivado_por_nome: user?.full_name || "",
+          arquivado_por_nome: arquivador.nome,
+          arquivado_por_id: arquivador.id,
         });
         setItens(prev => prev.map(i => i.id === item.id ? { ...i, status: "ok" } : i));
       } catch {
@@ -103,6 +117,19 @@ export default function NovaNotaFiscal() {
         </Button>
         <h1 className="text-xl font-bold text-tinta">Arquivar Notas Fiscais</h1>
       </div>
+
+      <Card>
+        <CardContent className="p-5">
+          <SelectOperador
+            id="nf-arquivado-por"
+            rotulo="Arquivado por"
+            obrigatorio
+            valor={arquivador?.id}
+            aoEscolher={(op) => { setArquivador(op); setErroArquivador(null); }}
+            erro={erroArquivador}
+          />
+        </CardContent>
+      </Card>
 
       {/* Botões de upload */}
       <Card>
@@ -210,7 +237,7 @@ export default function NovaNotaFiscal() {
         <Card>
           <CardContent className="p-5 space-y-3">
             <p className="text-sm text-texto-fraco font-medium">Ou arquive apenas pelo número (sem foto)</p>
-            <SemFotoForm user={user} onSalvo={() => navigate("/NotasFiscais")} />
+            <SemFotoForm arquivador={arquivador} exigirArquivador={exigirArquivador} onSalvo={() => navigate("/NotasFiscais")} />
           </CardContent>
         </Card>
       )}
@@ -218,24 +245,35 @@ export default function NovaNotaFiscal() {
   );
 }
 
-function SemFotoForm({ user, onSalvo }) {
+function SemFotoForm({ arquivador, exigirArquivador, onSalvo }) {
   const [numero, setNumero] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [ok, setOk] = useState(false);
 
+  const [erro, setErro] = useState(null);
   const salvar = async () => {
-    if (!numero.trim()) return;
+    if (!numero.trim() || !exigirArquivador()) return;
     setSalvando(true);
-    await base44.entities.NotaFiscalArquivo.create({
-      numero_nf: numero.trim(),
-      arquivado_por_nome: user?.full_name || "",
-    });
-    setSalvando(false);
-    setOk(true);
-    setTimeout(onSalvo, 800);
+    setErro(null);
+    try {
+      await base44.entities.NotaFiscalArquivo.create({
+        numero_nf: numero.trim(),
+        arquivado_por_nome: arquivador.nome,
+        arquivado_por_id: arquivador.id,
+      });
+      setOk(true);
+      setTimeout(onSalvo, 800);
+    } catch {
+      // Antes não havia tratamento: uma falha deixava o botão parado, sem aviso.
+      setErro("Não foi possível arquivar. Tente de novo.");
+    } finally {
+      setSalvando(false);
+    }
   };
 
   return (
+    <div className="space-y-2">
+    {erro && <p role="alert" className="text-sm font-bold text-erro">{erro}</p>}
     <div className="flex gap-2">
       <Input
         value={numero}
@@ -247,6 +285,7 @@ function SemFotoForm({ user, onSalvo }) {
       <Button onClick={salvar} disabled={salvando || ok || !numero.trim()} className="gap-1 bg-marca hover:bg-marca-forte">
         {ok ? <CheckCircle2 className="w-4 h-4" /> : salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
       </Button>
+    </div>
     </div>
   );
 }

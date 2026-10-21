@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SelectOperador from "@/components/operadores/SelectOperador";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Play, Square, Save, Edit, Calendar, User, Package, Clock, AlertCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -86,7 +87,12 @@ export default function CheckoutItemCard({ item, operators }) {
     },
   });
 
+  // Sem operador escolhido, nada sai de "Pendente" (o banco também exige).
+  const [erroOperador, setErroOperador] = useState(null);
+
   const handleStartTimer = () => {
+    if (!formData.operator_id) { setErroOperador("Escolha o operador antes de iniciar."); return; }
+    setErroOperador(null);
     const now = format(new Date(), "HH:mm");
     const newData = { 
       ...formData, 
@@ -130,6 +136,11 @@ export default function CheckoutItemCard({ item, operators }) {
       dataToSave.status = "Pendente";
     }
 
+    if (dataToSave.status !== "Pendente" && !dataToSave.operator_id) {
+      setErroOperador("Escolha o operador antes de salvar.");
+      return;
+    }
+    setErroOperador(null);
     console.log('💾 Salvando check-out:', item.numero_pedido, dataToSave);
     updateMutation.mutate(dataToSave);
   };
@@ -221,31 +232,15 @@ export default function CheckoutItemCard({ item, operators }) {
         {/* ── Formulário de execução ─────────────────────────────────────── */}
         {(isEditing || showAtrasoForm) && (
           <div className="mt-5 flex min-w-0 flex-col gap-5 border-t border-borda pt-5">
-            <div className="min-w-0 space-y-2">
-              <Label htmlFor={`operador-${item.id}`}>Operador *</Label>
-              <Select
-                value={formData.operador}
-                onValueChange={(value) => {
-                  const opObj = operators?.find(op => op.nome === value);
-                  setFormData(prev => ({
-                    ...prev,
-                    operador: value,
-                    operator_id: opObj ? opObj.id : prev.operator_id
-                  }));
-                }}
-              >
-                <SelectTrigger id={`operador-${item.id}`}>
-                  <SelectValue placeholder="Selecione o operador" />
-                </SelectTrigger>
-                <SelectContent>
-                  {operators.map((op) => (
-                    <SelectItem key={op.id} value={op.nome}>
-                      {op.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Quem fez o check-out deste item: escolhido aqui, a cada item
+                (o banco exige operator_id fora de "Pendente"). */}
+            <SelectOperador
+              id={`operador-${item.id}`}
+              obrigatorio
+              valor={formData.operator_id}
+              aoEscolher={(op) => { setErroOperador(null); setFormData(prev => ({ ...prev, operador: op?.nome || "", operator_id: op?.id || null })); }}
+              erro={erroOperador}
+            />
 
             {/* Tempo */}
             <fieldset className="min-w-0 rounded-painel bg-fundo p-4">

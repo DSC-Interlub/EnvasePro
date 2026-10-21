@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SelectOperador from "@/components/operadores/SelectOperador";
 import { ArrowLeft, Upload, Trash2, Plus, Search } from "lucide-react";
 import { format } from "date-fns";
 
@@ -35,7 +36,7 @@ export default function NovaEmpilhaProgramacao() {
   const queryClient = useQueryClient();
   const [dataProgramada, setDataProgramada] = useState(format(new Date(), "yyyy-MM-dd"));
   const [empilhadeiraId, setEmpilhadeiraId] = useState("");
-  const [criadoPor, setCriadoPor] = useState("");
+  const [criadoPor, setCriadoPor] = useState(null); // { id, nome } escolhido na lista
   const [observacoes, setObservacoes] = useState("");
   const [rawText, setRawText] = useState("");
   const [linhas, setLinhas] = useState([]);
@@ -45,11 +46,6 @@ export default function NovaEmpilhaProgramacao() {
     queryKey: ["empilhadeiras-config"],
     queryFn: () => base44.entities.EmpilhadeiraConfig.list(),
     initialData: [],
-  });
-
-  const { data: operadores = [] } = useQuery({
-    queryKey: ["operadores-programacao"],
-    queryFn: () => base44.entities.Operator.list(),
   });
 
   const ativas = empilhadeiras.filter(e => e.ativa);
@@ -63,7 +59,8 @@ export default function NovaEmpilhaProgramacao() {
         total_linhas: linhas.length,
         linhas_concluidas: 0,
         observacoes,
-        criado_por: criadoPor,
+        criado_por: criadoPor?.nome || null,
+        criado_por_id: criadoPor?.id || null,
       });
 
       if (linhas.length > 0) {
@@ -133,17 +130,13 @@ export default function NovaEmpilhaProgramacao() {
                 <Label>Data Programada *</Label>
                 <Input aria-label="Data Programada" type="date" value={dataProgramada} onChange={e => setDataProgramada(e.target.value)} />
               </div>
-              <div className="space-y-2">
-                <Label>Criado por (Líder/Supervisor)</Label>
-                <Select value={criadoPor} onValueChange={setCriadoPor}>
-                   <SelectTrigger><SelectValue placeholder="Selecione o líder" /></SelectTrigger>
-                   <SelectContent>
-                     {operadores.map(o => (
-                       <SelectItem key={o.id} value={o.nome}>{o.nome}</SelectItem>
-                     ))}
-                   </SelectContent>
-                 </Select>
-              </div>
+              <SelectOperador
+                id="empilha-criado-por"
+                rotulo="Criado por (Líder/Supervisor)"
+                placeholder="Selecione o líder"
+                valor={criadoPor?.id}
+                aoEscolher={setCriadoPor}
+              />
             </div>
             <div className="space-y-2">
               <Label>Observações</Label>

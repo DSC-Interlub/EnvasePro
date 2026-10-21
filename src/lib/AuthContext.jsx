@@ -44,42 +44,29 @@ export const AuthProvider = ({ children }) => {
   const [loginModalAberto, setLoginModalAberto] = useState(false);
   const [isTvPage, setIsTvPage] = useState(false);
 
-  // Operador físico ativo no chão de fábrica (Lição 3)
-  const [currentOperator, setCurrentOperator] = useState(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const raw = localStorage.getItem('envase_current_operator');
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const selectOperator = useCallback((operator) => {
-    setCurrentOperator(operator);
-    if (typeof window !== 'undefined') {
-      if (operator) {
-        localStorage.setItem('envase_current_operator', JSON.stringify(operator));
-      } else {
-        localStorage.removeItem('envase_current_operator');
-      }
-    }
-  }, []);
-
-  const clearOperator = useCallback(() => {
-    selectOperator(null);
-  }, [selectOperator]);
+  // NÃO existe mais "operador físico" guardado (decisão do dono, 20/10/2026):
+  // todos usam a mesma conta compartilhada e escolhem o nome numa lista
+  // suspensa DENTRO de cada tarefa (SelectOperador), como era na Base44. Nada
+  // fica lembrado entre uma tarefa e outra.
 
   const logout = useCallback(async () => {
-    clearOperator();
     await supabase.auth.signOut().catch(() => {});
     setUser(null);
     setIsAuthenticated(false);
-  }, [clearOperator]);
+  }, []);
 
   // Carrega perfil estendido com atraso seguro (Lição 2: fora do lock do auth)
   const carregarPerfilUsuario = useCallback((authUser) => {
     if (!authUser) return;
+    // Com senha temporária o banco recusa QUALQUER leitura (checar_sessao:
+    // 403 senha_temporaria) — e a única tela é "Crie a sua senha", que não
+    // precisa do perfil. Ler mesmo assim deixava um 403 no console (relatado
+    // pelo dono em 20/10/2026). Depois da troca, a sessão nova chega pelo
+    // onAuthStateChange e o perfil é lido normalmente.
+    if (authUser.app_metadata?.trocar_senha) {
+      setPerfilCarregado(true);
+      return;
+    }
     setTimeout(async () => {
       try {
         const { data: profile } = await supabase
@@ -114,7 +101,7 @@ export const AuthProvider = ({ children }) => {
     const ehTv = ehRotaTvPublica(pathname);
     setIsTvPage(ehTv);
 
-    // isTvPage continua sendo usado para o modal de operador físico não abrir na TV.
+    // isTvPage: se a rota atual é uma tela de TV (exposto no contexto).
     // O que NÃO se faz mais aqui: encerrar o loading antes de getSession(). Isso
     // vinha da época da "TV pública" e, numa TV já logada, fazia a tela de login
     // piscar por um instante antes de a sessão resolver.
@@ -164,7 +151,6 @@ export const AuthProvider = ({ children }) => {
       } else {
         setUser(null);
         setIsAuthenticated(false);
-        clearOperator();
       }
       setIsLoadingAuth(false);
     });
@@ -181,11 +167,15 @@ export const AuthProvider = ({ children }) => {
         window.removeEventListener('envase_open_login_modal', handleOpenLogin);
       }
     };
-  }, [carregarPerfilUsuario, clearOperator]);
+  }, [carregarPerfilUsuario]);
 
   // Resto da versão com logout por inatividade: apaga a chave antiga.
   useEffect(() => {
-    try { localStorage.removeItem(CHAVE_ANTIGA_ULTIMA_ATIVIDADE); } catch { /* sem localStorage */ }
+    try {
+      localStorage.removeItem(CHAVE_ANTIGA_ULTIMA_ATIVIDADE);
+      // E a do "operador físico", que não existe mais.
+      localStorage.removeItem('envase_current_operator');
+    } catch { /* sem localStorage */ }
   }, []);
 
   // Sessão encerrada pelo administrador (resetar, desativar, excluir, encerrar
@@ -194,14 +184,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const aoRevogar = async () => {
       setAuthError(MENSAGEM_SESSAO_REVOGADA);
-      clearOperator();
       await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
       setUser(null);
       setIsAuthenticated(false);
     };
     window.addEventListener(EVENTO_SESSAO_REVOGADA, aoRevogar);
     return () => window.removeEventListener(EVENTO_SESSAO_REVOGADA, aoRevogar);
-  }, [clearOperator]);
+  }, []);
 
   // Bate-ponto: tela parada (TV, painel aberto) não faz requisição nenhuma por
   // minutos e não perceberia a revogação. A cada 20 s, com a aba VISÍVEL, uma
@@ -262,9 +251,6 @@ export const AuthProvider = ({ children }) => {
       sairComAviso,
       navigateToLogin,
       login,
-      currentOperator,
-      selectOperator,
-      clearOperator,
       loginModalAberto,
       setLoginModalAberto,
       isTvPage,
@@ -281,13 +267,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
-
-export const useCurrentOperator = () => {
-  const context = useAuth();
-  return {
-    currentOperator: context.currentOperator,
-    selectOperator: context.selectOperator,
-    clearOperator: context.clearOperator
-  };
 };

@@ -8,7 +8,6 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import LoginModal from '@/components/auth/LoginModal';
 import TelaLogin from '@/components/auth/TelaLogin';
-import SelecionarOperadorModal from '@/components/auth/SelecionarOperadorModal';
 import TelaTrocarSenhaObrigatoria from '@/components/auth/TelaTrocarSenhaObrigatoria';
 
 
@@ -173,7 +172,6 @@ const AuthenticatedApp = () => {
       </LimiteDeErro>
 
       <LoginModal />
-      <SelecionarOperadorModal />
     </>
   );
 };

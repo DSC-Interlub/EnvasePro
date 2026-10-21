@@ -6,15 +6,15 @@ import { errorOverlayPlugin } from './vite-plugins/error-overlay-plugin.js'
 import { apiLocalPlugin } from './vite-plugins/api-local-plugin.js'
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, isPreview }) => {
   return {
     plugins: [
       mode === 'development' && visualEditPlugin(),
       react(),
       errorOverlayPlugin(),
-      // Só no `vite` de desenvolvimento (apply: 'serve'): /api/admin-usuarios
-      // contra o Supabase LOCAL. Não entra no build.
-      mode === 'development' && apiLocalPlugin(mode),
+      // Só no `vite` de desenvolvimento e no `vite preview`: /api/admin-usuarios
+      // contra o Supabase LOCAL (o plugin recusa outro alvo). Não entra no build.
+      (mode === 'development' || isPreview) && apiLocalPlugin(mode),
       mode === 'development' && {
         name: 'iframe-hmr',
         configureServer(server) {

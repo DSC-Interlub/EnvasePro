@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SelectOperador from "@/components/operadores/SelectOperador";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, X, Plus } from "lucide-react";
@@ -18,7 +19,7 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
     local_id: "", local_nome: "",
     data_prevista: format(new Date(), "yyyy-MM-dd"), hora_prevista: "",
     tipo_limpeza: "Limpeza geral", observacoes: "", status: "Pendente",
-    criado_por: currentUser?.full_name || "",
+    criado_por: "", criado_por_id: "",
     responsaveis: [],
   });
   const [aviso, setAviso] = useState(false);
@@ -39,7 +40,8 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
         tipo_limpeza: programacao.tipo_limpeza || "Limpeza geral",
         observacoes: programacao.observacoes || "",
         status: programacao.status || "Pendente",
-        criado_por: programacao.criado_por || currentUser?.full_name || "",
+        criado_por: programacao.criado_por || "",
+        criado_por_id: programacao.criado_por_id || "",
         responsaveis,
       });
     } else {
@@ -47,7 +49,7 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
         local_id: "", local_nome: "",
         data_prevista: format(new Date(), "yyyy-MM-dd"), hora_prevista: "",
         tipo_limpeza: "Limpeza geral", observacoes: "", status: "Pendente",
-        criado_por: currentUser?.full_name || "",
+        criado_por: "", criado_por_id: "",
         responsaveis: [],
       });
     }
@@ -189,6 +191,15 @@ export default function ModalLimpezaProgramacao({ open, onClose, programacao, lo
               </SelectContent>
             </Select>
           </div>
+          {/* Quem programou: escolhido na lista (antes era o nome da conta
+              logada, gravado sem ninguém ver). Opcional. */}
+          <SelectOperador
+            id="limpeza-criado-por"
+            rotulo="Programado por"
+            placeholder="Selecione (opcional)"
+            valor={form.criado_por_id}
+            aoEscolher={(op) => setForm(f => ({ ...f, criado_por: op?.nome || "", criado_por_id: op?.id || "" }))}
+          />
           <div>
             <Label>Observações</Label>
             <Textarea value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} rows={2} placeholder="Instruções específicas..." />

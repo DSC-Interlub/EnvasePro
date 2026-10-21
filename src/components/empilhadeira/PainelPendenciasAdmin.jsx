@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ChevronDown, ChevronUp, PenLine, CheckCircle, Clock, AlertTriangle, OctagonX, Wrench, Sparkles } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import ModalAssinaturaLimpeza from "../limpeza/ModalAssinaturaLimpeza";
+import SelectOperador from "@/components/operadores/SelectOperador";
 
 export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, empilhadeiras, programacoes, currentUser }) {
   const queryClient = useQueryClient();
@@ -52,7 +53,10 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
   const [resolvendo, setResolvendo] = useState(null);
   const [resolucaoTexto, setResolucaoTexto] = useState("");
   const [horaFimParada, setHoraFimParada] = useState(format(new Date(), "HH:mm"));
-  const [nomeLider, setNomeLider] = useState(currentUser?.full_name || "");
+  // O líder é escolhido na lista de operadores (antes: texto livre já
+  // preenchido com o nome da CONTA logada). Vale para as linhas assinadas
+  // nesta lista, e está à vista acima delas.
+  const [nomeLider, setNomeLider] = useState(null);
 
   const updateLinhaMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.EmpilhaLinha.update(id, data),
@@ -81,7 +85,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
       id: linha.id,
       data: {
         assinatura_lider: true,
-        assinatura_lider_nome: nomeLider,
+        assinatura_lider_nome: nomeLider?.nome,
         assinatura_lider_hora: now,
         status_assinatura: "Completo",
       },
@@ -164,10 +168,15 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
           {/* Conteúdo — Assinaturas */}
           {abaAtiva === "assinaturas" && (
             <div className="space-y-2">
-              <div className="space-y-2 mb-3">
-                <label className="text-xs text-texto-fraco">Seu nome (líder):</label>
-                <Input value={nomeLider} onChange={e => setNomeLider(e.target.value)} className="max-w-xs" placeholder="Nome do líder" />
-              </div>
+              <SelectOperador
+                id="pendencias-lider"
+                rotulo="Líder que assina"
+                placeholder="Selecione o líder"
+                obrigatorio
+                valor={nomeLider?.id}
+                aoEscolher={setNomeLider}
+                className="mb-3 max-w-sm"
+              />
               {linhasPendentesAssinatura.length === 0 ? (
                 <p className="text-texto-apagado text-sm">Nenhuma assinatura pendente.</p>
               ) : linhasPendentesAssinatura.map(l => (
