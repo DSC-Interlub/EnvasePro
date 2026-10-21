@@ -239,7 +239,7 @@ scripts. Agora e **allowlist** (so `localhost`/`127.0.0.1`), checa `VITE_SUPABAS
 
 **F0-6 — Portas locais.** A faixa 5432x estava ocupada por outro projeto Supabase local
 (`..._meta`) na maquina. As portas deste projeto foram movidas para **5442x**
-(API 54421, DB 54422, Studio 54423, Mailpit 54424).
+(API 54421, DB 54422, Studio 54423, Mailpit 54424). **Em 21/10/2026 movidas para 3542x** (API 35421, DB 35422, Studio 35423, Mailpit 35424): a 5442x fica na faixa dinâmica do Windows (49152–65535), que o WinNAT/Hyper-V reserva ao reiniciar e derrubava o banco local.
 
 **Desvio documentado:** a segunda confirmacao do guard e `--confirm-ref=<ref>` digitado na linha de
 comando, nao um prompt interativo. Leitura sincrona de stdin e fragil no Windows, e tornar o guard

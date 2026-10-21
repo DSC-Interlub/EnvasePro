@@ -25,7 +25,7 @@ const REF = 'xifzjpbkpxislqrowswd';
 // local, para provar o script e a trava antes de usá-lo em produção.
 const ENSAIO = process.argv.includes('--ensaio-local');
 const APP = ENSAIO ? 'http://127.0.0.1:4180' : 'https://envase-pro.vercel.app';
-const ehSupabase = (u) => (ENSAIO ? u.port === '54421' : /supabase\.co$/.test(u.hostname));
+const ehSupabase = (u) => (ENSAIO ? u.port === '35421' : /supabase\.co$/.test(u.hostname));
 if (!ENSAIO && (!process.argv.includes('--allow-production') || !process.argv.includes(`--confirm-ref=${REF}`))) {
   console.error(`Recusado: passe --allow-production --confirm-ref=${REF}`);
   process.exit(2);
@@ -112,7 +112,7 @@ try {
     const antes = bloqueadas.length;
     const chegou = await page.evaluate(async (url) => {
       try { await fetch(`${url}/rest/v1/operators`, { method: 'POST', body: '{}' }); return true; } catch { return false; }
-    }, 'http://127.0.0.1:54421');
+    }, 'http://127.0.0.1:35421');
     const ok = !chegou && bloqueadas.length === antes + 1;
     bloqueadas.splice(antes); // a escrita de prova não conta como falha do passeio
     eventos.splice(0, eventos.length, ...eventos.filter((e) => !e.startsWith('[prova-da-trava]')));
