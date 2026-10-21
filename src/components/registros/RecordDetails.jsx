@@ -6,6 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Edit, Package, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
+import { formatarData } from "@/lib/datas";
+
+/** Uma linha "rótulo: valor" do detalhe; some quando não há valor. */
+function Campo({ rotulo, valor, mono = false }) {
+  if (valor === null || valor === undefined || valor === "") return null;
+  return (
+    <div className="flex justify-between gap-3">
+      <span className="text-texto-fraco">{rotulo}:</span>
+      <span className={`text-right font-semibold ${mono ? "font-mono" : ""}`}>{valor}</span>
+    </div>
+  );
+}
+const DIFICULDADE = { 0: "Normal", 1: "Rotulagem", 2: "Final Tambor", 3: "Mescla de Produto" };
 
 export default function RecordDetails({ record, onClose, onEdit }) {
   const queryClient = useQueryClient();
@@ -95,7 +108,7 @@ export default function RecordDetails({ record, onClose, onEdit }) {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-texto-fraco">Data:</span>
-                  <span className="font-semibold">{format(new Date(record.data), "dd/MM/yyyy")}</span>
+                  <span className="font-semibold">{formatarData(record.data, "dd/MM/yyyy")}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-texto-fraco">Sala:</span>
@@ -127,6 +140,37 @@ export default function RecordDetails({ record, onClose, onEdit }) {
                   <span className="text-texto-fraco">Consistência:</span>
                   <span className="font-semibold">{record.consistencia}</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Os dados da produção — o detalhe mostrava só identificação e
+              produto desde a migração da Base44 (achado pela rodada por clique). */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <h3 className="font-semibold text-tinta-media mb-3">Produção</h3>
+              <div className="space-y-2 text-sm">
+                <Campo rotulo="Quantidade produzida" valor={record.quantidade_produzida != null ? Number(record.quantidade_produzida).toLocaleString("pt-BR") : null} />
+                <Campo rotulo="Embalagem" valor={[record.codigo_embalagem, record.descricao_embalagem].filter(Boolean).join(" · ")} />
+                <Campo rotulo="Embalagens" valor={record.quantidade_embalagens || null} />
+                <Campo rotulo="Início" valor={record.inicio?.slice(0, 5)} mono />
+                <Campo rotulo="Término" valor={record.termino?.slice(0, 5)} mono />
+                <Campo rotulo="Tempo produtivo" valor={record.tempo_produtivo} mono />
+                <Campo rotulo="Tempo por embalagem" valor={record.tempo_por_embalagem} mono />
+                <Campo rotulo="Dificuldade" valor={DIFICULDADE[record.dificuldade_codigo] || record.dificuldade_tipo} />
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold text-tinta-media mb-3">Rastreabilidade</h3>
+              <div className="space-y-2 text-sm">
+                <Campo rotulo="Lote da embalagem" valor={record.lote_embalagem} mono />
+                <Campo rotulo="Lotes da tampa" valor={record.lotes_tampa} mono />
+                {record.observacoes && (
+                  <div>
+                    <span className="text-texto-fraco block mb-1">Observações:</span>
+                    <span className="font-semibold whitespace-pre-wrap [overflow-wrap:anywhere]">{record.observacoes}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
