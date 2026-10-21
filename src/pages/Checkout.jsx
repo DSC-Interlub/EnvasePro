@@ -196,11 +196,11 @@ export default function Checkout() {
                         <span className="mt-1 flex flex-wrap items-center gap-3 text-sm font-semibold text-texto-fraco">
                           <span className="flex items-center gap-1.5">
                             <Package className="h-4 w-4" aria-hidden="true" />
-                            <span className="num font-bold text-tinta">{total}</span> pedidos
+                            <span className="num font-bold text-tinta">{total}</span> {total === 1 ? "pedido" : "pedidos"}
                           </span>
                           <span className="flex items-center gap-1.5">
                             <CheckCircle className="h-4 w-4" aria-hidden="true" />
-                            <span className="num font-bold text-tinta">{feitos}</span> concluídos
+                            <span className="num font-bold text-tinta">{feitos}</span> {feitos === 1 ? "concluído" : "concluídos"}
                           </span>
                           {criticos > 0 && (
                             <span className="rounded-full bg-erro-suave px-2.5 py-0.5 text-xs font-extrabold text-erro">
