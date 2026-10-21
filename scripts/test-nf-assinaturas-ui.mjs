@@ -171,6 +171,8 @@ try {
   await op.getByRole('button', { name: /^Finalizar$/ }).click();
   const modalOp = op.getByRole('dialog');
   await esperarPor(async () => (await modalOp.getByText(/Confirmo que realizei esta movimentação/).count()) > 0, 15000);
+  // Quem assina como operador é escolhido na lista (sem pré-preenchimento).
+  const assinou = await escolher(op, modalOp, 0, opsSeed[0].nome);
   await modalOp.getByText(/Confirmo que realizei esta movimentação/).click();
   await modalOp.getByRole('button', { name: /Confirmar e continuar/ }).click();
   await esperarPor(async () => (await modalOp.getByText(/Aguardando Assinatura do Líder/i).count()) > 0, 15000);
@@ -181,7 +183,8 @@ try {
   }, 15000);
   const { data: l1 } = await svc.from('empilha_linhas').select('*').eq('id', linha.id).single();
   ok(l1.status === 'Concluído' && l1.assinatura_operador && l1.status_assinatura === 'Parcial',
-    `operador finaliza e assina: ${l1.status}, assinatura_operador=${l1.assinatura_operador}, ${l1.status_assinatura}`);
+    `operador finaliza e assina (${assinou}): ${l1.status}, assinatura_operador=${l1.assinatura_operador}, ${l1.status_assinatura}`);
+  ok(l1.assinatura_operador_nome === opsSeed[0].nome, `a assinatura grava o nome ESCOLHIDO na lista (${l1.assinatura_operador_nome})`);
   await op.keyboard.press('Escape');
   await op.goto(`${APP}/ExecutarEmpilha?id=${prog.id}`, { waitUntil: 'domcontentloaded' });
   await pronto(op);
@@ -228,8 +231,10 @@ try {
   const { data: lp1 } = await svc.from('limpeza_programacoes').select('*').eq('id', limp.id).single();
   ok(lp1.status === 'Concluído' && lp1.assinatura_responsavel && lp1.status_assinatura === 'Parcial',
     `responsável assina: ${lp1.status}, assinatura_responsavel=${lp1.assinatura_responsavel}, ${lp1.status_assinatura}`);
-  const nomeLider = modalL.getByPlaceholder('Nome do líder...');
-  if (!(await nomeLider.inputValue())) await nomeLider.fill('Líder de teste');
+  // O líder é escolhido na lista de operadores (antes: texto livre já
+  // preenchido com o nome da conta). Sem escolher, o botão fica desabilitado.
+  ok(await modalL.getByRole('button', { name: /Assinar como Líder/ }).isDisabled(), 'limpeza: sem escolher o líder, "Assinar como Líder" fica desabilitado');
+  const liderLimpeza = await escolher(adm, modalL, 0, null);
   await modalL.getByRole('button', { name: /Assinar como Líder/ }).click();
   await esperarPor(async () => {
     const { data } = await svc.from('limpeza_programacoes').select('status_assinatura').eq('id', limp.id).single();
@@ -274,8 +279,8 @@ try {
   await adm.getByRole('button', { name: /Assinaturas/ }).click();
   const modalRA = adm.getByRole('dialog');
   await esperarPor(async () => (await modalRA.getByRole('button', { name: /Assinar como Líder/ }).count()) > 0, 15000);
-  const campoLider = modalRA.getByLabel('Nome do líder');
-  if (!(await campoLider.inputValue())) await campoLider.fill('Líder de teste');
+  ok(await modalRA.getByRole('button', { name: /Assinar como Líder/ }).isDisabled(), 'recebimento: sem escolher o líder, "Assinar como Líder" fica desabilitado');
+  const liderReceb = await escolher(adm, modalRA, 0, null);
   await modalRA.getByRole('button', { name: /Assinar como Líder/ }).click();
   await esperarPor(async () => {
     const { data } = await svc.from('recebimentos').select('status_assinatura').eq('id', rec.id).single();

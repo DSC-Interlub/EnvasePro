@@ -161,16 +161,12 @@ try {
     await esperarPor(async () => (await X.page.locator('#email').count()) === 0, 30000);
     sessoes[papel] = X;
   }
-  // Operador com o banco vazio: o modal "Quem é você hoje?" não tem ninguém.
+  // Sem 'Quem é você hoje?' (removido em 20/10/2026): com o banco vazio o
+  // operador entra e usa o sistema; quem fez cada tarefa é escolhido nela.
   const op = sessoes.operador.page;
   await op.waitForTimeout(2000);
-  const modal = await op.getByText(/quem é você hoje/i).count();
-  if (modal) {
-    const opcoes = await op.locator('[role="dialog"] button').filter({ hasNotText: /fechar|cancelar|close/i }).count();
-    nota(`operador: o modal "Quem é você hoje?" abre com ${opcoes} botão(ões) — sem operadores cadastrados não há quem escolher (DEPENDE do cadastro de operadores)`);
-    await op.screenshot({ path: `${SAIDA}/2-operador-modal-vazio.png` });
-    await op.keyboard.press('Escape').catch(() => {});
-  }
+  ok((await op.getByText(/quem é você hoje/i).count()) === 0, 'operador: entra direto, sem modal de operador (mesmo com o cadastro vazio)');
+  nota('operador: com o cadastro de operadores vazio, as listas "Operador" das tarefas dizem "Nenhum operador cadastrado — Cadastre em Configurações → Operadores" e nada sai de Pendente');
   for (const [papel, telas] of Object.entries(TELAS)) {
     const page = sessoes[papel].page;
     for (const tela of telas) {

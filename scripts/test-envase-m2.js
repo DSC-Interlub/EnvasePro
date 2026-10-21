@@ -204,6 +204,22 @@ async function main() {
   // --- preenche o resto e deixa o autosave gravar ---------------------------
   await page.locator('#sala').click();
   await page.getByRole('option', { name: /sala bio/i }).click();
+
+  // O operador é ESCOLHIDO na lista, dentro da tarefa (não existe mais o
+  // "operador do turno" guardado): começa vazio e só mostra quem trabalha na sala.
+  const campoOperador = page.locator('#operador');
+  registrar('o campo Operador começa vazio (sem pré-preenchimento)',
+    /Selecione o operador/i.test(await campoOperador.innerText()), (await campoOperador.innerText()).trim());
+  await campoOperador.click();
+  const nomesNaLista = (await page.getByRole('option').allInnerTexts()).map((t) => t.trim());
+  const { data: opsBanco } = await svc.from('operators').select('id, nome, sala, ativo');
+  const daSala = (opsBanco || []).filter((o) => o.ativo && (!o.sala || o.sala === 'Bio' || o.sala === 'Ambas')).map((o) => o.nome).sort();
+  registrar('sala Bio: a lista traz só os operadores ativos de Bio e de "Ambas"',
+    JSON.stringify([...nomesNaLista].sort()) === JSON.stringify(daSala), `${nomesNaLista.length} na lista, ${daSala.length} esperados`);
+  const escolhido = nomesNaLista[nomesNaLista.length - 1];
+  await page.getByRole('option', { name: escolhido, exact: true }).click();
+  const idEscolhido = (opsBanco || []).find((o) => o.nome === escolhido)?.id;
+
   await page.locator('#inicio').fill('08:00');
   await page.locator('#op').fill('OP-M2-TESTE');
 
@@ -224,6 +240,8 @@ async function main() {
 
   registrar('autosave cria o registro no banco', gravou, linha ? `id ${linha.id}` : 'nao apareceu');
   if (linha) {
+    registrar('o operator_id gravado é o da opção ESCOLHIDA na lista',
+      linha.operator_id === idEscolhido && linha.operador === escolhido, `${linha.operador}`);
     registrar('a quantidade do teclado chega como NUMERO',
       Number(linha.quantidade_produzida) === 450, `banco = ${linha.quantidade_produzida}`);
     registrar('o produto escolhido na busca chega ao banco',

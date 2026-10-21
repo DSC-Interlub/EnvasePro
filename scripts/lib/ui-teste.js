@@ -73,42 +73,26 @@ export function criarAjudantes({ app, svc }) {
 
     const campoEmail = page.locator('#email');
     if (await campoEmail.count()) {
-      await campoEmail.fill(conta.email);
-      await page.locator('#password').fill(conta.senha);
-      await page.locator('button[type="submit"]').first().click();
-      await esperarPor(async () =>
-        (await estaAutenticado(page)) ||
-        (await page.locator('button').filter({ hasText: /SEED-/ }).count()) > 0);
-    }
-
-    // Modal do operador fisico. O overlay intercepta o ponteiro (`force`) e a
-    // lista chega de forma assincrona, trocando o no sob o cursor.
-    const tituloOperador = page.getByText(/quem é você hoje/i);
-    if (await esperarPor(async () => (await tituloOperador.count()) > 0, 6000)) {
+      // A tela de login pode remontar logo depois de abrir (a sessão ainda
+      // assentando) e apagar o que foi digitado: o "Entrar" ficava desabilitado
+      // e o clique esperava 30 s. Confere os campos antes de clicar e tenta de novo.
       for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
-        const opcoes = page.locator('button').filter({ hasText: /SEED-/ });
-        if (!(await opcoes.count())) break;
-        // Prazo curto por tentativa: se a lista recarrega entre a contagem e o
-        // clique, o clique esperava 30 s por um botao que sumiu e derrubava a
-        // suite inteira (visto em test-metas-ui na rodada de 20/10).
-        await opcoes.first().click({ force: true, timeout: 8000 }).catch(() => {});
-        if (await esperarPor(async () => (await tituloOperador.count()) === 0, 6000)) break;
+        await page.waitForTimeout(300);
+        await campoEmail.fill(conta.email);
+        await page.locator('#password').fill(conta.senha);
+        const preenchido = await page.evaluate(([e, s]) =>
+          document.querySelector('#email')?.value === e && document.querySelector('#password')?.value === s,
+        [conta.email, conta.senha]);
+        if (!preenchido) continue;
+        const enviou = await page.locator('button[type="submit"]').first().click({ timeout: 8000 }).then(() => true, () => false);
+        if (enviou) break;
       }
+      await esperarPor(async () =>
+        (await estaAutenticado(page)));
     }
 
-    // O que mantem o modal fechado e a chave no localStorage. Se o clique nao a
-    // gravou, o modal reabre em toda navegacao e bloqueia as telas seguintes.
-    const temOperador = await page.evaluate(() => {
-      try { return !!localStorage.getItem('envase_current_operator'); } catch { return false; }
-    });
-    if (!temOperador && svc) {
-      const { data: umOperador } = await svc
-        .from('operators').select('*').eq('ativo', true).order('nome').limit(1).single();
-      await page.evaluate((op) => {
-        try { localStorage.setItem('envase_current_operator', JSON.stringify(op)); } catch { /* vazio */ }
-      }, umOperador);
-      await page.reload({ waitUntil: 'domcontentloaded' });
-    }
+    // Não existe mais modal de operador físico nem operador guardado no
+    // localStorage (decisão do dono, 20/10/2026): cada tarefa escolhe o seu.
 
     await esperarPor(() => estaAutenticado(page), 10000);
     return estaAutenticado(page);
