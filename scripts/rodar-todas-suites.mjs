@@ -19,6 +19,7 @@ const SAIDA = process.argv[2] || 'scratch/rodada-final/relatorio.json';
 fs.mkdirSync('scratch/rodada-final', { recursive: true });
 
 const GRUPOS = {
+  'código: estático': ['test-sem-indefinidos.mjs'],
   'banco: migrations, permissões, segurança': [
     'test-security-signup.js', 'test-sql-injection.js', 'test-critical-columns-triggers.js',
     'test-author-immutability.js', 'test-reconcile-triggers.js', 'test-fuso-banco.js', 'test-dia-local.js',
@@ -37,7 +38,9 @@ const GRUPOS = {
     'test-leitor-codigo.js', 'test-listas-v1.js', 'test-tokens-fluxo.js', 'test-inactivity-timeout.js',
     'test-tv-authenticated.js', 'test-tv-paineis-ui.mjs', 'test-indicadores-ui.mjs',
     'test-nf-assinaturas-ui.mjs', 'test-gerenciar-usuarios-ui.mjs', 'test-sessao-revogada-ui.mjs',
-    'test-tv-layout.mjs',
+    'test-tv-layout.mjs', 'test-operador-por-tarefa.mjs',
+    // Rodada por clique: serve a build de produção em 127.0.0.1:4180 (vite preview).
+    'test-e2e-cliques.mjs',
   ],
 };
 
