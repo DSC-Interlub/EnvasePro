@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Wrench, Plus, CheckCircle, AlertCircle, Settings } from "lucide-react";
 import { format, differenceInDays, parseISO, addDays } from "date-fns";
+import { paraData } from "@/lib/datas";
 import { ptBR } from "date-fns/locale";
 
 export default function EmpilhadeiraConfigPage() {
@@ -56,7 +57,7 @@ export default function EmpilhadeiraConfigPage() {
       });
       // Atualizar config com datas
       if (empilhadeira) {
-        const proxima = format(addDays(new Date(data.data_manutencao), empilhadeira.intervalo_manutencao_dias || 90), "yyyy-MM-dd");
+        const proxima = format(addDays(paraData(data.data_manutencao), empilhadeira.intervalo_manutencao_dias || 90), "yyyy-MM-dd");
         await base44.entities.EmpilhadeiraConfig.update(empilhadeira.id, {
           data_ultima_manutencao: data.data_manutencao,
           data_proxima_manutencao: proxima,
