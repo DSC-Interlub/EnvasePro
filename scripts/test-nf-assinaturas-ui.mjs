@@ -81,6 +81,9 @@ try {
   console.log('\n1. NOTA FISCAL (operador): PDF e imagem de uma vez');
   await op.goto(`${APP}/NovaNotaFiscal`, { waitUntil: 'domcontentloaded' });
   await pronto(op);
+  // "Arquivado por" é obrigatório desde d593a02: escolhido na lista, nunca pré-preenchido.
+  const arquivador = await escolher(op, op.locator('main'), 0, null);
+  ok(Boolean(arquivador), `"Arquivado por" escolhido na lista (${arquivador})`);
   await op.locator('input[type="file"][multiple]').setInputFiles([pdf, png]);
   const campos = op.getByPlaceholder('Ex: 123456');
   await esperarPor(async () => (await campos.count()) === 2, 10000);
