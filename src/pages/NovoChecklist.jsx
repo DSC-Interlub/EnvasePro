@@ -163,10 +163,14 @@ export default function NovoChecklist() {
       setValue("data_prevista_material", p.data_vencimento || "", { shouldValidate: true });
     } else {
       setSapStatus("not_found");
+      // Só desfaz o que uma busca ANTERIOR preencheu. Sem isso, sair do campo do
+      // pedido apagava o fornecedor que o operador já tinha digitado à mão.
+      if (formValues.sap_pedido_id) {
+        setValue("nome_fornecedor", "");
+        setValue("codigo_fornecedor", "");
+        setValue("data_prevista_material", "");
+      }
       setValue("sap_pedido_id", "");
-      setValue("nome_fornecedor", "");
-      setValue("codigo_fornecedor", "");
-      setValue("data_prevista_material", "");
     }
   };
 
@@ -411,7 +415,7 @@ export default function NovoChecklist() {
             <div>
               <Label className="text-sm font-medium">Unidade de Medida *</Label>
               <Select value={formValues.unidade_medida} onValueChange={v => set("unidade_medida", v)}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="UN" /></SelectTrigger>
+                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {["KG", "LT", "PC", "UN", "MILHEIRO", "M³"].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                 </SelectContent>
