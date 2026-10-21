@@ -290,12 +290,14 @@ export default function Empilhadeira() {
                 <VazioFluxo
                   icone={Warehouse}
                   titulo="Nenhuma programação neste período"
-                  legenda="Ajuste o período acima ou crie uma programação."
-                  acao={
+                  // Criar programação é tela de admin: o operador não vê um botão
+                  // que o levaria a "acesso restrito".
+                  legenda={isAdmin ? "Ajuste o período acima ou crie uma programação." : "Ajuste o período acima. Programações são criadas por um administrador."}
+                  acao={isAdmin ? (
                     <Link to={createPageUrl("NovaEmpilhaProgramacao")}>
                       <Button><Plus className="h-4 w-4" aria-hidden="true" />Criar programação</Button>
                     </Link>
-                  }
+                  ) : null}
                 />
               ) : (
                 <ul className="flex min-w-0 flex-col gap-2.5">
