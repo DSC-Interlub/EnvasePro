@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SelectOperador from "@/components/operadores/SelectOperador";
 import { format } from "date-fns";
 
 function calcDiffMinutes(h1, h2) {
@@ -22,6 +23,7 @@ export default function ModalParada({ open, onClose, empilhadeiraId, programacao
     tipo: "Quebra",
     descricao: "",
     registrado_por: "",
+    registrado_por_id: "",
     hora_inicio: format(new Date(), "HH:mm"),
     hora_fim: "",
   });
@@ -43,7 +45,7 @@ export default function ModalParada({ open, onClose, empilhadeiraId, programacao
       queryClient.invalidateQueries({ queryKey: ["empilha-paradas"] });
       queryClient.invalidateQueries({ queryKey: ["empilha-paradas-prog", programacaoId] });
       onClose();
-      setForm({ tipo: "Quebra", descricao: "", registrado_por: "", hora_inicio: format(new Date(), "HH:mm"), hora_fim: "" });
+      setForm({ tipo: "Quebra", descricao: "", registrado_por: "", registrado_por_id: "", hora_inicio: format(new Date(), "HH:mm"), hora_fim: "" });
     },
   });
 
@@ -65,17 +67,13 @@ export default function ModalParada({ open, onClose, empilhadeiraId, programacao
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Registrado por *</Label>
-            <Select value={form.registrado_por} onValueChange={v => setForm(p => ({ ...p, registrado_por: v }))}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>
-                {(operators || []).filter(o => o.ativo).map(o => (
-                  <SelectItem key={o.id} value={o.nome}>{o.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <SelectOperador
+            id="parada-registrado-por"
+            rotulo="Registrado por"
+            obrigatorio
+            valor={form.registrado_por_id}
+            aoEscolher={(op) => setForm(p => ({ ...p, registrado_por: op?.nome || "", registrado_por_id: op?.id || "" }))}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Hora Início *</Label>

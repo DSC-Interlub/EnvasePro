@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import SelectOperador from "@/components/operadores/SelectOperador";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle, PenLine, Clock } from "lucide-react";
@@ -14,7 +15,8 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
   const [etapa, setEtapa] = useState("participantes");
   const [assinandoId, setAssinandoId] = useState(null);
   const [confirmado, setConfirmado] = useState(false);
-  const [nomeLider, setNomeLider] = useState(currentUser?.full_name || "");
+  // O líder é escolhido na lista de operadores, sem pré-preenchimento.
+  const [nomeLider, setNomeLider] = useState(null);
   const [participantesLocais, setParticipantesLocais] = useState([]);
 
   useEffect(() => {
@@ -22,7 +24,7 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
     setParticipantesLocais(participantes || []);
     setConfirmado(false);
     setAssinandoId(null);
-    setNomeLider(currentUser?.full_name || "");
+    setNomeLider(null);
     const todosAssinaram = participantes?.length > 0 && participantes.every(p => p.assinou);
     setEtapa(todosAssinaram ? "lider" : "participantes");
   }, [recebimento, open, participantes]);
@@ -64,7 +66,7 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
     const dt = new Date().toISOString();
     mutRecebimento.mutate({
       assinatura_lider: true,
-      assinatura_lider_nome: nomeLider,
+      assinatura_lider_nome: nomeLider?.nome,
       assinatura_lider_datetime: dt,
       status_assinatura: "Completo",
     }, { onSuccess: onClose });
@@ -171,10 +173,14 @@ export default function ModalAssinaturaRecebimento({ open, onClose, recebimento,
               </div>
             ) : isAdmin ? (
               <>
-                <div>
-                  <Label>Nome do líder</Label>
-                  <Input aria-label="Nome do líder" value={nomeLider} onChange={e => setNomeLider(e.target.value)} />
-                </div>
+                <SelectOperador
+                  id="assina-lider-recebimento"
+                  rotulo="Líder"
+                  placeholder="Selecione o líder"
+                  obrigatorio
+                  valor={nomeLider?.id}
+                  aoEscolher={setNomeLider}
+                />
                 <DialogFooter>
                   <Button variant="outline" onClick={onClose}>Fechar</Button>
                   <Button className="bg-ok hover:bg-ok" onClick={handleAssinarLider}

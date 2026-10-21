@@ -11,7 +11,7 @@ import BuscaProduto from "./BuscaProduto";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCurrentOperator } from "@/lib/AuthContext";
+import SelectOperador from "@/components/operadores/SelectOperador";
 import * as z from "zod";
 
 const envaseSchema = z.object({
@@ -41,7 +41,6 @@ const DIFICULDADES = [
 
 export default function EnvaseForm({ products, embalagens, operators, onSubmit, isLoading, initialData }) {
   const queryClient = useQueryClient();
-  const { currentOperator } = useCurrentOperator ? useCurrentOperator() : { currentOperator: null };
   const formId = initialData?.id || `envase-${Date.now()}`;
   const storageKey = `envase-form-${formId}`;
   const [recordId, setRecordId] = useState(initialData?.id || null);
@@ -70,6 +69,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
       data: format(new Date(), "yyyy-MM-dd"),
       op: "",
       operador: "",
+      operator_id: "",
       codigo_produto: "",
       quantidade_produzida: "",
       inicio: "",
@@ -88,11 +88,8 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
   );
   const [timing, setTiming] = useState(false);
 
-  useEffect(() => {
-    if (!formData.operador && currentOperator?.nome) {
-      setFormData(prev => ({ ...prev, operador: currentOperator.nome }));
-    }
-  }, [currentOperator, formData.operador]);
+  // Sem pré-preenchimento do operador: quem envasou é escolhido na lista,
+  // a cada registro (decisão do dono, 20/10/2026).
 
   // Mutation para criar/atualizar registro
   const autoSaveMutation = useMutation({
@@ -155,6 +152,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
         ano: formData.ano || (formData.data ? new Date(formData.data).getFullYear() : undefined),
         op: formData.op || "",
         operador: formData.operador,
+        operator_id: formData.operator_id || null,
         codigo_produto: formData.codigo_produto || "",
         descricao_produto: formData.descricao_produto || "",
         consistencia: formData.consistencia || "",
@@ -250,6 +248,7 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
         ano: formData.ano || (formData.data ? new Date(formData.data).getFullYear() : undefined),
         op: formData.op || "",
         operador: formData.operador,
+        operator_id: formData.operator_id || null,
         codigo_produto: formData.codigo_produto || "",
         descricao_produto: formData.descricao_produto || "",
         consistencia: formData.consistencia || "",
@@ -508,7 +507,12 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
             <Label htmlFor="sala">Sala *</Label>
             <Select
               value={formData.sala}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, sala: value }))}
+              onValueChange={(value) => setFormData(prev => {
+                // Trocou a sala e o operador escolhido não trabalha nela: limpa.
+                const op = (operators || []).find(o => o.id === prev.operator_id);
+                const serve = !op || !op.sala || op.sala === value || op.sala === "Ambas";
+                return { ...prev, sala: value, ...(serve ? {} : { operador: "", operator_id: "" }) };
+              })}
               required
             >
               <SelectTrigger id="sala">
@@ -522,28 +526,14 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
             {formErrors.sala && <p className="text-xs font-bold text-erro">{formErrors.sala}</p>}
           </div>
 
-          <div className="min-w-0 space-y-2">
-            <Label htmlFor="operador">Operador *</Label>
-            <Select
-              value={formData.operador}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, operador: value }))}
-              required
-            >
-              <SelectTrigger id="operador">
-                <SelectValue placeholder="Selecione o operador" />
-              </SelectTrigger>
-              <SelectContent>
-                {operators.map((op) => (
-                  <SelectItem key={op.id} value={op.nome}>
-                    {op.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {formErrors.operador && (
-              <p className="text-xs font-bold text-erro">{formErrors.operador}</p>
-            )}
-          </div>
+          <SelectOperador
+            id="operador"
+            obrigatorio
+            sala={formData.sala}
+            valor={formData.operator_id}
+            aoEscolher={(op) => setFormData(prev => ({ ...prev, operador: op?.nome || "", operator_id: op?.id || "" }))}
+            erro={formErrors.operador}
+          />
 
           <div className="min-w-0 space-y-2">
             <Label htmlFor="data">Data *</Label>

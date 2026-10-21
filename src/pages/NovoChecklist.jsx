@@ -198,7 +198,9 @@ export default function NovoChecklist() {
       ...validData,
       quantidade_recebida: Number(validData.quantidade_recebida),
       ...calc,
-      criado_por_nome: user?.full_name || user?.email || "",
+      // Quem fez o checklist são os inspetores escolhidos acima (a conta é
+      // compartilhada; o nome dela não diz quem foi).
+      criado_por_nome: (validData.inspecionado_por || []).join(", "),
     });
   };
 

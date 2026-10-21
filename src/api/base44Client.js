@@ -64,6 +64,11 @@ const TABELAS_MAPEAMENTO = {
 let cacheOperadores = null;
 let cacheOperadoresTimestamp = 0;
 
+/** Nome comparável: sem espaços nas pontas, minúsculo e sem acento. */
+function normalizarNome(nome) {
+  return nome.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 async function obterMapaOperadores() {
   const agora = Date.now();
   if (cacheOperadores && (agora - cacheOperadoresTimestamp < 60000)) {
@@ -108,16 +113,6 @@ async function obterMapaOperadores() {
   cacheOperadores = mapa;
   cacheOperadoresTimestamp = agora;
   return mapa;
-}
-
-function obterOperadorAtivoLocalStorage() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem('envase_current_operator');
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -166,37 +161,16 @@ async function sanitizarPayload(tabela, data, isCreate = false) {
     }
   }
 
-  // Resolução de operador para tabelas operacionais (Lição 3)
-  // Regra: Em create(), injeta o operador ativo de localStorage se não fornecido.
-  // Em update(), NÃO injeta de localStorage (não altera autoria por acidente),
-  // MAS NÃO apaga valores que o usuário enviou explicitamente (permite atribuição manual/edição legítima).
-  if (tabela === 'envase_records' || tabela === 'checkout_itens') {
-    if (isCreate) {
-      if (!clone.operator_id) {
-        const operadorAtivo = obterOperadorAtivoLocalStorage();
-        if (operadorAtivo && operadorAtivo.id) {
-          clone.operator_id = operadorAtivo.id;
-          if (!clone.operador) clone.operador = operadorAtivo.nome;
-        } else if (clone.operador) {
-          const mapa = await obterMapaOperadores();
-          const norm = clone.operador.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const encontrado = mapa.get(norm);
-          if (encontrado) {
-            clone.operator_id = encontrado.id;
-          }
-        }
-      }
-    } else {
-      // Em update(): NÃO injeta de localStorage, mas se o usuário enviou 'operador' e não 'operator_id',
-      // resolve o operator_id correspondente para manter integridade com as FKs/CHECKs
-      if (clone.operador && !clone.operator_id) {
-        const mapa = await obterMapaOperadores();
-        const norm = clone.operador.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const encontrado = mapa.get(norm);
-        if (encontrado) {
-          clone.operator_id = encontrado.id;
-        }
-      }
+  // Autoria: quem gravou é o operador ESCOLHIDO na lista suspensa da tarefa
+  // (SelectOperador manda o operator_id junto com o nome). NÃO existe mais
+  // operador "guardado" injetado aqui (decisão do dono, 20/10/2026). Só por
+  // compatibilidade: se vier o nome sem o id, resolve o id pelo nome.
+  if ((tabela === 'envase_records' || tabela === 'checkout_itens') && clone.operador && !clone.operator_id) {
+    const mapa = await obterMapaOperadores();
+    const norm = normalizarNome(clone.operador);
+    const encontrado = mapa.get(norm);
+    if (encontrado) {
+      clone.operator_id = encontrado.id;
     }
   }
 
@@ -1086,9 +1060,6 @@ const authAdapter = {
   },
 
   async logout() {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('envase_current_operator');
-    }
     await supabase.auth.signOut();
   },
 

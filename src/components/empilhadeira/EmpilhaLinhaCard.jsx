@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SelectOperador from "@/components/operadores/SelectOperador";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -40,42 +41,37 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
   const queryClient = useQueryClient();
   const isAdmin = currentUser?.role === "admin";
 
-  const { data: admins } = useQuery({
-    queryKey: ["admins-lista"],
-    queryFn: async () => {
-      const res = await base44.functions.invoke("listarAdmins", {});
-      return res.data.admins || [];
-    },
-    initialData: [],
-    enabled: isAdmin,
-  });
 
   const [showIniciarModal, setShowIniciarModal] = useState(false);
   const [showAssinaturaModal, setShowAssinaturaModal] = useState(false);
   const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
   const [etapaAssinatura, setEtapaAssinatura] = useState(ETAPA_OPERADOR);
 
+  // Quem fez cada coisa é ESCOLHIDO na lista suspensa de operadores, sem
+  // pré-preenchimento (decisão do dono, 20/10/2026). Guarda-se o operador
+  // inteiro ({ id, nome }): o id vai para o banco, o nome é o rótulo.
+
   // Iniciar
-  const [empilhador, setEmpilhador] = useState(linha.operador_empilhadeira || "");
-  const [ajudante, setAjudante] = useState(linha.operador_ajudante || "");
+  const [empilhador, setEmpilhador] = useState(null);
+  const [ajudante, setAjudante] = useState(""); // "" | "nenhum" | { id, nome }
 
   // Assinatura - Etapa 1 (operador)
   const [checkOperador, setCheckOperador] = useState(false);
-  const [nomeOperador, setNomeOperador] = useState(linha.operador_empilhadeira || "");
+  const [nomeOperador, setNomeOperador] = useState(null);
 
   // Assinatura - Etapa 2 (ajudante)
   const [checkAjudante, setCheckAjudante] = useState(false);
-  const [nomeAjudante, setNomeAjudante] = useState(linha.operador_ajudante || "");
+  const [nomeAjudante, setNomeAjudante] = useState(null);
 
   // Assinatura - Etapa 3 (líder — somente admin)
   const [checkLider, setCheckLider] = useState(false);
-  const [nomeLider, setNomeLider] = useState(currentUser?.full_name || "");
+  const [nomeLider, setNomeLider] = useState(null);
 
   // Ocorrência
   const [ocorrenciaDesc, setOcorrenciaDesc] = useState("");
   const [ocorrenciaTipo, setOcorrenciaTipo] = useState("Problema");
   const [ocorrenciaFuncao, setOcorrenciaFuncao] = useState("Empilhador");
-  const [ocorrenciaRegistradoPor, setOcorrenciaRegistradoPor] = useState("");
+  const [ocorrenciaRegistradoPor, setOcorrenciaRegistradoPor] = useState(null);
   const [notificarLider, setNotificarLider] = useState(false);
 
   const invalidate = () => {
@@ -94,6 +90,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
     onSuccess: async (ocorrencia) => {
       setShowOcorrenciaModal(false);
       setOcorrenciaDesc("");
+      setOcorrenciaRegistradoPor(null);
       queryClient.invalidateQueries({ queryKey: ["empilha-ocorrencias"] });
       // Notificar admin por email se marcado
       if (notificarLider && ocorrencia?.id) {
@@ -103,19 +100,20 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
   });
 
   const handleIniciar = () => {
-    if (!empilhador) return;
+    if (!empilhador?.id) return;
     const now = format(new Date(), "HH:mm");
-    const opObj = operators?.find(o => o.nome === empilhador);
-    const ajudObj = ajudante && ajudante !== "nenhum" ? operators?.find(o => o.nome === ajudante) : null;
+    const ajud = ajudante && ajudante !== "nenhum" ? ajudante : null;
     updateMutation.mutate({
       status: "Em Andamento",
       hora_inicio: linha.hora_inicio || now,
-      operador_empilhadeira: empilhador,
-      operador_empilhadeira_id: opObj ? opObj.id : null,
-      operador_ajudante: ajudante === "nenhum" ? null : (ajudante || null),
-      operador_ajudante_id: ajudObj ? ajudObj.id : null,
+      operador_empilhadeira: empilhador.nome,
+      operador_empilhadeira_id: empilhador.id,
+      operador_ajudante: ajud ? ajud.nome : null,
+      operador_ajudante_id: ajud ? ajud.id : null,
     });
     setShowIniciarModal(false);
+    setEmpilhador(null);
+    setAjudante("");
   };
 
   const handlePausar = () => updateMutation.mutate({ status: "Pausado", hora_pausa: format(new Date(), "HH:mm") });
@@ -133,9 +131,9 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
       tempo_pausado: minsToHHMM(pausadoMins),
       status_assinatura: "Pendente",
     });
-    // Preparar modal de assinatura
-    setNomeOperador(linha.operador_empilhadeira || empilhador || "");
-    setNomeAjudante(linha.operador_ajudante || ajudante || "");
+    // Preparar modal de assinatura (quem assina é escolhido na lista)
+    setNomeOperador(null);
+    setNomeAjudante(null);
     setCheckOperador(false);
     setCheckAjudante(false);
     setCheckLider(false);
@@ -143,14 +141,14 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
     setShowAssinaturaModal(true);
   };
 
-  const temAjudante = (linha.operador_ajudante || ajudante) && (linha.operador_ajudante || ajudante) !== "nenhum";
+  const temAjudante = Boolean(linha.operador_ajudante) && linha.operador_ajudante !== "nenhum";
 
   const handleConfirmarEtapa1 = () => {
-    if (!checkOperador) return;
+    if (!checkOperador || !nomeOperador) return;
     const now = format(new Date(), "HH:mm");
     updateMutation.mutate({
       assinatura_operador: true,
-      assinatura_operador_nome: nomeOperador,
+      assinatura_operador_nome: nomeOperador?.nome,
       assinatura_operador_hora: now,
     });
     if (temAjudante) {
@@ -166,11 +164,11 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
   };
 
   const handleConfirmarEtapa2 = () => {
-    if (!checkAjudante) return;
+    if (!checkAjudante || !nomeAjudante) return;
     const now = format(new Date(), "HH:mm");
     updateMutation.mutate({
       assinatura_ajudante: true,
-      assinatura_ajudante_nome: nomeAjudante,
+      assinatura_ajudante_nome: nomeAjudante?.nome,
       assinatura_ajudante_hora: now,
       status_assinatura: "Parcial",
     });
@@ -183,7 +181,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
     const now = format(new Date(), "HH:mm");
     updateMutation.mutate({
       assinatura_lider: true,
-      assinatura_lider_nome: nomeLider,
+      assinatura_lider_nome: nomeLider?.nome,
       assinatura_lider_hora: now,
       status_assinatura: "Completo",
     });
@@ -196,7 +194,8 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
       linha_id: linha.id,
       tipo: ocorrenciaTipo,
       descricao: ocorrenciaDesc,
-      registrado_por: ocorrenciaRegistradoPor,
+      registrado_por: ocorrenciaRegistradoPor?.nome,
+      registrado_por_id: ocorrenciaRegistradoPor?.id,
       registrado_por_funcao: ocorrenciaFuncao,
       data: format(new Date(), "yyyy-MM-dd"),
       hora: format(new Date(), "HH:mm"),
@@ -301,7 +300,7 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
               {/* Botão assinar líder — visível para admin quando líder ainda não assinou */}
               {linha.status === "Concluído" && !linha.assinatura_lider && isAdmin && (
                 <Button size="sm" variant="outline" className="border-marca text-marca hover:bg-marca-suave" onClick={() => {
-                  setNomeLider(currentUser?.full_name || "");
+                  setNomeLider(null);
                   setCheckLider(false);
                   setEtapaAssinatura(ETAPA_CONCLUIDO);
                   setShowAssinaturaModal(true);
@@ -312,8 +311,8 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
               {/* Botão assinar operador — quando operador ainda não assinou */}
               {linha.status === "Concluído" && !linha.assinatura_operador && (
                 <Button size="sm" variant="outline" onClick={() => {
-                  setNomeOperador(linha.operador_empilhadeira || "");
-                  setNomeAjudante(linha.operador_ajudante || "");
+                  setNomeOperador(null);
+                  setNomeAjudante(null);
                   setCheckOperador(false);
                   setCheckAjudante(false);
                   setEtapaAssinatura(ETAPA_OPERADOR);
@@ -332,25 +331,22 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
         <DialogContent>
           <DialogHeader><DialogTitle>Iniciar Movimentação</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Operador Empilhadeira *</Label>
-              <Select value={empilhador} onValueChange={setEmpilhador}>
-                <SelectTrigger><SelectValue placeholder="Selecione o operador" /></SelectTrigger>
-                <SelectContent>
-                  {operators.filter(o => o.ativo).map(o => <SelectItem key={o.id} value={o.nome}>{o.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Operador Ajudante</Label>
-              <Select value={ajudante} onValueChange={setAjudante}>
-                <SelectTrigger><SelectValue placeholder="Selecione o ajudante" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nenhum">Nenhum</SelectItem>
-                  {operators.filter(o => o.ativo && o.nome !== empilhador).map(o => <SelectItem key={o.id} value={o.nome}>{o.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            <SelectOperador
+              id={`empilhador-${linha.id}`}
+              rotulo="Operador Empilhadeira"
+              obrigatorio
+              valor={empilhador?.id}
+              aoEscolher={setEmpilhador}
+            />
+            <SelectOperador
+              id={`ajudante-${linha.id}`}
+              rotulo="Operador Ajudante"
+              placeholder="Selecione o ajudante"
+              opcaoNenhum="Nenhum"
+              excluir={empilhador ? [empilhador.id] : []}
+              valor={ajudante === "nenhum" ? "nenhum" : ajudante?.id}
+              aoEscolher={(op) => setAjudante(op || "")}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowIniciarModal(false)}>Cancelar</Button>
@@ -378,15 +374,12 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                   <p><strong>Quantidade:</strong> {linha.quantidade || "—"} un.</p>
                   <p><strong>Local:</strong> {linha.rua_torre || "—"}</p>
                 </div>
-                <div className="space-y-2">
-                  <Label>Operador *</Label>
-                  <Select value={nomeOperador} onValueChange={setNomeOperador}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o operador" /></SelectTrigger>
-                    <SelectContent>
-                      {operators.filter(o => o.ativo).map(o => <SelectItem key={o.id} value={o.nome}>{o.nome}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <SelectOperador
+                  id={`assina-operador-${linha.id}`}
+                  obrigatorio
+                  valor={nomeOperador?.id}
+                  aoEscolher={setNomeOperador}
+                />
                 <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-token hover:bg-ok-suave transition-colors">
                   <input type="checkbox" checked={checkOperador} onChange={e => setCheckOperador(e.target.checked)} className="w-5 h-5 mt-0.5" />
                   <span className="text-sm font-medium text-tinta-media">Confirmo que realizei esta movimentação</span>
@@ -410,15 +403,14 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-2">
-                <div className="space-y-2">
-                  <Label>Ajudante *</Label>
-                  <Select value={nomeAjudante} onValueChange={setNomeAjudante}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o ajudante" /></SelectTrigger>
-                    <SelectContent>
-                      {operators.filter(o => o.ativo).map(o => <SelectItem key={o.id} value={o.nome}>{o.nome}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <SelectOperador
+                  id={`assina-ajudante-${linha.id}`}
+                  rotulo="Ajudante"
+                  placeholder="Selecione o ajudante"
+                  obrigatorio
+                  valor={nomeAjudante?.id}
+                  aoEscolher={setNomeAjudante}
+                />
                 <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-token hover:bg-marca-suave transition-colors">
                   <input type="checkbox" checked={checkAjudante} onChange={e => setCheckAjudante(e.target.checked)} className="w-5 h-5 mt-0.5" />
                   <span className="text-sm font-medium text-tinta-media">Confirmo que participei desta movimentação</span>
@@ -446,17 +438,14 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
               <div className="space-y-4 py-2">
                 {isAdmin ? (
                   <>
-                    <div className="space-y-2">
-                      <Label>Nome do Líder *</Label>
-                      <Select value={nomeLider} onValueChange={setNomeLider}>
-                        <SelectTrigger><SelectValue placeholder="Selecione o líder" /></SelectTrigger>
-                        <SelectContent>
-                          {(admins || []).map(a => (
-                            <SelectItem key={a.id} value={a.full_name}>{a.full_name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <SelectOperador
+                      id={`assina-lider-${linha.id}`}
+                      rotulo="Líder"
+                      placeholder="Selecione o líder"
+                      obrigatorio
+                      valor={nomeLider?.id}
+                      aoEscolher={setNomeLider}
+                    />
                     <label className="flex items-start gap-3 cursor-pointer p-3 border rounded-token hover:bg-atencao-suave transition-colors">
                       <input type="checkbox" checked={checkLider} onChange={e => setCheckLider(e.target.checked)} className="w-5 h-5 mt-0.5" />
                       <span className="text-sm font-medium text-tinta-media">Confirmo e assino como líder esta linha</span>
@@ -498,15 +487,14 @@ export default function EmpilhaLinhaCard({ linha, operators, programacaoId, curr
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Registrado por</Label>
-              <Select value={ocorrenciaRegistradoPor} onValueChange={setOcorrenciaRegistradoPor}>
-                <SelectTrigger><SelectValue placeholder="Selecione quem registra" /></SelectTrigger>
-                <SelectContent>
-                  {operators.filter(o => o.ativo).map(o => <SelectItem key={o.id} value={o.nome}>{o.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            <SelectOperador
+              id={`ocorrencia-por-${linha.id}`}
+              rotulo="Registrado por"
+              placeholder="Selecione quem registra"
+              obrigatorio
+              valor={ocorrenciaRegistradoPor?.id}
+              aoEscolher={setOcorrenciaRegistradoPor}
+            />
             <div className="space-y-2">
               <Label>Função</Label>
               <Select value={ocorrenciaFuncao} onValueChange={setOcorrenciaFuncao}>

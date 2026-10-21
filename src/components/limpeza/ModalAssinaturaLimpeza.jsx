@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import SelectOperador from "@/components/operadores/SelectOperador";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle, PenLine, Clock } from "lucide-react";
@@ -44,7 +45,8 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
   const [assinaturas, setAssinaturas] = useState([]);
   const [assinandoId, setAssinandoId] = useState(null); // qual responsável está assinando agora
   const [confirmado, setConfirmado] = useState(false);
-  const [nomeLider, setNomeLider] = useState("");
+  // O líder é escolhido na lista de operadores, sem pré-preenchimento.
+  const [nomeLider, setNomeLider] = useState(null);
 
   useEffect(() => {
     if (!programacao) return;
@@ -52,7 +54,7 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
     setAssinaturas(lista);
     setConfirmado(false);
     setAssinandoId(null);
-    setNomeLider(currentUser?.full_name || "");
+    setNomeLider(null);
     // Se todos responsáveis já assinaram, ir direto para etapa do líder
     const todosAssinaram = lista.length > 0 && lista.every(a => a.assinado);
     setEtapa(todosAssinaram ? "lider" : "responsaveis");
@@ -91,7 +93,7 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
     const hora = format(new Date(), "HH:mm");
     mutation.mutate({
       assinatura_lider: true,
-      assinatura_lider_nome: nomeLider,
+      assinatura_lider_nome: nomeLider?.nome,
       assinatura_lider_hora: hora,
       status_assinatura: "Completo",
     }, { onSuccess: onClose });
@@ -191,10 +193,14 @@ export default function ModalAssinaturaLimpeza({ open, onClose, programacao, cur
               </div>
             ) : isAdmin ? (
               <>
-                <div>
-                  <Label>Nome do líder</Label>
-                  <Input value={nomeLider} onChange={e => setNomeLider(e.target.value)} placeholder="Nome do líder..." />
-                </div>
+                <SelectOperador
+                  id="assina-lider-limpeza"
+                  rotulo="Líder"
+                  placeholder="Selecione o líder"
+                  obrigatorio
+                  valor={nomeLider?.id}
+                  aoEscolher={setNomeLider}
+                />
                 <DialogFooter>
                   <Button variant="outline" onClick={onClose}>Fechar</Button>
                   <Button className="bg-ok hover:bg-ok" onClick={handleAssinarLider}

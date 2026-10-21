@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
-import SelecionarOperadorModal from "@/components/auth/SelecionarOperadorModal";
 import MenuLateral from "@/components/casca/MenuLateral";
 
 /**
@@ -37,8 +36,7 @@ const ORDEM_GRUPOS = ["Acompanhar", "Operação", "Cadastros"];
 
 export default function Layout({ children }) {
   const location = useLocation();
-  const { user, logout, currentOperator } = useAuth();
-  const [modalOperadorAberto, setModalOperadorAberto] = useState(false);
+  const { user, logout } = useAuth();
   const [gavetaAberta, setGavetaAberta] = useState(false);
   const rawRole = user?.role || "operator";
   const role = rawRole === "user" ? "operator" : rawRole;
@@ -110,9 +108,8 @@ export default function Layout({ children }) {
   }
 
   const propsMenu = {
-    grupos, role, user, currentOperator, contadorDe, contadoresFalharam,
+    grupos, role, user, contadorDe, contadoresFalharam,
     urlAtual: pathnameLower,
-    aoTrocarOperador: () => setModalOperadorAberto(true),
     aoSair: logout,
   };
 
@@ -158,12 +155,6 @@ export default function Layout({ children }) {
                   Operações Interlub
                 </h1>
               </div>
-              {role === "operator" && currentOperator && (
-                <span className="text-xs bg-marca-suave text-marca font-bold px-2.5 py-1
-                                 rounded-full flex-shrink-0 truncate max-w-[40%]">
-                  {currentOperator.nome}
-                </span>
-              )}
             </div>
           </header>
 
@@ -202,10 +193,6 @@ export default function Layout({ children }) {
         </div>
       )}
 
-      <SelecionarOperadorModal
-        abertoManualmente={modalOperadorAberto}
-        aoFechar={() => setModalOperadorAberto(false)}
-      />
     </>
   );
 }

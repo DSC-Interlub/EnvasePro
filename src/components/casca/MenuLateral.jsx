@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Factory, KeyRound, LogOut, RefreshCw, ShieldAlert, UserCheck } from "lucide-react";
+import { Factory, KeyRound, LogOut, ShieldAlert } from "lucide-react";
 
 /**
  * O menu lateral da direção "Fluxo".
@@ -75,8 +75,8 @@ function Item({ item, ativo, contador, modo, aoNavegar }) {
 }
 
 export default function MenuLateral({
-  grupos, role, user, currentOperator, contadorDe, contadoresFalharam,
-  modo = "completo", aoNavegar, aoTrocarOperador, aoSair, urlAtual,
+  grupos, role, user, contadorDe, contadoresFalharam,
+  modo = "completo", aoNavegar, aoSair, urlAtual,
 }) {
   const soIcone = modo === "rail";
 
@@ -161,32 +161,6 @@ export default function MenuLateral({
       )}
 
       <div className="flex-1 min-h-3" />
-
-      {/* --------------------------------------------- operador do turno */}
-      {role === "operator" && !soIcone && (
-        <div className="rounded-token bg-fundo p-3 space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-texto-fraco uppercase flex items-center gap-1">
-              <UserCheck className="w-3 h-3 text-marca" aria-hidden="true" /> Operador do turno
-            </span>
-            <button
-              type="button"
-              onClick={aoTrocarOperador}
-              className="press foco-fluxo min-h-[48px] px-2 rounded-token-sm text-[11px]
-                         font-bold text-marca hover:bg-marca-suave flex items-center gap-1"
-              title="Trocar operador ativo"
-            >
-              <RefreshCw className="w-3 h-3" aria-hidden="true" /> Trocar
-            </button>
-          </div>
-          <p className="text-sm font-bold leading-tight text-tinta [overflow-wrap:anywhere]">
-            {currentOperator?.nome || "Nenhum selecionado"}
-          </p>
-          {currentOperator?.sala && (
-            <p className="text-[11px] font-semibold text-texto-fraco">Sala: {currentOperator.sala}</p>
-          )}
-        </div>
-      )}
 
       {/* ------------------------------------------------ conta e sair */}
       {soIcone ? (
