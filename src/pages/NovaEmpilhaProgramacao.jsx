@@ -273,7 +273,7 @@ export default function NovaEmpilhaProgramacao() {
           className="w-full bg-atencao hover:bg-atencao text-white text-lg py-6"
         >
           <Upload className="w-5 h-5 mr-2" />
-          {criarMutation.isPending ? "Criando..." : `Criar Programação${linhas.length > 0 ? ` com ${linhas.length} linhas` : ""}`}
+          {criarMutation.isPending ? "Criando..." : `Criar Programação${linhas.length > 0 ? ` com ${linhas.length} ${linhas.length === 1 ? "linha" : "linhas"}` : ""}`}
         </Button>
 
         {!empilhadeiraId && (
