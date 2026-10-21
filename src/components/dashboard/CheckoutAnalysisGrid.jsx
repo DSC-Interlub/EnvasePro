@@ -65,8 +65,8 @@ export default function CheckoutAnalysisGrid({ items, programacoes, isLoading })
     );
   }
 
-  const operadorTempo = getOperadorTempoAnalysis();
-  const operadorQuantidade = getOperadorQuantidadeAnalysis();
+  const operadorTempo = getOperadorTempoMedio();
+  const operadorQuantidade = getOperadorQuantidade();
   const pedidosCriticos = getPedidosCriticos();
   const pedidosAtrasados = getPedidosAtrasados();
 
