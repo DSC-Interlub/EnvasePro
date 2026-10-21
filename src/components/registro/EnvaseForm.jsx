@@ -9,6 +9,7 @@ import { Play, Square, Check, Package, Hash, ClipboardList } from "lucide-react"
 import { SectionCard, TecladoNumerico } from "@/components/fluxo";
 import BuscaProduto from "./BuscaProduto";
 import { format } from "date-fns";
+import { paraData } from "@/lib/datas";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import SelectOperador from "@/components/operadores/SelectOperador";
@@ -142,14 +143,17 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
     if (isSubmitting) return;
 
     // Verificar se tem os campos mínimos necessários E tem início
-    if (formData.inicio && formData.sala && formData.operador) {
+    // O produto também: sem ele o banco recusa (codigo_produto é obrigatório) e o
+    // autosave deixava um 400 no console a cada mudança, se o operador marcasse o
+    // início antes de escolher o produto (achado pela rodada por clique, 21/10/2026).
+    if (formData.inicio && formData.sala && formData.operador && formData.codigo_produto) {
       console.log('🚀 Iniciando auto-save porque início foi definido:', formData.inicio);
       
       const dataToSave = {
         sala: formData.sala,
         data: formData.data,
-        mes: formData.mes || (formData.data ? new Date(formData.data).getMonth() + 1 : undefined),
-        ano: formData.ano || (formData.data ? new Date(formData.data).getFullYear() : undefined),
+        mes: formData.mes || (formData.data ? paraData(formData.data).getMonth() + 1 : undefined),
+        ano: formData.ano || (formData.data ? paraData(formData.data).getFullYear() : undefined),
         op: formData.op || "",
         operador: formData.operador,
         operator_id: formData.operator_id || null,
@@ -244,8 +248,8 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
       const finalDataForUpdate = {
         sala: formData.sala,
         data: formData.data,
-        mes: formData.mes || (formData.data ? new Date(formData.data).getMonth() + 1 : undefined),
-        ano: formData.ano || (formData.data ? new Date(formData.data).getFullYear() : undefined),
+        mes: formData.mes || (formData.data ? paraData(formData.data).getMonth() + 1 : undefined),
+        ano: formData.ano || (formData.data ? paraData(formData.data).getFullYear() : undefined),
         op: formData.op || "",
         operador: formData.operador,
         operator_id: formData.operator_id || null,
@@ -307,7 +311,9 @@ export default function EnvaseForm({ products, embalagens, operators, onSubmit, 
 
   useEffect(() => {
     if (formData.data) {
-      const date = new Date(formData.data);
+      // paraData: "AAAA-MM-DD" no horário LOCAL. new Date("AAAA-MM-DD") é meia-noite
+      // UTC — em Brasília, o dia anterior: no dia 1º gravava o mês anterior.
+      const date = paraData(formData.data);
       setFormData(prev => ({
         ...prev,
         mes: date.getMonth() + 1,

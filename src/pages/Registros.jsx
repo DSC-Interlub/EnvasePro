@@ -7,6 +7,7 @@ import { Plus, Factory, Clock, CheckCircle, Package, List } from "lucide-react";
 import { formatarData } from "@/lib/datas";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useAuth } from "@/lib/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import RecordDetails from "../components/registros/RecordDetails";
@@ -18,6 +19,9 @@ import { PageHeader, ListaCard, ChipsFiltro, EmptyState, StatusPill } from "@/co
 import { useEhCelular } from "../components/listas/useEhCelular";
 
 export default function Registros() {
+  // Excluir registro de envase é só do admin (o banco recusa o operador).
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all"); // "all", "bio", "industrial", "finalizados"
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -141,7 +145,7 @@ export default function Registros() {
       descricao={`O registro da OP ${record.op} — ${record.descricao_produto} — será excluído. Esta ação não pode ser desfeita.`}
       onVer={() => handleView(record)}
       onEditar={() => handleEdit(record)}
-      onExcluir={() => handleDelete(record.id)}
+      onExcluir={isAdmin ? () => handleDelete(record.id) : undefined}
       excluindo={deleteMutation.isPending}
       extras={record.sala === "Bio" && record.termino && !record.material_retirado && (
         <Button

@@ -2,6 +2,7 @@ import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { AlertTriangle, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { paraData } from "@/lib/datas";
 import {
   ChartCard, SectionCard, EmptyState, CORES_GRAFICO, EIXO, GRADE, TOOLTIP, RAIO_BARRA,
 } from "@/components/fluxo";
@@ -38,7 +39,7 @@ export default function CheckoutAnalysisGrid({ items, programacoes, isLoading })
   const getPedidosAtrasados = () => {
     return items
       .filter(i => i.finalizado_fora_do_prazo)
-      .sort((a, b) => new Date(b.data_finalizacao_real) - new Date(a.data_finalizacao_real))
+      .sort((a, b) => (paraData(b.data_finalizacao_real) || 0) - (paraData(a.data_finalizacao_real) || 0))
       .slice(0, 10);
   };
 
@@ -64,8 +65,8 @@ export default function CheckoutAnalysisGrid({ items, programacoes, isLoading })
     );
   }
 
-  const operadorTempo = getOperadorTempoAnalysis();
-  const operadorQuantidade = getOperadorQuantidadeAnalysis();
+  const operadorTempo = getOperadorTempoMedio();
+  const operadorQuantidade = getOperadorQuantidade();
   const pedidosCriticos = getPedidosCriticos();
   const pedidosAtrasados = getPedidosAtrasados();
 
@@ -130,7 +131,7 @@ export default function CheckoutAnalysisGrid({ items, programacoes, isLoading })
                 </div>
                 {item.data_saida && (
                   <span className="num flex-none rounded-full bg-cartao px-3 py-1 text-xs font-bold text-texto-fraco">
-                    saída {format(new Date(item.data_saida), "dd/MM")}
+                    saída {format(paraData(item.data_saida), "dd/MM")}
                   </span>
                 )}
               </li>
@@ -159,13 +160,13 @@ export default function CheckoutAnalysisGrid({ items, programacoes, isLoading })
                     {programacao && (
                       <div className="flex gap-1">
                         <dt>Programado:</dt>
-                        <dd className="num">{format(new Date(programacao.data_programada), "dd/MM/yyyy")}</dd>
+                        <dd className="num">{format(paraData(programacao.data_programada), "dd/MM/yyyy")}</dd>
                       </div>
                     )}
                     {item.data_finalizacao_real && (
                       <div className="flex gap-1">
                         <dt>Finalizado:</dt>
-                        <dd className="num">{format(new Date(item.data_finalizacao_real), "dd/MM/yyyy")}</dd>
+                        <dd className="num">{format(paraData(item.data_finalizacao_real), "dd/MM/yyyy")}</dd>
                       </div>
                     )}
                   </dl>

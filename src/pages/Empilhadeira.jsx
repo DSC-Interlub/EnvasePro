@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
 import { format, differenceInDays, parseISO, addDays } from "date-fns";
+import { paraData } from "@/lib/datas";
 import { useAuth } from "@/lib/AuthContext";
 import FiltroPeriodoEmpilha from "../components/empilhadeira/FiltroperiodoEmpilha";
 import BlocosIndicadores from "../components/empilhadeira/BlocosIndicadores";
@@ -108,7 +109,7 @@ export default function Empilhadeira() {
     mutationFn: async (data) => {
       const manut = await base44.entities.EmpilhadeiraManutencao.create({ ...data, empilhadeira_id: empilhadeira?.id || "default" });
       if (empilhadeira) {
-        const proxima = format(addDays(new Date(data.data_manutencao), empilhadeira.intervalo_manutencao_dias || 90), "yyyy-MM-dd");
+        const proxima = format(addDays(paraData(data.data_manutencao), empilhadeira.intervalo_manutencao_dias || 90), "yyyy-MM-dd");
         await base44.entities.EmpilhadeiraConfig.update(empilhadeira.id, { data_ultima_manutencao: data.data_manutencao, data_proxima_manutencao: proxima });
       }
       return manut;
@@ -290,12 +291,14 @@ export default function Empilhadeira() {
                 <VazioFluxo
                   icone={Warehouse}
                   titulo="Nenhuma programação neste período"
-                  legenda="Ajuste o período acima ou crie uma programação."
-                  acao={
+                  // Criar programação é tela de admin: o operador não vê um botão
+                  // que o levaria a "acesso restrito".
+                  legenda={isAdmin ? "Ajuste o período acima ou crie uma programação." : "Ajuste o período acima. Programações são criadas por um administrador."}
+                  acao={isAdmin ? (
                     <Link to={createPageUrl("NovaEmpilhaProgramacao")}>
                       <Button><Plus className="h-4 w-4" aria-hidden="true" />Criar programação</Button>
                     </Link>
-                  }
+                  ) : null}
                 />
               ) : (
                 <ul className="flex min-w-0 flex-col gap-2.5">

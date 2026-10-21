@@ -48,6 +48,9 @@ export default function AcoesDaLinha({
           <Edit className="w-5 h-5" />
           <span className="ml-2 hidden sm:inline">Editar</span>
         </Button>
+        {/* Só quem pode excluir vê o botão (o banco só deixa admin apagar):
+            sem `onExcluir`, não há botão. */}
+        {onExcluir && (
         <Button
           variant="outline"
           onClick={() => setAberto(true)}
@@ -60,6 +63,7 @@ export default function AcoesDaLinha({
           <Trash2 className="w-5 h-5" />
           <span className="ml-2 hidden sm:inline">Excluir</span>
         </Button>
+        )}
       </div>
 
       <AlertDialog open={aberto} onOpenChange={setAberto}>

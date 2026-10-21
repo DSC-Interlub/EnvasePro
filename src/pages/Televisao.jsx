@@ -5,7 +5,7 @@ import {
   MolduraTV, NumeroTV, MetaTV, StatusTV, PainelImportacoes, GradeOperacoes, usePainelTV, u,
 } from "@/components/fluxo/tv";
 import { format } from "date-fns";
-import { formatarData } from '@/lib/datas';
+import { formatarData, paraData } from '@/lib/datas';
 
 /* ===================== UTILITÁRIOS ===================== */
 function calcElapsed(startTime) {
@@ -354,7 +354,7 @@ export default function Televisao() {
 
   // Rodape: quatro situacoes, cada uma com ponto de cor E texto.
   const diasAteManutencao = empilhadeiraAtiva?.data_proxima_manutencao
-    ? Math.ceil((new Date(empilhadeiraAtiva.data_proxima_manutencao) - new Date()) / 86400000)
+    ? Math.ceil((paraData(empilhadeiraAtiva.data_proxima_manutencao) - new Date()) / 86400000)
     : null;
 
   const situacoes = [

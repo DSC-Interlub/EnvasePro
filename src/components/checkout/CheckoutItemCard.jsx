@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SelectOperador from "@/components/operadores/SelectOperador";
+import { useAuth } from "@/lib/AuthContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Play, Square, Save, Edit, Calendar, User, Package, Clock, AlertCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -15,6 +16,9 @@ import { StatusPill } from "@/components/fluxo";
 
 
 export default function CheckoutItemCard({ item, operators }) {
+  // Excluir o pedido é só do admin (o banco recusa o operador).
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const queryClient = useQueryClient();
 
   const [isEditing, setIsEditing] = useState(item.status === "Pendente" || item.status === "Em Andamento");
@@ -216,6 +220,7 @@ export default function CheckoutItemCard({ item, operators }) {
                 Marcar atraso
               </Button>
             )}
+            {isAdmin && (
             <Button
               variant="ghost"
               size="icon"
@@ -226,6 +231,7 @@ export default function CheckoutItemCard({ item, operators }) {
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
             </Button>
+            )}
           </div>
         </div>
 

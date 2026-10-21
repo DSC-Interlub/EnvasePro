@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChipsFiltro } from "@/components/fluxo";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { formatarData } from "@/lib/datas";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ChevronDown, ChevronUp, PenLine, CheckCircle, Clock, AlertTriangle, OctagonX, Wrench, Sparkles } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
@@ -213,7 +214,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="rounded-full bg-cartao px-2.5 py-0.5 text-[11px] font-extrabold text-atencao">{o.tipo}</span>
-                        <span className="text-xs text-texto-fraco">{o.data} {o.hora} — {o.registrado_por}</span>
+                        <span className="text-xs text-texto-fraco">{formatarData(o.data, "dd/MM/yyyy")} {String(o.hora || "").slice(0, 5)} — {o.registrado_por}</span>
                       </div>
                       <p className="text-sm text-tinta-media mt-1">{o.descricao}</p>
                     </div>
@@ -248,7 +249,7 @@ export default function PainelPendenciasAdmin({ linhas, ocorrencias, paradas, em
                     <OctagonX className="w-4 h-4 text-erro" />
                     <div>
                       <p className="font-medium text-erro text-sm">{p.tipo} — desde {p.hora_inicio}</p>
-                      <p className="text-xs text-texto-fraco">{p.data} · {p.descricao}</p>
+                      <p className="text-xs text-texto-fraco">{formatarData(p.data, "dd/MM/yyyy")} · {p.descricao}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

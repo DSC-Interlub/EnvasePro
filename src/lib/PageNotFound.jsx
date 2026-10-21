@@ -1,75 +1,35 @@
-import { useLocation } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Compass, Home } from "lucide-react";
 
-
-export default function PageNotFound({}) {
-    const location = useLocation();
-    const pageName = location.pathname.substring(1);
-
-    const { data: authData, isFetched } = useQuery({
-        queryKey: ['user'],
-        queryFn: async () => {
-            try {
-                const user = await base44.auth.me();
-                return { user, isAuthenticated: true };
-            } catch (error) {
-                return { user: null, isAuthenticated: false };
-            }
-        }
-    });
-    
-    return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-fundo">
-            <div className="max-w-md w-full">
-                <div className="text-center space-y-6">
-                    {/* 404 Error Code */}
-                    <div className="space-y-2">
-                        <h1 className="text-7xl font-light text-texto-apagado">404</h1>
-                        <div className="h-0.5 w-16 bg-trilha mx-auto"></div>
-                    </div>
-                    
-                    {/* Main Message */}
-                    <div className="space-y-3">
-                        <h2 className="text-2xl font-medium text-tinta">
-                            Page Not Found
-                        </h2>
-                        <p className="text-texto-fraco leading-relaxed">
-                            The page <span className="font-medium text-tinta-media">"{pageName}"</span> could not be found in this application.
-                        </p>
-                    </div>
-                    
-                    {/* Admin Note */}
-                    {isFetched && authData.isAuthenticated && authData.user?.role === 'admin' && (
-                        <div className="mt-8 p-4 bg-fundo rounded-token border border-borda">
-                            <div className="flex items-start space-x-3">
-                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-atencao-suave flex items-center justify-center mt-0.5">
-                                    <div className="w-2 h-2 rounded-full bg-atencao"></div>
-                                </div>
-                                <div className="text-left space-y-1">
-                                    <p className="text-sm font-medium text-tinta-media">Admin Note</p>
-                                    <p className="text-sm text-texto-fraco leading-relaxed">
-                                        This could mean that the AI hasn't implemented this page yet. Ask it to implement it in the chat.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* Action Button */}
-                    <div className="pt-6">
-                        <button 
-                            onClick={() => window.location.href = '/'} 
-                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-tinta-media bg-cartao border border-borda rounded-token hover:bg-fundo hover:border-borda transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
-                        >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                            Go Home
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
+/**
+ * Rota inexistente.
+ *
+ * Era a página da Base44: em inglês ("Page Not Found", "Go Home"), com uma nota
+ * ao admin pedindo para "a IA implementar a página", e uma consulta ao banco
+ * só para decidir se mostrava essa nota. Agora: português, padrão Fluxo, botão
+ * de 48 px e nenhuma requisição.
+ */
+export default function PageNotFound() {
+  const { pathname } = useLocation();
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-fundo p-4">
+      <div className="entra cartao-fluxo w-full max-w-[460px] p-8 text-center sm:p-10">
+        <span aria-hidden="true" className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-painel bg-marca-suave text-marca">
+          <Compass className="h-7 w-7" />
+        </span>
+        <p className="text-sm font-extrabold uppercase tracking-wide text-texto-fraco">Erro 404</p>
+        <h1 className="mt-1 text-[24px] font-extrabold leading-tight text-tinta">Página não encontrada</h1>
+        <p className="mt-2 text-sm font-semibold text-texto-fraco [overflow-wrap:anywhere]">
+          O endereço <span className="font-mono text-tinta-media">{pathname}</span> não existe neste sistema.
+        </p>
+        <Link
+          to="/"
+          className="press foco-fluxo mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-token bg-marca px-6 text-base font-bold text-white no-underline shadow-marca hover:bg-marca-forte"
+        >
+          <Home className="h-4 w-4" aria-hidden="true" /> Voltar ao início
+        </Link>
+      </div>
+    </main>
+  );
 }

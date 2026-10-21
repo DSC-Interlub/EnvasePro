@@ -296,6 +296,8 @@ async function main() {
   registrar('a lista tem os chips de filtro', quantosChips === 4, `${quantosChips} chips`);
 
   if (quantosChips === 4) {
+    // O chip mostra 0 até a lista chegar (5.800+ linhas paginadas): espera o número.
+    await esperarPor(async () => /[1-9]d*s*$/.test((await chips.first().innerText()).trim()), 20000);
     const textos = await chips.allInnerTexts();
     const numero = (t) => Number((t.match(/(\d+)\s*$/) || [0, '0'])[1]);
     const emAndamento = numero(textos[0]);
