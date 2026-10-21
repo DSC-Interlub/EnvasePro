@@ -20,8 +20,10 @@ export default function SectionCard({
       className={`entra cartao-fluxo flex flex-col min-w-0 ${className}`}
     >
       {(titulo || acoes) && (
-        <div className="flex flex-col gap-3 px-6 pt-5 pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
+        // Quebra a linha em vez de espremer: com ações largas (Limpeza, no
+        // tablet) o título encolhia até virar uma letra.
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-6 pt-5 pb-4">
+          <div className="flex min-w-[12rem] flex-1 items-center gap-2.5">
             {Icone && (
               <span aria-hidden="true"
                     className="w-9 h-9 rounded-token bg-marca-suave text-marca
@@ -40,7 +42,7 @@ export default function SectionCard({
               )}
             </div>
           </div>
-          {acoes && <div className="flex flex-wrap items-center gap-2 flex-shrink-0">{acoes}</div>}
+          {acoes && <div className="flex min-w-0 flex-wrap items-center gap-2">{acoes}</div>}
         </div>
       )}
 

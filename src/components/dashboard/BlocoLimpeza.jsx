@@ -262,7 +262,7 @@ export default function BlocoLimpeza({ currentUser, isAdmin }) {
     >
       {/* Resumo do período. "Aguard. líder" virou "Aguardando líder": a
           abreviação economizava quatro caracteres num cartão de 180px. */}
-      <div className="mb-4 grid min-w-0 grid-cols-2 gap-2.5 md:grid-cols-5">
+      <div className="mb-4 grid min-w-0 grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
         {[
           { rotulo: "Total", valor: filtradas.length, cor: "text-tinta" },
           { rotulo: "Concluídas", valor: concluidas.length, cor: "text-ok" },
