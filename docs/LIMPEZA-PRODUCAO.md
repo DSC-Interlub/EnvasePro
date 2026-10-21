@@ -87,10 +87,10 @@ sem nenhum erro**, e o primeiro protocolo é `000001`.
 
 **O que depende de cadastro para servir (com o banco vazio):**
 
-- **Operador fica TRAVADO**: o modal "Quem é você hoje?" mostra "Nenhum operador
-  ativo cadastrado no sistema." e não fecha. **Cadastre os operadores**
-  (Configurações → Operadores, ou restaure os 14 reais) **antes** de entregar a
-  conta de operador.
+- ~~Operador fica TRAVADO no modal "Quem é você hoje?"~~ — **resolvido em
+  20/10/2026**: o modal foi removido. O operador entra direto; sem operadores
+  cadastrados, as listas "Operador" das tarefas dizem "Nenhum operador
+  cadastrado" e nada sai de Pendente. **Cadastre os operadores** antes de usar.
 - Envase (`/NovoRegistro`): sem **produtos** e **embalagens**, a busca não acha nada.
 - Empilhadeira: manutenção e paradas usam a **empilhadeira cadastrada**
   (`/EmpilhadeiraConfig`).
