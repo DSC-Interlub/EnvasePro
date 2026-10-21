@@ -8,9 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Plus, Calendar, Package, CheckCircle, Filter, AlertCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { formatarData } from '@/lib/datas';
+import { useAuth } from "@/lib/AuthContext";
 import { PageHeader, StatCard, ListaCard, StatusPill, EmptyState } from "@/components/fluxo";
 
 export default function Checkout() {
+  // Excluir programação é só do admin (o banco recusa o operador).
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -229,6 +233,7 @@ export default function Checkout() {
 
                       <div className="flex flex-none items-center gap-2.5">
                         <StatusPill estado={prog.status} />
+                        {isAdmin && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -239,6 +244,7 @@ export default function Checkout() {
                         >
                           <Trash2 className="h-5 w-5" aria-hidden="true" />
                         </Button>
+                        )}
                       </div>
                     </li>
                   );
