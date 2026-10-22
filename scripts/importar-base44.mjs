@@ -77,7 +77,8 @@ const DECISOES_PADRAO = {
   apostrofo_exportador: 'manter',                // ou remover
   foto_inacessivel: 'manter_url_original',       // ou anular
   aliases_codigo_produto: {},                    // { "código no histórico": "código no cadastro" } (indicado pelo dono)
-  normalizar_codigo_produto: false,              // true: " ivp0736" → "IVP0736" quando o normalizado existe
+  normalizar_codigo_produto: false,
+  todos_operadores_ativos: false,                // true: todo operador entra ativo (inclusive os históricos)              // true: " ivp0736" → "IVP0736" quando o normalizado existe
 };
 const DECISOES = { ...DECISOES_PADRAO, ...(arg('decisoes') ? JSON.parse(fs.readFileSync(arg('decisoes'), 'utf8')) : {}) };
 {
@@ -90,6 +91,7 @@ const DECISOES = { ...DECISOES_PADRAO, ...(arg('decisoes') ? JSON.parse(fs.readF
     !ok(DECISOES.apostrofo_exportador, ['manter', 'remover']) && 'apostrofo_exportador',
     !ok(DECISOES.foto_inacessivel, ['manter_url_original', 'anular']) && 'foto_inacessivel',
     typeof DECISOES.normalizar_codigo_produto !== 'boolean' && 'normalizar_codigo_produto',
+    typeof DECISOES.todos_operadores_ativos !== 'boolean' && 'todos_operadores_ativos',
     DECISOES.operadores_historicos.length && !ok(DECISOES.sala_operador_historico, ['Bio', 'Industrial', 'Ambas']) && 'sala_operador_historico (obrigatória quando há operadores_historicos)',
   ].filter(Boolean);
   if (problemas.length) { console.error(`Decisões inválidas: ${problemas.join(', ')}`); process.exit(2); }
@@ -162,12 +164,12 @@ function resolverOperador(nome) {
 
 function criarOperadorHistorico(nome, criadoEm) {
   const id = uuidDerivado(`operador:${normalizarNome(nome)}`);
-  const rec = { id, nome: String(nome).trim(), matricula: null, sala: DECISOES.sala_operador_historico, ativo: false, foto_url: null, created_at: criadoEm, updated_at: criadoEm };
+  const rec = { id, nome: String(nome).trim(), matricula: null, sala: DECISOES.sala_operador_historico, ativo: DECISOES.todos_operadores_ativos, foto_url: null, created_at: criadoEm, updated_at: criadoEm };
   aceitos.operators.push(rec);
   registrarChaves('operators', rec);
   operadorPorNome.set(normalizarNome(nome), id);
   criados.operators = (criados.operators || 0) + 1;
-  avisos.push({ tabela: 'operators', id_original: '', tratamento: 'operador histórico criado (inativo)', detalhe: rec.nome });
+  avisos.push({ tabela: 'operators', id_original: '', tratamento: `operador histórico criado (${DECISOES.todos_operadores_ativos ? 'ativo' : 'inativo'})`, detalhe: rec.nome });
   return id;
 }
 
@@ -203,6 +205,10 @@ for (const [ent, tabela] of ENTIDADES) {
     if (!rec.id) erros.push(['id ausente ou inválido', 'id', idOrig]);
 
     // Tratamentos específicos (cada um só por decisão explícita; senão, quarentena).
+    if (tabela === 'operators' && DECISOES.todos_operadores_ativos && rec.ativo === false) {
+      rec.ativo = true;
+      avisos.push({ tabela, id_original: idOrig, tratamento: 'inativo na Base44 → ativo (decisão do dono)', detalhe: rec.nome });
+    }
     if (tabela === 'operators' && rec.sala == null && !erros.some((e) => e[1] === 'sala')) {
       if (['Bio', 'Industrial', 'Ambas'].includes(DECISOES.operador_sem_sala)) {
         rec.sala = DECISOES.operador_sem_sala;
@@ -310,9 +316,19 @@ for (const [ent, tabela] of ENTIDADES) {
   const checks = CHECKS.filter((k) => k.t === tabela);
   if (checks.length && restantes.length) {
     const ruins = new Map();
-    for (let i = 0; i < restantes.length; i += 2000) {
-      const lote = literalJson(restantes.slice(i, i + 2000));
-      const consulta = checks.map((k) => `select ${tabela}.id::text id, '${k.n}' regra from json_populate_recordset(null::public.${ident(tabela)}, ${lote}) as ${tabela} where not (${k.d.replace(/^CHECK\s*/, '').replace(/\s+NOT VALID$/, '')})`).join('\nunion all\n');
+    // Lotes por TAMANHO (~900 KB), e o lote vai UMA vez (CTE), não uma vez por regra:
+    // a API de gerenciamento recusa corpo acima de ~2,5–4 MB (413, medido em 22/10/2026).
+    const lotes = [];
+    let atual = []; let tam = 0;
+    for (const r of restantes) {
+      atual.push(r); tam += JSON.stringify(r).length;
+      if (tam > 900_000) { lotes.push(atual); atual = []; tam = 0; }
+    }
+    if (atual.length) lotes.push(atual);
+    for (const loteRegs of lotes) {
+      const lote = literalJson(loteRegs);
+      const consulta = `with dados as (select * from json_populate_recordset(null::public.${ident(tabela)}, ${lote}))\n`
+        + checks.map((k) => `select ${tabela}.id::text id, '${k.n}' regra from dados as ${tabela} where not (${k.d.replace(/^CHECK\s*/, '').replace(/\s+NOT VALID$/, '')})`).join('\nunion all\n');
       for (const r of banco.sql(consulta)) { if (!ruins.has(r.id)) ruins.set(r.id, []); ruins.get(r.id).push(r.regra); }
     }
     const def = Object.fromEntries(checks.map((k) => [k.n, k.d]));
@@ -526,11 +542,19 @@ if (!SO_VALIDAR) {
   }
   // Sequences: o próximo número gerado pelo banco é max+1 e não colide.
   for (const [tabela, p] of Object.entries(PROTOCOLOS)) {
-    const [r] = banco.sql(`select public.gerar_protocolo('${p.prefixo}', 'public.${p.sequence}') proximo`);
-    const num = Number(r.proximo.split('-').pop());
+    let r;
+    if (PRODUCAO) {
+      // Em produção, só leitura: o próximo valor sai do estado da sequence, sem consumir número.
+      const [e] = banco.sql(`select last_value::bigint v, is_called c from public.${p.sequence}`);
+      const prox = e.c ? Number(e.v) + 1 : Number(e.v);
+      r = { proximo: `${p.prefixo}-AAAA-${String(prox).padStart(6, '0')} (calculado)` };
+    } else {
+      [r] = banco.sql(`select public.gerar_protocolo('${p.prefixo}', 'public.${p.sequence}') proximo`);
+    }
+    const num = Number(r.proximo.split(' ')[0].split('-').pop());
     const [col] = banco.sql(`select count(*)::int n from public.${ident(tabela)} where ${ident(p.coluna)} like '%-${String(num).padStart(6, '0')}'`);
-    // devolve a sequence ao ponto certo (o teste consumiu um número)
-    banco.sql(maxProtocolo[tabela] > 0 ? `select setval('public.${p.sequence}', ${maxProtocolo[tabela]}, true)` : `select setval('public.${p.sequence}', 1, false)`);
+    // devolve a sequence ao ponto certo (no local, o teste consumiu um número)
+    if (!PRODUCAO) banco.sql(maxProtocolo[tabela] > 0 ? `select setval('public.${p.sequence}', ${maxProtocolo[tabela]}, true)` : `select setval('public.${p.sequence}', 1, false)`);
     verif.sequences.push({ tabela, maior_importado: maxProtocolo[tabela], proximo_gerado: r.proximo, esperado_numero: maxProtocolo[tabela] + 1, colide: col.n > 0, ok: num === maxProtocolo[tabela] + 1 && col.n === 0 });
   }
 }
@@ -553,7 +577,7 @@ fs.writeFileSync(path.join(SAIDA, 'relatorio.json'), JSON.stringify(relatorio, n
 // Resumo em linguagem simples.
 const L = [];
 L.push(`IMPORTAÇÃO ${SO_VALIDAR ? '(SÓ VALIDAÇÃO — nada gravado)' : ''} — ${MODO.toUpperCase()} — ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
-L.push(`Duração: ${duracao.toFixed(0)} s · chamadas ao banco: ${banco.chamadas}`);
+L.push(`Duração: ${duracao.toFixed(0)} s · chamadas ao banco: ${banco.chamadas} · repetições por falta de conexão: ${banco.repeticoes}`);
 L.push('\nCONTAGENS (exportado → quarentena → criados → esperado → no banco):');
 for (const c of verif.contagens) if (c.exportado || c.esperado || c.no_banco) L.push(`  ${c.confere === false ? 'DIVERGE' : c.confere ? 'ok     ' : '       '} ${c.tabela.padEnd(26)} ${String(c.exportado).padStart(6)} → ${String(c.quarentena).padStart(5)} → ${String(c.criados_pela_importacao).padStart(3)} → ${String(c.esperado).padStart(6)} → ${c.no_banco ?? '—'}`);
 const vazias = verif.contagens.filter((c) => !c.exportado).map((c) => c.entidade);

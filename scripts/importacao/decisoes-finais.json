@@ -1,0 +1,37 @@
+{
+  "_leia": "DECISÕES FINAIS do dono (22/10/2026), respondendo às perguntas do ensaio de 21/10/2026. Usar na carga de produção.",
+
+  "_aliases_operador": "Item 2: aplicar pela evidência de mesmo dia de edição do cadastro (Jorge 799 registros, Maike 11).",
+  "aliases_operador": { "Jorge": "Jorge Willian", "Maike": "Mike" },
+
+  "_operadores_historicos": "Item 2: Renan entra, e ATIVO.",
+  "operadores_historicos": ["Renan"],
+  "sala_operador_historico": "Ambas",
+
+  "_todos_operadores_ativos": "Item 2: TODOS os operadores ativos (Rodrigo e William estavam inativos na Base44). O dono corrige o resto manualmente depois.",
+  "todos_operadores_ativos": true,
+
+  "_operador_sem_sala": "Item 3.",
+  "operador_sem_sala": "Ambas",
+
+  "_checkout_concluido_sem_operador": "Item 4: os 12 itens ficam de fora.",
+  "checkout_concluido_sem_operador": "quarentena",
+
+  "_produto_inexistente": "Item 5: os 49 envases com produto fora do cadastro ficam de fora (idem os 3 com quantidade negativa e os 2 sem código, que caem pelas regras do banco).",
+  "produto_inexistente": "quarentena",
+  "aliases_codigo_produto": {},
+
+  "_duplicatas": "Item 6: fica o registro MAIS RECENTE (comportamento do importador); embalagem 6340 = 'Tambor 200 L'.",
+
+  "_checklist_sap_inexistente": "Item 8: ligação desfeita nos 38 checklists, número do pedido mantido.",
+  "checklist_sap_inexistente": "anular_referencia",
+
+  "_normalizar_codigo_produto": "Item 8: normalização dos 4 códigos (espaço/minúsculas).",
+  "normalizar_codigo_produto": true,
+
+  "_apostrofo_exportador": "Item 8: remover o apóstrofo dos tempos negativos.",
+  "apostrofo_exportador": "remover",
+
+  "_foto_inacessivel": "Item 8 (proposta aceita): não guardar URL da Base44.",
+  "foto_inacessivel": "anular"
+}

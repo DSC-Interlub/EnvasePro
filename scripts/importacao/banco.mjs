@@ -19,7 +19,23 @@ export function criarBanco({ producao }) {
     if (ref !== REF_PRODUCAO) throw new Error(`o projeto vinculado é ${ref}, não ${REF_PRODUCAO}`);
   }
   let chamadas = 0;
+  let repeticoes = 0;
+  // Repete SÓ quando a conexão nem abriu ("failed to connect"): o comando não
+  // chegou ao banco, então repetir não duplica nada. Qualquer outro erro
+  // (inclusive tempo esgotado DURANTE a execução) para a carga.
+  const SEM_CONEXAO = /failed to connect|could not connect|connection refused|ECONNREFUSED/i;
   function sql(texto) {
+    for (let tentativa = 1; ; tentativa += 1) {
+      try { return sqlUmaVez(texto); } catch (e) {
+        if (tentativa >= 4 || !SEM_CONEXAO.test(e.message)) throw e;
+        repeticoes += 1;
+        const espera = [0, 2000, 5000, 10000][tentativa];
+        console.log(`  (sem conexão com o banco; nova tentativa ${tentativa + 1}/4 em ${espera / 1000} s)`);
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, espera);
+      }
+    }
+  }
+  function sqlUmaVez(texto) {
     chamadas += 1;
     const tmp = path.join(os.tmpdir(), `importacao-${process.pid}-${Date.now()}-${chamadas}.sql`);
     fs.writeFileSync(tmp, texto);
@@ -37,7 +53,7 @@ export function criarBanco({ producao }) {
       fs.rmSync(tmp, { force: true });
     }
   }
-  return { sql, get chamadas() { return chamadas; } };
+  return { sql, get chamadas() { return chamadas; }, get repeticoes() { return repeticoes; } };
 }
 
 // Literal SQL seguro para JSON: dollar-quote com etiqueta que não aparece no texto.
