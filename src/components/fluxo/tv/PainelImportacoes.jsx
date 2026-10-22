@@ -128,13 +128,14 @@ export default function PainelImportacoes({ pedidos = [], carregando = false }) 
       </div>
 
       {proximas.length > 0 && (
-        <CartaoVidro atraso={0.35} className="min-h-0 flex-1 flex-col" style={{ padding: u(1.4) }}>
+        // A lista leva a fatia maior da altura: os 3 cartões de cima têm folga, e
+        // com 4+ documentos a lista era quem ficava sem espaço.
+        <CartaoVidro atraso={0.35} className="min-h-0 flex-[1.5] flex-col" style={{ padding: u(1.4) }}>
           <ListaTV
             titulo="Próximas importações"
             contagem={`${proximas.length} documento(s)`}
             carregando={carregando}
             vazio="Nenhuma importação prevista"
-            maximo={3}
             itens={proximas.map((d) => ({
               id: d.numero_documento,
               tom: d.data_chegada === hoje ? "ok" : "neutro",

@@ -22,6 +22,15 @@ const TOM_DO_NUMERO = {
   marca: "text-marca",
 };
 
+/** Classe de tamanho pelo número de caracteres do valor (cabe num cartão de ~200px). */
+export function tamanhoDoNumero(valor) {
+  const n = String(valor ?? "").length;
+  if (n <= 5) return "text-[48px] lg:text-[60px]";
+  if (n <= 7) return "text-[40px] lg:text-[46px]";
+  if (n <= 9) return "text-[32px] lg:text-[36px]";
+  return "text-[26px] lg:text-[30px]";
+}
+
 export default function StatCard({
   rotulo, valor, legenda, icone: Icone, tom = "neutro", destaque = false,
   variacao, atraso = 0, aoClicar, className = "",
@@ -56,7 +65,12 @@ export default function StatCard({
         )}
       </div>
 
-      <div className={`num mt-1.5 text-[48px] lg:text-[60px] font-extrabold leading-[1.05] ${corNumero}`}>
+      {/* O tamanho acompanha o comprimento do número: com o histórico real,
+          "12.571,3" em 60px passava da borda do cartão. Curtos continuam com
+          o tamanho do protótipo; nunca quebra no meio do número. */}
+      <div
+        className={`num mt-1.5 whitespace-nowrap font-extrabold leading-[1.05] ${tamanhoDoNumero(valor)} ${corNumero}`}
+      >
         {valor}
       </div>
 
