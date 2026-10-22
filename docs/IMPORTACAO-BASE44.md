@@ -218,3 +218,21 @@ entidades vazias no formato da Base44): registros já assinados ("Completo") ent
 (retenção até 2030 para NF de 2025) e protocolo `NFA-2025-…`; quarentena exatamente
 a plantada (domínio, data 30/02, operador desconhecido em linha concluída, FK,
 anexo corrompido / 21 MB / faltando / executável com extensão .png).
+
+## 11. Carga em PRODUÇÃO — 22/10/2026
+
+Autorizada por escrito pelo dono, com as decisões finais
+(`scripts/importacao/decisoes-finais.json`). Snapshot antes, verificado com
+restauração no banco local (24 OK): `C:\Users\kauan.pereira\EnvasePro-backups\prod_2026-10-22T07-57-35_PRE-CARGA-BASE44`.
+Produção conferida vazia imediatamente antes (0 linhas nas 22 tabelas, 0 arquivos).
+
+- Primeira tentativa: **parou antes de gravar** — `413 request entity too large` na
+  validação dos CHECKs (o lote ia uma vez por regra, ~7 MB). Medido o teto da API de
+  gerenciamento: **2,5 MB passa, 4 MB recusa**. Corrigido (lote único por consulta,
+  ~900 KB). Validação só leitura em produção (`--so-validar`) idêntica ao ensaio local.
+- Carga: **673 s (11min13s)**, 136 chamadas, 0 repetições. Verificação em produção:
+  contagens, somas (221.064,948 / 29.579), amostra campo a campo, 0 FK órfã, 0
+  duplicata, 48/48 notas de checklist, sequences em max+1 (conferidas só por leitura em
+  produção; o teste que gera número roda no local). 6/6 fotos abrem por URL assinada.
+- Em produção a verificação de sequence é só leitura (`last_value`), para não consumir
+  número.
