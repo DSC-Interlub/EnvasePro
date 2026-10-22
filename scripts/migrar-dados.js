@@ -27,11 +27,12 @@ if (fs.existsSync(envLocalPath)) {
   dotenv.config({ path: envLocalPath });
 } else {
   dotenv.config();
+}
 
 // Guard obrigatorio (CLAUDE.md Fase 0): aborta se o alvo nao for o Supabase local.
 // Precisa rodar DEPOIS do carregamento do ambiente e ANTES de criar o client.
+// (Estava dentro do else: só rodava quando NÃO havia .env.local.)
 enforceNonProductionGuard('migrar-dados');
-}
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;

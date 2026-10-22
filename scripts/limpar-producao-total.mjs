@@ -94,7 +94,9 @@ begin
   end if;
 
   select string_agg(format('public.%I', c.relname), ', ' order by c.relname) into lista
-    from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind in ('r','p');
+    from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind in ('r','p')
+     -- A auditoria de usuários é imutável por gatilho (recusa TRUNCATE) e fica.
+     and c.relname <> 'auditoria_usuarios';
   execute 'truncate table ' || lista || ' restart identity cascade';
 
   -- setval NÃO é transacional: o ROLLBACK do ensaio não o desfaz. Por isso só
@@ -107,7 +109,8 @@ begin
 
   -- Conferência dentro da transação: se sobrou qualquer linha, nada é gravado.
   select coalesce(sum((xpath('/row/n/text()', query_to_xml(format('select count(*) as n from public.%I', c.relname), false, true, '')))[1]::text::bigint), 0)
-    into restante from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind in ('r','p');
+    into restante from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind in ('r','p')
+     and c.relname <> 'auditoria_usuarios';
   if restante <> 0 then raise exception 'ABORTADO: sobraram % linhas em public', restante; end if;
   if (select count(*) from auth.users) <> 0 then raise exception 'ABORTADO: sobraram contas em auth.users'; end if;
   if (select count(*) from auth.sessions) + (select count(*) from auth.refresh_tokens) + (select count(*) from auth.identities) <> 0 then

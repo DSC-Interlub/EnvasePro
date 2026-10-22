@@ -1,0 +1,29 @@
+{
+  "_leia": "PROPOSTA do Claude a partir das evidências do export de 21/10/2026. O dono confirma ou muda cada item antes da carga em produção. Sem --decisoes, o importador usa o modo estrito (tudo em quarentena).",
+  "_aliases_operador": "Jorge → Jorge Willian: o nome muda exatamente em 28→29/04/2026, dia em que o cadastro foi editado. Maike → Mike: 'Maike' vai até 20/04, dia em que o cadastro 'Mike' foi corrigido.",
+  "aliases_operador": {
+    "Jorge": "Jorge Willian",
+    "Maike": "Mike"
+  },
+  "_operadores_historicos": "Renan: 62 envases entre 27/11 e 12/12/2025 e não está no cadastro. Entra como operador INATIVO para o histórico não perder o autor.",
+  "operadores_historicos": [
+    "Renan"
+  ],
+  "sala_operador_historico": "Ambas",
+  "_operador_sem_sala": "9 dos 13 operadores estão sem sala; todos têm envases nas DUAS salas.",
+  "operador_sem_sala": "Ambas",
+  "_checkout_concluido_sem_operador": "12 itens 'Concluído' sem operador. Mudar para 'Pendente' falsificaria o histórico (apareceriam como pendentes); a proposta é deixá-los na quarentena até o dono decidir.",
+  "checkout_concluido_sem_operador": "quarentena",
+  "_checklist_sap_inexistente": "38 de 48 checklists apontam para pedidos SAP que não vieram no export. A referência é anulada; o NÚMERO do pedido de compras continua gravado no checklist.",
+  "checklist_sap_inexistente": "anular_referencia",
+  "_produto_inexistente": "40 envases usam códigos fora do cadastro e SEM descrição; outros 9 têm descrição mas o código parece digitado errado (IVP07207101050, \"I\", \"20604\"...). Criar produto com código errado poluiria o catálogo: ficam na quarentena até o dono indicar o código certo em aliases_codigo_produto.",
+  "produto_inexistente": "quarentena",
+  "_apostrofo_exportador": "O exportador põe ' antes de valores que começam com '-' (ex.: '-0:-30) para planilhas não lerem como fórmula. Não faz parte do dado.",
+  "apostrofo_exportador": "remover",
+  "_foto_inacessivel": "Foto que não baixar ou não validar: não guardar a URL da Base44, que morre quando ela sair do ar.",
+  "foto_inacessivel": "anular",
+  "_normalizar_codigo_produto": "3 envases têm o código com espaço no começo ou em minúsculas (\" IVP073613220\", \"ivp073615020\"); normalizado, bate com o SINTAPLEX HS 2 BLANCA do cadastro.",
+  "normalizar_codigo_produto": true,
+  "_aliases_codigo_produto": "Preencher com o dono: { \"código digitado no envase\": \"código correto do cadastro\" }.",
+  "aliases_codigo_produto": {}
+}

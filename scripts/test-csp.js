@@ -14,7 +14,7 @@
  *
  * AJUSTE DECLARADO: a CSV de produção libera `https://*.supabase.co` em
  * `connect-src`. Como o teste roda contra o Supabase LOCAL
- * (`http://127.0.0.1:54421`), esse host é acrescentado só durante o teste.
+ * (`http://127.0.0.1:35421`), esse host é acrescentado só durante o teste.
  * Sem isso toda chamada ao banco viraria violação de mentira.
  *
  * Uso: npx vite build && node scripts/test-csp.js

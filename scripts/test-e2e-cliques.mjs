@@ -41,6 +41,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(APP)) { console.error(`Re
 const SAIDA = 'scratch/e2e-cliques';
 fs.rmSync(SAIDA, { recursive: true, force: true });
 fs.mkdirSync(SAIDA, { recursive: true });
+const MANTER = process.argv.includes('--manter');
 const SO = (process.argv.find((a) => a.startsWith('--so=')) || '').slice(5).split(',').filter(Boolean);
 // Cadastros cria o produto, a embalagem e os 2 operadores que os outros módulos usam.
 const rodar = (m) => !SO.length || SO.includes(m) || (m === 'cadastros' && SO.some((x) => !['login', 'erros', 'larguras', 'tvs', 'paineis'].includes(x)));
@@ -211,7 +212,10 @@ try {
       exigir(await esperarPor(async () => /Dashboard/.test(await h1(p)), 30000), `não chegou ao Dashboard (${await h1(p)})`);
     });
     await passo(p, 'Menu', 'admin vê os itens de admin e os contadores', async () => {
-      const menu = (await p.page.locator('nav:visible').allInnerTexts()).join('\n');
+      // Os itens de admin só entram quando o perfil chega (o papel vem do banco).
+      const lerMenu = async () => (await p.page.locator('nav:visible').allInnerTexts()).join('\n');
+      await esperarPor(async () => (await lerMenu()).includes('Configurações'), 15000);
+      const menu = await lerMenu();
       for (const item of ['Dashboard', 'Televisão', 'Painel Geral', 'Novo Registro', 'Todos os Registros', 'Check-out',
         'Empilhadeira', 'Recebimento', 'Checklist', 'Notas Fiscais', 'Configurações', 'Alterar minha senha']) {
         exigir(menu.includes(item), `o menu não tem "${item}"`);
@@ -1009,10 +1013,14 @@ try {
   // Padrão 'E2E' (todas as rodadas): uma rodada interrompida deixava operadores
   // que poluíam a lista das seguintes. Banco LOCAL apenas (trava no topo).
   // Ordem: quem referencia operador/produto antes (FKs ON DELETE RESTRICT).
-  for (const [t, col] of [['envase_records', 'op'], ['checkout_itens', 'numero_pedido'], ['checkout_programacoes', 'observacoes'],
+  // --manter: deixa os dados no banco local para olhar pela tela depois.
+  // A próxima rodada sem --manter apaga tudo que leva o marcador E2E.
+  if (MANTER) console.log(`
+--manter: os dados desta rodada (marcador ${M}) ficaram no banco local.`);
+  else for (const [t, col] of [['envase_records', 'op'], ['checkout_itens', 'numero_pedido'], ['checkout_programacoes', 'observacoes'],
     ['empilha_ocorrencias', 'descricao'], ['empilha_linhas', 'descricao_produto'], ['empilha_programacoes', 'observacoes'],
     ['empilhadeira_manutencoes', 'descricao'], ['nota_fiscal_arquivos', 'numero_nf'], ['notificacao_destinatarios', 'email'],
-    ['checklist_recebimentos', 'nome_fornecedor'], ['recebimento_participantes', 'operator_nome'], ['recebimentos', 'numero_nf'],
+    ['checklist_recebimentos', 'nome_fornecedor'], ['recebimento_participantes', 'operator_nome'], ['recebimentos', 'numero_documento'],
     ['recebimento_fornecedores', 'nome'], ['limpeza_programacoes', 'local_nome'], ['limpeza_locais', 'nome'], ['operators', 'nome'],
     ['products', 'codigo'], ['embalagens', 'codigo']]) {
     await svc.from(t).delete().like(col, '%E2E%').then(() => {}, () => {});
