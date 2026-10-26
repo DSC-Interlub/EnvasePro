@@ -38,7 +38,7 @@ const GRUPOS = {
     'test-leitor-codigo.js', 'test-listas-v1.js', 'test-tokens-fluxo.js', 'test-inactivity-timeout.js',
     'test-tv-authenticated.js', 'test-tv-paineis-ui.mjs', 'test-indicadores-ui.mjs',
     'test-nf-assinaturas-ui.mjs', 'test-gerenciar-usuarios-ui.mjs', 'test-sessao-revogada-ui.mjs',
-    'test-tv-layout.mjs', 'test-operador-por-tarefa.mjs',
+    'test-tv-layout.mjs', 'test-operador-por-tarefa.mjs', 'test-checkout-excluir-pendente.mjs',
     // Rodada por clique: serve a build de produção em 127.0.0.1:4180 (vite preview).
     'test-e2e-cliques.mjs',
   ],
