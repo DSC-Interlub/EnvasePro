@@ -45,7 +45,9 @@ if (!ENSAIO && ref !== REF) { console.error(`Recusado: o projeto vinculado é ${
 // usuários; remoção das metas; encerramento imediato de sessão).
 const AUTORIZADAS = ['20261013000001', '20261019000001', '20261019000002', '20261019000003',
   '20261019000004', '20261019000005', '20261019000006', '20261019000007', '20261019000008', '20261020000001',
-  '20261020000002', '20261020000003'];
+  '20261020000002', '20261020000003',
+  // 26/10/2026 — autorizada por escrito pelo dono ("você está autorizado"):
+  '20261026000001'];
 if (!ENSAIO && !AUTORIZADAS.includes(versao)) { console.error(`Recusado: ${versao} não está na autorização do dono`); process.exit(2); }
 
 const arquivo = fs.readdirSync('supabase/migrations').find((f) => f.startsWith(`${versao}_`));
@@ -89,6 +91,7 @@ const ESPERADO = {
   '20261020000001': { funcoes: [], indices: ['idx_auditoria_usuarios_criado_em', 'idx_auditoria_usuarios_ator_criado'], tabelas: [], extra: 'gestao' },
   '20261020000002': { funcoes: ['painel_televisao_empilha()', 'painel_televisao()'], indices: [], tabelas: [], extra: 'sem_metas' },
   '20261020000003': { funcoes: [], indices: [], tabelas: [], extra: 'sessao' },
+  '20261026000001': { funcoes: [], indices: [], tabelas: [], extra: 'excluir_pendente' },
 }[versao];
 
 let falhas = 0;
@@ -222,6 +225,14 @@ if (ESPERADO.extra === 'gestao') {
   }
   const a = consultar("select count(*)::int as n from public.user_profiles where role = 'admin'")[0];
   console.log(`  (admins no momento: ${a?.n})`);
+}
+if (ESPERADO.extra === 'excluir_pendente') {
+  const pol = consultar(`select polname, pg_get_expr(polqual, polrelid) as expr, polroles::regrole[]::text as papeis
+    from pg_policy where polrelid = 'public.checkout_itens'::regclass and polcmd = 'd'`);
+  ok(pol.length === 1 && pol[0].polname === 'checkout_itens_delete_pendente_ou_admin',
+    `checkout_itens tem UMA regra de exclusão, a nova (${pol.map((x) => x.polname).join(', ')})`);
+  ok(/is_admin()/.test(pol[0]?.expr || '') && /status = 'Pendente'/.test(pol[0]?.expr || '') && pol[0]?.papeis === '{authenticated}',
+    `regra: admin OU status Pendente, só para authenticated (${pol[0]?.expr})`);
 }
 if (ESPERADO.extra === 'sessao') {
   const x = consultar(`select
