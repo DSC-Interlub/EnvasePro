@@ -187,10 +187,20 @@ async function main() {
   const { data: perfilDepois } = await svc.from('user_profiles').select('role').eq('email', process.env.TEST_OPERATOR_EMAIL).single();
   checar('operador NAO se promove a admin (papel relido no banco)', perfilDepois.role === 'operator', `papel ficou = ${perfilDepois.role}`);
 
-  console.log('\n[12] DELETE e admin-only');
+  // Desde 20261026000001: item ainda PENDENTE (pedido cancelado antes de ser
+  // separado) qualquer conta apaga; iniciado ou concluído, só o admin.
+  console.log('\n[12] DELETE: pendente qualquer conta; iniciado/concluido so admin');
+  const { data: opAna } = await svc.from('operators').select('id, nome').eq('nome', 'SEED-Ana Operadora').single();
+  await svc.from('checkout_itens').update({ status: 'Concluído', operator_id: opAna.id, operador: opAna.nome }).eq('id', item.id);
   await op.from('checkout_itens').delete().eq('id', item.id);
   const { count: aindaExiste } = await svc.from('checkout_itens').select('*', { count: 'exact', head: true }).eq('id', item.id);
-  checar('operador NAO apaga checkout_itens (linha relida no banco)', aindaExiste === 1, `linhas restantes = ${aindaExiste}`);
+  checar('operador NAO apaga checkout_itens CONCLUIDO (linha relida no banco)', aindaExiste === 1, `linhas restantes = ${aindaExiste}`);
+
+  const { data: pendente } = await svc.from('checkout_itens')
+    .insert({ programacao_id: prog.id, numero_pedido: 'PED-TESTE-CANCELADO', cliente: 'CLIENTE TESTE', status: 'Pendente' }).select().single();
+  await op.from('checkout_itens').delete().eq('id', pendente.id);
+  const { count: pendenteFica } = await svc.from('checkout_itens').select('*', { count: 'exact', head: true }).eq('id', pendente.id);
+  checar('operador APAGA checkout_itens PENDENTE (pedido cancelado)', pendenteFica === 0, `linhas restantes = ${pendenteFica}`);
 
   const { error: eDelAdm } = await adm.from('checkout_itens').delete().eq('id', item.id);
   const { count: depoisAdmin } = await svc.from('checkout_itens').select('*', { count: 'exact', head: true }).eq('id', item.id);

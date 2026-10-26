@@ -47,9 +47,11 @@ async function ler(sql) {
   return r.json();
 }
 
+// O SQL vai pela ENTRADA PADRÃO, não como argumento: com o histórico real
+// (26/10/2026) o comando passou do limite de tamanho do Windows (ENAMETOOLONG).
 const psql = (sql) => execFileSync('docker',
-  ['exec', '-i', 'supabase_db_envase', 'psql', '-U', 'postgres', '-d', 'postgres', '-tAc', sql],
-  { encoding: 'utf8' }).trim();
+  ['exec', '-i', 'supabase_db_envase', 'psql', '-U', 'postgres', '-d', 'postgres', '-tA', '-v', 'ON_ERROR_STOP=1'],
+  { encoding: 'utf8', input: sql, maxBuffer: 256 * 1024 * 1024 }).trim();
 
 const manifesto = JSON.parse(fs.readFileSync(path.join(pasta, 'MANIFESTO.json'), 'utf8'));
 

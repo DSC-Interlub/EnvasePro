@@ -16,9 +16,12 @@ import { StatusPill } from "@/components/fluxo";
 
 
 export default function CheckoutItemCard({ item, operators }) {
-  // Excluir o pedido é só do admin (o banco recusa o operador).
+  // Excluir: pedido ainda PENDENTE (cancelado antes de ser separado) qualquer
+  // conta exclui; iniciado ou concluído, só o admin — a mesma regra do banco
+  // (migration 20261026000001).
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const podeExcluir = isAdmin || item.status === "Pendente";
   const queryClient = useQueryClient();
 
   const [isEditing, setIsEditing] = useState(item.status === "Pendente" || item.status === "Em Andamento");
@@ -220,7 +223,7 @@ export default function CheckoutItemCard({ item, operators }) {
                 Marcar atraso
               </Button>
             )}
-            {isAdmin && (
+            {podeExcluir && (
             <Button
               variant="ghost"
               size="icon"
